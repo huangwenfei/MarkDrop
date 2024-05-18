@@ -76,14 +76,17 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
     private func stroke(_ value: StrokeAttributes) -> DropContants.AttributedDict {
         [
             .strokeColor: value.color,
-            .strokeWidth: value.width
+            // NSNumber containing floating point value, in percent of font point size, default 0: no stroke; positive for stroke alone, negative for stroke and fill (a typical value for outlined text would be 3.0)
+            .strokeWidth: NSNumber(value: value.width)
         ]
     }
     
     private func underline(_ value: UnderlineAttributes) -> DropContants.AttributedDict {
         [
             .underlineColor: value.color,
-            .underlineStyle: value.mode.style
+            .underlineStyle: NSNumber(value: value.mode.style.rawValue),
+            // NSNumber containing floating point value, in points; offset from baseline, default 0
+            .baselineOffset: NSNumber(value: value.margins)
         ]
     }
     

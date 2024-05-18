@@ -31,12 +31,14 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public let hashTag: TextCharacter = {
         var result = defaultText()
+        result.light.character.color = .orange.withAlphaComponent(0.5)
         result.light.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.light.backgroundBorder = .init(
             cornerRadius: 2,
             fillColor: .blue.withAlphaComponent(0.8),
             paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
         )
+        result.dark.character.color = .orange.withAlphaComponent(0.5)
         result.dark.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.dark.backgroundBorder = .init(
             cornerRadius: 2,
@@ -69,7 +71,7 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public let underline: TextCharacter = {
         var result = defaultText()
-        result.light.underline = .init(color: .systemGray, mode: .single)
+        result.light.underline = .init(color: .systemGray, mode: .thick)
         result.dark.underline = .init(color: .systemGray6, mode: .single)
         return result
     }()

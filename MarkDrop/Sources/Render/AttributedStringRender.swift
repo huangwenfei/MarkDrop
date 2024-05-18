@@ -113,7 +113,7 @@ public final class AttributedStringRender: DropRendable {
                 }
                 
                 var attributed = AttributedDict()
-                append(
+                let shouldAppendContent = append(
                     text: $1,
                     text: base.text,
                     attributes: attributes,
@@ -121,6 +121,10 @@ public final class AttributedStringRender: DropRendable {
                     in: &attributed,
                     with: &indentList
                 )
+                
+                guard shouldAppendContent else {
+                    return $0
+                }
                 
                 if let element = renderDict[$1.intRange] {
                     
@@ -190,22 +194,24 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
-    private func append(text node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [CGFloat]) {
+    private func append(text node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [CGFloat]) -> Bool {
         
         if
             let textNode = node as? DropContentNode,
             textNode.type == .text
         {
             dict = mapping.mapping(text: text, type: .text)
-            return
+            return true
         }
         
         guard 
             let markNode = node as? DropContentMarkNode,
             markNode.mark == .text
         else {
-            return
+            return true
         }
+        
+        var shouldAppendContent: Bool = true
         
         switch markNode.type {
         case .bulletList:      dict = mapping.mapping(text: attributes.bulletList.mark, type: .text)
@@ -220,18 +226,23 @@ public final class AttributedStringRender: DropRendable {
         case .highlight:       dict = mapping.mapping(text: attributes.highlight, type: .highlight)
         case .stroke:          dict = mapping.mapping(text: attributes.stroke, type: .stroke)
         case .tabIndent:
-            dict = mapping.mapping(text: attributes.tabIndent, type: .text)
+            let dict = mapping.mapping(text: attributes.tabIndent, type: .text)
             let content = node.rawRenderContent
             let width = NSAttributedString(string: content, attributes: dict).size().width
             indentList.append(width)
             
+            shouldAppendContent = false
+            
         case .spaceIndent:
-            dict = mapping.mapping(text: attributes.spaceIndent, type: .text)
+            let dict = mapping.mapping(text: attributes.spaceIndent, type: .text)
             let content = node.rawRenderContent
             let width = NSAttributedString(string: content, attributes: dict).size().width
             indentList.append(width)
+            
+            shouldAppendContent = false
         }
         
+        return shouldAppendContent
     }
     
 }

@@ -17,22 +17,22 @@ public struct TextAttributes: Hashable {
     
     // MARK: Properties
     public var character: CharacterAttributes
-    public var stroke: StrokeAttributes
-    public var underline: UnderlineAttributes
-    public var border: BorderAttributes
-    public var backgroundBorder: BorderAttributes
-    public var shadow: ShadowAttributes
+    public var stroke: StrokeAttributes?
+    public var underline: UnderlineAttributes?
+    public var border: BorderAttributes?
+    public var backgroundBorder: BorderAttributes?
+    public var shadow: ShadowAttributes?
     
     public var action: ActionAttributes?
     
     // MARK: Init
     public init(
         character: CharacterAttributes = .init(),
-        stroke: StrokeAttributes = .init(),
-        underline: UnderlineAttributes = .init(),
-        border: BorderAttributes = .init(),
-        backgroundBorder: BorderAttributes = .init(),
-        shadow: ShadowAttributes = .init(),
+        stroke: StrokeAttributes? = nil,
+        underline: UnderlineAttributes? = nil,
+        border: BorderAttributes? = nil,
+        backgroundBorder: BorderAttributes? = nil,
+        shadow: ShadowAttributes? = nil,
         action: ActionAttributes? = nil
     ) {
         self.character = character

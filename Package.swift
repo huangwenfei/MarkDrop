@@ -12,11 +12,12 @@ let package = Package(
         .library(
             name: "MarkDrop",
             targets: ["MarkDrop"]
-        ),
-        .library(
-            name: "MarkDropYYText",
-            targets: ["MarkDropYYText"]
         )
+//        ,
+//        .library(
+//            name: "MarkDropYYText",
+//            targets: ["MarkDropYYText"]
+//        )
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -25,10 +26,10 @@ let package = Package(
             name: "MarkDrop",
             path: "MarkDrop/Deployment/spm/MarkDrop"
         ),
-        .target(
-            name: "MarkDropYYText",
-            path: "MarkDrop/Deployment/spm/MarkDropYYText"
-        ),
+//        .target(
+//            name: "MarkDropYYText",
+//            path: "MarkDrop/Deployment/spm/MarkDropYYText"
+//        ),
         .testTarget(
             name: "MarkDropTests",
             dependencies: ["MarkDrop"],

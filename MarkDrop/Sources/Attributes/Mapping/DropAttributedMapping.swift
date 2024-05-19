@@ -7,21 +7,21 @@
 
 import Foundation
 
-public class DropAttributedMapping {
+open class DropAttributedMapping {
     
     // MARK: Init
     public init() {}
     
     // MARK: Mapping
-    public func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    open func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         fatalError("Using subclass !")
     }
     
-    public func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         fatalError("Using subclass !")
     }
     
-    public func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    open func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
         fatalError("Using subclass !")
     }
 }

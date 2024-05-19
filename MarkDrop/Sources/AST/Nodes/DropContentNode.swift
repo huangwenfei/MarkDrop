@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class DropContentNode: DropNode {
+public class DropContentNode: DropNode, DropContentNodeProtocol {
     
     // MARK: Properties
     public var type: DropContentType = .text

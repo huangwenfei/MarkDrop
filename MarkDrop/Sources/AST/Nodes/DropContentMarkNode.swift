@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class DropContentMarkNode: DropNode {
+public class DropContentMarkNode: DropNode, DropContentNodeProtocol {
     
     // MARK: Properties
     /// instance.type !=== .none

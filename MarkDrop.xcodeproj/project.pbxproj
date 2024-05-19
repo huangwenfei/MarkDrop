@@ -16,6 +16,8 @@
 		2307CA242BEE2570003CD18F /* DropRule+Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2307CA232BEE2570003CD18F /* DropRule+Tag.swift */; };
 		2307CA262BEE2686003CD18F /* DropRule+LargeTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2307CA252BEE2686003CD18F /* DropRule+LargeTag.swift */; };
 		2307CA282BEE6AC7003CD18F /* DropVaildHead.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2307CA272BEE6AC7003CD18F /* DropVaildHead.swift */; };
+		231DFFF52BF9CBEF00456E4B /* DropContentNodeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231DFFF42BF9CBEF00456E4B /* DropContentNodeProtocol.swift */; };
+		231DFFFA2BF9D3DB00456E4B /* DropParagraphIndent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */; };
 		232A0D172BE3E517006A594C /* MarkDrop.docc in Sources */ = {isa = PBXBuildFile; fileRef = 232A0D162BE3E517006A594C /* MarkDrop.docc */; };
 		232A0D1D2BE3E517006A594C /* MarkDrop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 232A0D122BE3E517006A594C /* MarkDrop.framework */; };
 		232A0D222BE3E517006A594C /* MarkDropTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232A0D212BE3E517006A594C /* MarkDropTests.swift */; };
@@ -107,6 +109,8 @@
 		2307CA232BEE2570003CD18F /* DropRule+Tag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+Tag.swift"; sourceTree = "<group>"; };
 		2307CA252BEE2686003CD18F /* DropRule+LargeTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+LargeTag.swift"; sourceTree = "<group>"; };
 		2307CA272BEE6AC7003CD18F /* DropVaildHead.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropVaildHead.swift; sourceTree = "<group>"; };
+		231DFFF42BF9CBEF00456E4B /* DropContentNodeProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropContentNodeProtocol.swift; sourceTree = "<group>"; };
+		231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropParagraphIndent.swift; sourceTree = "<group>"; };
 		232A0D122BE3E517006A594C /* MarkDrop.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkDrop.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		232A0D152BE3E517006A594C /* MarkDrop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MarkDrop.h; sourceTree = "<group>"; };
 		232A0D162BE3E517006A594C /* MarkDrop.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = MarkDrop.docc; sourceTree = "<group>"; };
@@ -201,6 +205,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		231DFFF62BF9CDD900456E4B /* Hacking */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Hacking;
+			sourceTree = "<group>";
+		};
 		232A0D082BE3E517006A594C = {
 			isa = PBXGroup;
 			children = (
@@ -300,6 +311,7 @@
 				23452ECB2BF48644009404D8 /* DropLargeTokenRenderType.swift */,
 				23452ECD2BF4865B009404D8 /* DropLargeTagRenderType.swift */,
 				23452ECF2BF4866C009404D8 /* DropMultiTagRenderType.swift */,
+				231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -363,6 +375,7 @@
 				2377B3312BE4E69B00A7B257 /* Dropper.swift */,
 				23B92E542BEFC0E800255BA7 /* Extensions */,
 				2377B3472BE4E8AE00A7B257 /* Contants */,
+				231DFFF62BF9CDD900456E4B /* Hacking */,
 				2377B3542BE4F38000A7B257 /* Rule */,
 				2377B34F2BE4F0A700A7B257 /* Content */,
 				2377B33D2BE4E7E300A7B257 /* AST */,
@@ -407,6 +420,7 @@
 				2377B3402BE4E81500A7B257 /* DropNode.swift */,
 				2377B3432BE4E82F00A7B257 /* DropContainerNode.swift */,
 				2377B3452BE4E83800A7B257 /* DropContentNode.swift */,
+				231DFFF42BF9CBEF00456E4B /* DropContentNodeProtocol.swift */,
 				23A2F7652BF309D00009686F /* DropContentMarkNode.swift */,
 			);
 			path = Nodes;
@@ -622,6 +636,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				231DFFF52BF9CBEF00456E4B /* DropContentNodeProtocol.swift in Sources */,
 				2307CA182BEE0FF2003CD18F /* DropLargeTagSet.swift in Sources */,
 				23452EC62BF48516009404D8 /* DropMarkRenderMode.swift in Sources */,
 				236C7EBA2BF8A76F0023BDEC /* DropAction.swift in Sources */,
@@ -656,6 +671,7 @@
 				23A2F7682BF309EC0009686F /* DropContentMarkType.swift in Sources */,
 				2377B3462BE4E83800A7B257 /* DropContentNode.swift in Sources */,
 				2377B3442BE4E82F00A7B257 /* DropContainerNode.swift in Sources */,
+				231DFFFA2BF9D3DB00456E4B /* DropParagraphIndent.swift in Sources */,
 				23EB49132BF70D36002F25F0 /* NSParagraphStyle+Extensions.swift in Sources */,
 				2377B3412BE4E81500A7B257 /* DropNode.swift in Sources */,
 				236C7EBC2BF8AF8E0023BDEC /* DropAppleAttributedMapping.swift in Sources */,

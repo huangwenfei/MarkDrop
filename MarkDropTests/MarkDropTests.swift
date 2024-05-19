@@ -110,7 +110,17 @@ final class MarkDropTests: XCTestCase {
                 现在，试着把当前脑海中的😤
         """
         
-        let dropper = Dropper(string: string)
+        let string1 =
+        """
+        现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
+        """
+        
+        let string2 =
+        """
+            现在，试着把当前脑海中的!!想法、**A灵无??压记录感Z**、情??绪!!等等记下来，尝试下无压记录的??愉悦??。
+        """
+        
+        let dropper = Dropper(string: string2)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

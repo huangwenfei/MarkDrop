@@ -172,7 +172,7 @@ public final class Dropper {
             
             lineOffset += 1
             
-            print(#function, #line, containerType, paragraph, (paragraphNode.parentNode as? DropContainerNode)?.type ?? "None Parent", paragraphNode.children.count)
+//            print(#function, #line, containerType, paragraph, (paragraphNode.parentNode as? DropContainerNode)?.type ?? "None Parent", paragraphNode.children.count)
             
         }
         
@@ -232,7 +232,7 @@ public final class Dropper {
                     openRules.append(rule)
                     rule.parent?.children.append(rule)
                     
-                    print(#function, #line, currentNode.intRange, currentNode.contents)
+//                    print(#function, #line, currentNode.intRange, currentNode.contents)
                     
                 } else {
                     
@@ -244,7 +244,7 @@ public final class Dropper {
                     rule.openNode = currentNode
                     openRules.append(rule)
                     
-                    print(#function, #line, currentNode.intRange, currentNode.contents)
+//                    print(#function, #line, currentNode.intRange, currentNode.contents)
                     
                 }
                 
@@ -307,13 +307,13 @@ public final class Dropper {
                     markNode.documentRange = node.documentRange
                     node.append(markNode)
                     
-                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
+//                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                     
                     addToParent(rule: rule, currentOpen: node, in: paragraph)
                     
                     upChildParent(rule: rule, currentOpen: node, in: dones)
                     
-                    print(#function, #line, node.intRange, node.contents, "parent: ", node.parentNode ?? "None Parent")
+//                    print(#function, #line, node.intRange, node.contents, "parent: ", node.parentNode ?? "None Parent")
                     
                     if node.parentNode === paragraph {
                         splitSelfTextWholeContains(
@@ -378,14 +378,14 @@ public final class Dropper {
                             markOffset = nextOffset(markOffset, count: count, limit: markOffsetLimit, in: paragraph)
                             markIntOffset += count
                             
-                            print(#function, #line, "mark", paragraph.rawContent[markNode.range])
+//                            print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                         }
                         
                         addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
                         
                         upChildParent(rule: rule, currentOpen: currentOpen, in: dones)
                         
-                        print(#function, #line, currentOpen.intRange, currentOpen.contents, "parent: ", currentOpen.parentNode ?? "None Parent")
+//                        print(#function, #line, currentOpen.intRange, currentOpen.contents, "parent: ", currentOpen.parentNode ?? "None Parent")
                         
                         if currentOpen.parentNode === paragraph {
                             splitSelfTextWholeContains(
@@ -554,6 +554,7 @@ public final class Dropper {
             paragraph.children = [text]
         }
         
+        #if false
         print()
         print(#function, #line, paragraph.children)
         print(#function, #line, paragraph.children.map({ "(\($0.range.lowerBound.utf16Offset(in: paragraph.rawContent)), \($0.range.upperBound.utf16Offset(in: paragraph.rawContent)))" }))
@@ -566,6 +567,7 @@ public final class Dropper {
             return paragraph.rawContent[start ..< end]
         }))
         print()
+        #endif
         
     }
     
@@ -1020,9 +1022,11 @@ public final class Dropper {
 //        result.renderContentOffsets = [0]
         result.range = range
         result.intRange = intRange
+        #if false
 //        print(#function, #line, "get doc content: \(document.raw[result.range])")
         print(#function, #line, "get doc content: \(document.raw[result.exculdeNewlineRange])")
         print(#function, #line, "nsrange: \(result.intRange)), content: \(document.content(in: result.exculdeNewlineIntRange))")
+        #endif
         return result
     }
     

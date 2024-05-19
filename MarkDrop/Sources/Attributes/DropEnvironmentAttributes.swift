@@ -31,16 +31,18 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public let hashTag: TextCharacter = {
         var result = defaultText()
+        result.light.character.color = .systemPink.withAlphaComponent(0.5)
         result.light.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.light.backgroundBorder = .init(
             cornerRadius: 2,
-            fillColor: .blue.withAlphaComponent(0.8),
+            fillColor: .blue.withAlphaComponent(0.1),
             paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
         )
+        result.dark.character.color = .orange.withAlphaComponent(0.5)
         result.dark.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.dark.backgroundBorder = .init(
             cornerRadius: 2,
-            fillColor: .blue,
+            fillColor: .blue.withAlphaComponent(0.1),
             paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
         )
         return result
@@ -69,8 +71,8 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public let underline: TextCharacter = {
         var result = defaultText()
-        result.light.underline = .init(color: .systemGray, mode: .single)
-        result.dark.underline = .init(color: .systemGray6, mode: .single)
+        result.light.underline = .init(color: .systemGray, margins: 1, mode: .single)
+        result.dark.underline = .init(color: .systemGray6, margins: 1, mode: .single)
         return result
     }()
     
@@ -93,8 +95,8 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public let stroke: TextCharacter = {
         var result = defaultText()
-        result.light.stroke = .init(color: .yellow.withAlphaComponent(0.8), width: 1)
-        result.dark.stroke = .init(color: .yellow, width: 1)
+        result.light.stroke = .init(color: .purple.withAlphaComponent(0.8), width: 3)
+        result.dark.stroke = .init(color: .yellow, width: 3)
         return result
     }()
     

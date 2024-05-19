@@ -85,11 +85,25 @@ public final class AttributedStringRender: DropRendable {
     }
     
     private func render(paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
-        render(paragraph: paragraph, isBreak: false, base: base, with: attributes, mapping: mapping)
+        
+        render(
+            paragraph: paragraph,
+            isBreak: false,
+            base: base,
+            with: attributes,
+            mapping: mapping
+        )
     }
     
     private func render(break paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
-        render(paragraph: paragraph, isBreak: true, base: base, with: attributes, mapping: mapping)
+        
+        render(
+            paragraph: paragraph,
+            isBreak: true,
+            base: base,
+            with: attributes,
+            mapping: mapping
+        )
     }
     
     private func render(paragraph: DropContainerNode, isBreak: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
@@ -100,11 +114,13 @@ public final class AttributedStringRender: DropRendable {
         /// - Tag: Contents
         var offset: Int = 0
         
-        var indentList: [CGFloat] = []
+        var indentList: [DropParagraphIndent] = []
         
         var result = paragraph.leaves
             .sorted(by: { $0.intRange.location < $1.intRange.location })
             .reduce(NSMutableAttributedString(string: ""), {
+                
+                $0.beginEditing()
                 
                 let string = $1.rawRenderContent
                 
@@ -113,14 +129,18 @@ public final class AttributedStringRender: DropRendable {
                 }
                 
                 var attributed = AttributedDict()
-                append(
-                    text: $1,
+                let shouldAppendContent = append(
+                    textNode: $1,
                     text: base.text,
                     attributes: attributes,
                     mapping: mapping,
                     in: &attributed,
                     with: &indentList
                 )
+                
+                guard shouldAppendContent else {
+                    return $0
+                }
                 
                 if let element = renderDict[$1.intRange] {
                     
@@ -149,6 +169,8 @@ public final class AttributedStringRender: DropRendable {
                     
                 }
                 
+                $0.endEditing()
+                
                 return $0
             })
         
@@ -170,8 +192,10 @@ public final class AttributedStringRender: DropRendable {
     }
     
     // MARK: Attributes
-    private func append(paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [CGFloat]) {
+    private func append(paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
+        /// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/TextAttributes/ChangingAttrStrings.html#//apple_ref/doc/uid/20000162-BBCBGCDG
+        /// Paragraph styles must apply to entire paragraphs.
         mapping.append(
             paragraph: paragraph,
             in: &content,
@@ -183,34 +207,83 @@ public final class AttributedStringRender: DropRendable {
         
         mapping.combine(
             oldAttributes: oldAttributes,
-            in: &attributed,
-            with: content,
-            in: renderRange
+            in: &attributed
         )
+        
+        content.addAttributes(attributed, range: renderRange)
         
     }
     
-    private func append(text node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [CGFloat]) {
+    private func append(textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) -> Bool {
         
         if
             let textNode = node as? DropContentNode,
             textNode.type == .text
         {
             dict = mapping.mapping(text: text, type: .text)
-            return
+            return true
         }
         
-        guard 
-            let markNode = node as? DropContentMarkNode,
-            markNode.mark == .text
-        else {
-            return
+        guard let markNode = node as? DropContentMarkNode else {
+            return true
         }
         
-        switch markNode.type {
-        case .bulletList:      dict = mapping.mapping(text: attributes.bulletList.mark, type: .text)
-        case .numberOrderList: dict = mapping.mapping(text: attributes.numberOrderList.mark, type: .text)
-        case .letterOrderList: dict = mapping.mapping(text: attributes.letterOrderList.mark, type: .text)
+        var shouldAppendContent: Bool = true
+        
+        self.attributeDict(
+            shouldAppendContent: &shouldAppendContent,
+            type: markNode.type,
+            textNode: node,
+            text: text,
+            attributes: attributes,
+            mapping: mapping,
+            in: &dict,
+            with: &indentList
+        )
+        
+        if markNode.type != .text {
+            
+            var parentMark = markNode.parentNode as? DropContentNodeProtocol
+            
+            while let parent = parentMark {
+                
+//                print(#function, #line, markNode.rawRenderContent, markNode.type, markNode.mark, "Parent", parent.rawRenderContent, parent.type)
+                
+                if parent.type == markNode.type, parent.type == .text {
+                    parentMark = parent.parentNode as? DropContentNodeProtocol
+                    continue
+                }
+                
+                var oldAttributes: DropContants.AttributedDict = .init()
+                var oldIndentList: [DropParagraphIndent] = []
+                
+                self.attributeDict(
+                    shouldAppendContent: &shouldAppendContent,
+                    type: parent.type,
+                    textNode: parent,
+                    text: text,
+                    attributes: attributes,
+                    mapping: mapping,
+                    in: &oldAttributes,
+                    with: &oldIndentList
+                )
+                
+                mapping.combine(
+                    oldAttributes: oldAttributes,
+                    in: &dict
+                )
+                
+                parentMark = parent.parentNode as? DropContentNodeProtocol
+            }
+            
+        }
+        
+        return shouldAppendContent
+    }
+    
+    private func attributeDict(shouldAppendContent: inout Bool, type: DropContentType, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) {
+        
+        switch type {
         case .text:            dict = mapping.mapping(text: text, type: .text)
         case .hashTag:         dict = mapping.mapping(text: attributes.hashTag, type: .hashTag)
         case .mention:         dict = mapping.mapping(text: attributes.mention, type: .mention)
@@ -219,18 +292,64 @@ public final class AttributedStringRender: DropRendable {
         case .underline:       dict = mapping.mapping(text: attributes.underline, type: .underline)
         case .highlight:       dict = mapping.mapping(text: attributes.highlight, type: .highlight)
         case .stroke:          dict = mapping.mapping(text: attributes.stroke, type: .stroke)
+            
+        case .bulletList:
+            dict = mapping.mapping(text: attributes.bulletList.mark, type: .text)
+            fillIndentList(
+                indentList: &indentList,
+                in: node,
+                attributes: dict,
+                mode: .tabStop
+            )
+            
+        case .numberOrderList: 
+            dict = mapping.mapping(text: attributes.numberOrderList.mark, type: .text)
+            fillIndentList(
+                indentList: &indentList,
+                in: node,
+                attributes: dict,
+                mode: .tabStop
+            )
+            
+        case .letterOrderList: 
+            dict = mapping.mapping(text: attributes.letterOrderList.mark, type: .text)
+            fillIndentList(
+                indentList: &indentList,
+                in: node,
+                attributes: dict,
+                mode: .tabStop
+            )
+            
         case .tabIndent:
-            dict = mapping.mapping(text: attributes.tabIndent, type: .text)
-            let content = node.rawRenderContent
-            let width = NSAttributedString(string: content, attributes: dict).size().width
-            indentList.append(width)
+            let dict = mapping.mapping(text: attributes.tabIndent, type: .text)
+            fillIndentList(
+                indentList: &indentList,
+                in: node,
+                attributes: dict,
+                mode: .firstHeadIndent
+            )
+            
+            shouldAppendContent = false
             
         case .spaceIndent:
-            dict = mapping.mapping(text: attributes.spaceIndent, type: .text)
-            let content = node.rawRenderContent
-            let width = NSAttributedString(string: content, attributes: dict).size().width
-            indentList.append(width)
+            let dict = mapping.mapping(text: attributes.spaceIndent, type: .text)
+            fillIndentList(
+                indentList: &indentList,
+                in: node,
+                attributes: dict,
+                mode: .firstHeadIndent
+            )
+            
+            shouldAppendContent = false
         }
+        
+    }
+    
+    private func fillIndentList(indentList: inout [DropParagraphIndent], in node: DropNode, attributes: DropContants.AttributedDict, mode: DropParagraphIndentMode) {
+        
+        let content = node.rawRenderContent
+        let width = NSAttributedString(string: content, attributes: attributes).size().width
+        indentList.append(.init(indentation: width, mode: mode))
         
     }
     

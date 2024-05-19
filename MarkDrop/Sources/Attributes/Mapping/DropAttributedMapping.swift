@@ -13,11 +13,11 @@ public class DropAttributedMapping {
     public init() {}
     
     // MARK: Mapping
-    public func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [CGFloat]) {
+    public func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         fatalError("Using subclass !")
     }
     
-    public func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, with content: NSMutableAttributedString, in renderRange: DropContants.IntRange) {
+    public func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         fatalError("Using subclass !")
     }
     
@@ -29,7 +29,7 @@ public class DropAttributedMapping {
 
 public final class DropDefaultAttributedMapping: DropAttributedMapping {
     
-    public override func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [CGFloat]) {
+    public override func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         let style = DropMutableParagraph()
         style.setParagraphStyle(paragraph.paragraphStyle)
@@ -38,11 +38,29 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         style.headIndent = 0
         style.tabStops = []
         
-        indentList.forEach({ indentation in
-            style.firstLineHeadIndent += indentation
-            style.headIndent += indentation
-            let tabStop = DropTabStop(textAlignment: .left, location: indentation)
-            style.tabStops.append(tabStop)
+        let indentation = paragraph.indentWidth
+        
+        indentList.forEach({
+            
+            let mode =  $0.mode
+            
+            if mode.contains(.firstHeadIndent) {
+                style.firstLineHeadIndent += indentation
+            }
+            
+            if mode.contains(.headIndent) {
+                style.headIndent += indentation
+            }
+            
+            if mode.contains(.tailIndent) {
+                style.tailIndent += indentation
+            }
+            
+            if mode.contains(.tabStop) {
+                let tabStop = DropTabStop(textAlignment: .left, location: indentation)
+                style.tabStops.append(tabStop)
+            }
+            
         })
         
         content.addAttribute(
@@ -52,26 +70,23 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         )
     }
     
-    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, with content: NSMutableAttributedString, in renderRange: DropContants.IntRange) {
+    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         
         let fontKey = AttributesKey.characterFont.attributed
         
-        oldAttributes.forEach({
-            guard $0.key != fontKey else { return }
-            attributed[$0.key] = $0.value
-        })
+        let font = oldAttributes[fontKey] as? DropFont
+        let newFont = attributed[fontKey] as? DropFont
         
-        if
-            var font = oldAttributes[fontKey] as? DropFont,
-            let newFont = attributed[fontKey] as? DropFont
-        {
+        /// 如果 key 重复，就使用 attributed 的 value (current)
+        attributed.merge(oldAttributes, uniquingKeysWith: { current,_ in current })
+        
+        if var font, let newFont {
             if newFont.isBold      { font = font.bold }
             if newFont.isItalic    { font = font.italic }
             if newFont.isMonoSpace { font = font.monoSpace }
             attributed[fontKey] = font
         }
         
-        content.addAttributes(attributed, range: renderRange)
     }
     
     public override func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
@@ -79,11 +94,16 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         var result = DropContants.AttributedDict()
         
         merge(character(text.character), in: &result)
-        merge(stroke(text.stroke), in: &result)
-        merge(border(text.border), in: &result)
-        merge(backgroundBorder(text.backgroundBorder), in: &result)
-        merge(underline(text.underline), in: &result)
-        merge(shadow(text.shadow), in: &result)
+        
+        if let stroke = text.stroke { merge(self.stroke(stroke), in: &result) }
+        if let border = text.border { merge(self.border(border), in: &result) }
+        if let underline = text.underline { merge(self.underline(underline), in: &result) }
+        if let shadow = text.shadow { merge(self.shadow(shadow), in: &result) }
+        if let action = text.action { merge(self.action(action), in: &result) }
+        
+        if let backgroundBorder = text.backgroundBorder {
+            merge(self.backgroundBorder(backgroundBorder), in: &result)
+        }
         
         return result
     }
@@ -91,7 +111,8 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
     private func character(_ value: CharacterAttributes) -> DropContants.AttributedDict {
         [
             key(.characterColor): value.color,
-            key(.characterFont): value.font
+            key(.characterFont): value.font,
+            key(.characterKern): value.kern
         ]
     }
     
@@ -137,6 +158,13 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
             key(.shadowRadius): value.radius,
             key(.shadowOffset): value.offset,
             key(.shadowBlendMode): value.blendMode
+        ]
+    }
+    
+    private func action(_ value: ActionAttributes) -> DropContants.AttributedDict {
+        [
+            key(.actionCurrentState): value.currentState,
+            key(.actionActions): value.actions
         ]
     }
     

@@ -27,6 +27,9 @@ public struct ParagraphAttributes: Hashable {
     public var lineBreakMode: NSLineBreakMode
     public var lineBreakStrategy: NSParagraphStyle.LineBreakStrategy
     
+    /// use for indentation -> firstHead & head & tail & tabStop
+    public var indentWidth: CGFloat
+    
     // MARK: Init
     public init(
         alignment: NSTextAlignment = NSParagraphStyle.default.alignment,
@@ -36,7 +39,8 @@ public struct ParagraphAttributes: Hashable {
         paragraphSpacingBefore: CGFloat = NSParagraphStyle.default.paragraphSpacingBefore,
         paragraphSpacingAfter: CGFloat = NSParagraphStyle.default.paragraphSpacing,
         lineBreakMode: NSLineBreakMode = NSParagraphStyle.default.lineBreakMode,
-        lineBreakStrategy: NSParagraphStyle.LineBreakStrategy = NSParagraphStyle.default.lineBreakStrategy
+        lineBreakStrategy: NSParagraphStyle.LineBreakStrategy = NSParagraphStyle.default.lineBreakStrategy,
+        indentWidth: CGFloat = 20
     ) {
         self.alignment = alignment
         self.maximumLineHeight = maximumLineHeight
@@ -46,6 +50,7 @@ public struct ParagraphAttributes: Hashable {
         self.paragraphSpacingAfter = paragraphSpacingAfter
         self.lineBreakMode = lineBreakMode
         self.lineBreakStrategy = lineBreakStrategy
+        self.indentWidth = indentWidth
     }
 
     // MARK: Style

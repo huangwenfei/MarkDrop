@@ -17,6 +17,7 @@ public struct BorderAttributes: Hashable {
     
     // MARK: Properties
     public var color: DropColor
+    public var lineMode: DropLineMode
     public var width: CGFloat
     public var cornerRadius: CGFloat
     public var fillColor: DropColor
@@ -25,12 +26,14 @@ public struct BorderAttributes: Hashable {
     // MARK: Init
     public init(
         color: DropColor = .white,
+        lineMode: DropLineMode = .single,
         width: CGFloat = 1,
         cornerRadius: CGFloat = 0,
         fillColor: DropColor = .clear,
         paddings: DropPaddings = .zero
     ) {
         self.color = color
+        self.lineMode = lineMode
         self.width = width
         self.cornerRadius = cornerRadius
         self.fillColor = fillColor
@@ -40,6 +43,7 @@ public struct BorderAttributes: Hashable {
     // MARK: Hashable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.color == rhs.color &&
+        lhs.lineMode == rhs.lineMode &&
         lhs.width == rhs.width &&
         lhs.cornerRadius == rhs.cornerRadius &&
         lhs.fillColor == rhs.fillColor &&
@@ -48,6 +52,7 @@ public struct BorderAttributes: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(color)
+        hasher.combine(lineMode)
         hasher.combine(width)
         hasher.combine(cornerRadius)
         hasher.combine(fillColor)
@@ -67,6 +72,10 @@ extension AttributesKey {
     
     public static var borderColor: Self {
         .init(rawValue: "drop.attributes.border.color.key")
+    }
+    
+    public static var borderLineMode: Self {
+        .init(rawValue: "drop.attributes.border.lineMode.key")
     }
     
     public static var borderWidth: Self {
@@ -95,6 +104,10 @@ extension AttributesKey {
     
     public static var backgroundBorderColor: Self {
         .init(rawValue: "drop.attributes.border.background.color.key")
+    }
+    
+    public static var backgroundBorderLineMode: Self {
+        .init(rawValue: "drop.attributes.border.background.lineMode.key")
     }
     
     public static var backgroundBorderWidth: Self {

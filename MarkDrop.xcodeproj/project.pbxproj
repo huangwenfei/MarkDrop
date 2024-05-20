@@ -22,6 +22,9 @@
 		232A0D1D2BE3E517006A594C /* MarkDrop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 232A0D122BE3E517006A594C /* MarkDrop.framework */; };
 		232A0D222BE3E517006A594C /* MarkDropTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232A0D212BE3E517006A594C /* MarkDropTests.swift */; };
 		232A0D232BE3E517006A594C /* MarkDrop.h in Headers */ = {isa = PBXBuildFile; fileRef = 232A0D152BE3E517006A594C /* MarkDrop.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2338055A2BFAE126002D3F36 /* DropExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233805592BFAE126002D3F36 /* DropExtensions.swift */; };
+		2338055C2BFAEA0E002D3F36 /* DropLineMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2338055B2BFAEA0E002D3F36 /* DropLineMode.swift */; };
+		233805622BFB2074002D3F36 /* DropDiretionExpandWidth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233805612BFB2074002D3F36 /* DropDiretionExpandWidth.swift */; };
 		23452EC62BF48516009404D8 /* DropMarkRenderMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452EC52BF48516009404D8 /* DropMarkRenderMode.swift */; };
 		23452EC82BF4856C009404D8 /* DropTagRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452EC72BF4856C009404D8 /* DropTagRenderType.swift */; };
 		23452ECA2BF485BD009404D8 /* DropTokenRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452EC92BF485BD009404D8 /* DropTokenRenderType.swift */; };
@@ -117,6 +120,9 @@
 		232A0D1C2BE3E517006A594C /* MarkDropTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkDropTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		232A0D212BE3E517006A594C /* MarkDropTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDropTests.swift; sourceTree = "<group>"; };
 		232A0D302BE3E58B006A594C /* HiFlomoFileFormat.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HiFlomoFileFormat.md; sourceTree = "<group>"; };
+		233805592BFAE126002D3F36 /* DropExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropExtensions.swift; sourceTree = "<group>"; };
+		2338055B2BFAEA0E002D3F36 /* DropLineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropLineMode.swift; sourceTree = "<group>"; };
+		233805612BFB2074002D3F36 /* DropDiretionExpandWidth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDiretionExpandWidth.swift; sourceTree = "<group>"; };
 		23452EC52BF48516009404D8 /* DropMarkRenderMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropMarkRenderMode.swift; sourceTree = "<group>"; };
 		23452EC72BF4856C009404D8 /* DropTagRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropTagRenderType.swift; sourceTree = "<group>"; };
 		23452EC92BF485BD009404D8 /* DropTokenRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropTokenRenderType.swift; sourceTree = "<group>"; };
@@ -312,6 +318,8 @@
 				23452ECD2BF4865B009404D8 /* DropLargeTagRenderType.swift */,
 				23452ECF2BF4866C009404D8 /* DropMultiTagRenderType.swift */,
 				231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */,
+				2338055B2BFAEA0E002D3F36 /* DropLineMode.swift */,
+				233805612BFB2074002D3F36 /* DropDiretionExpandWidth.swift */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -472,6 +480,7 @@
 		23B92E542BEFC0E800255BA7 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				233805592BFAE126002D3F36 /* DropExtensions.swift */,
 				23B92E552BEFC0F600255BA7 /* NSRange+Extensions.swift */,
 				23C8317F2BF648840047D385 /* DropFont+Extensions.swift */,
 				23EB49122BF70D36002F25F0 /* NSParagraphStyle+Extensions.swift */,
@@ -660,6 +669,7 @@
 				238199462BE8D85800B0D763 /* DropContentRule.swift in Sources */,
 				236C7EB22BF89B8C0023BDEC /* DropAttributeType.swift in Sources */,
 				2307CA222BEE24D0003CD18F /* DropRule+LargeToken.swift in Sources */,
+				2338055A2BFAE126002D3F36 /* DropExtensions.swift in Sources */,
 				23C8316B2BF5E1930047D385 /* DropRendable.swift in Sources */,
 				2377B3562BE4F39900A7B257 /* DropRule.swift in Sources */,
 				23A2F76E2BF30D840009686F /* DropContentMultiTagRuleState.swift in Sources */,
@@ -680,6 +690,7 @@
 				238199442BE8D80000B0D763 /* DropTokenClose.swift in Sources */,
 				236C7EB42BF89CA70023BDEC /* DropAttributedMapping.swift in Sources */,
 				2307CA1C2BEE15AD003CD18F /* DropContentLargeTokenRuleState.swift in Sources */,
+				233805622BFB2074002D3F36 /* DropDiretionExpandWidth.swift in Sources */,
 				2377B3362BE4E74300A7B257 /* DropError.swift in Sources */,
 				23452ECC2BF48644009404D8 /* DropLargeTokenRenderType.swift in Sources */,
 				23C831782BF5FBFA0047D385 /* DropEnvironmentAttributes.swift in Sources */,
@@ -688,6 +699,7 @@
 				239B94622BF116DF0050D828 /* StrokeAttributes.swift in Sources */,
 				236C7EBE2BF8DB8D0023BDEC /* DropParagraph.swift in Sources */,
 				23452EC82BF4856C009404D8 /* DropTagRenderType.swift in Sources */,
+				2338055C2BFAEA0E002D3F36 /* DropLineMode.swift in Sources */,
 				23EB492D2BF7AC16002F25F0 /* ParagraphMarkTextAttributes.swift in Sources */,
 				238199422BE8D74300B0D763 /* DropTokenSet.swift in Sources */,
 				23EB490D2BF7040D002F25F0 /* DropPaddings.swift in Sources */,

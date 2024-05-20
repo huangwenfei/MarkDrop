@@ -14,6 +14,8 @@ public class DropContentMarkNode: DropNode, DropContentNodeProtocol {
     public var type: DropContentType = .text
     public var mark: DropContentMarkType = .none
     
+    public var renderExpandWidthMode: DropDiretionExpandWidthMode = .none
+    
     public override var lineDescription: String {
         "{ markType: \(type), mark: \(mark), rawContent: \(rawContent), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
     }

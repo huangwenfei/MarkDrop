@@ -126,6 +126,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
     private func border(_ value: BorderAttributes) -> DropContants.AttributedDict {
         [
             key(.borderColor): value.color,
+            key(.borderLineMode): value.lineMode,
             key(.borderWidth): value.width,
             key(.borderCornerRadius): value.cornerRadius,
             key(.borderFillColor): value.fillColor,
@@ -136,6 +137,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
     private func backgroundBorder(_ value: BorderAttributes) -> DropContants.AttributedDict {
         [
             key(.backgroundBorderColor): value.color,
+            key(.backgroundBorderLineMode): value.lineMode,
             key(.backgroundBorderWidth): value.width,
             key(.backgroundBorderCornerRadius): value.cornerRadius,
             key(.backgroundBorderFillColor): value.fillColor,

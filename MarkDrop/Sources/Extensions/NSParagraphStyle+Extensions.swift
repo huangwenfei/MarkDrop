@@ -13,25 +13,33 @@ import UIKit
 import AppKit
 #endif
 
-extension NSParagraphStyle {
+extension NSParagraphStyle: DropExtensions { }
 
-    func indented(by indentation: CGFloat) -> NSParagraphStyle {
-        guard let result = mutableCopy() as? NSMutableParagraphStyle else {
-            return self
+extension DropWrapper where RawValue == NSParagraphStyle {
+
+    public func indented(by indentation: CGFloat) -> NSParagraphStyle {
+        guard let result = rawValue.mutableCopy() as? NSMutableParagraphStyle else {
+            return self.rawValue
         }
         
         result.firstLineHeadIndent += indentation
         result.headIndent += indentation
 
-        result.tabStops = tabStops.map {
-            NSTextTab(textAlignment: $0.alignment, location: $0.location + indentation, options: $0.options)
+        result.tabStops = rawValue.tabStops.map {
+            NSTextTab(
+                textAlignment: $0.alignment,
+                location: $0.location + indentation,
+                options: $0.options
+            )
         }
 
         return result
     }
 
-    func inset(by amount: CGFloat) -> NSParagraphStyle {
-        guard let result = mutableCopy() as? NSMutableParagraphStyle else { return self }
+    public func inset(by amount: CGFloat) -> NSParagraphStyle {
+        guard let result = rawValue.mutableCopy() as? NSMutableParagraphStyle else {
+            return self.rawValue
+        }
         result.paragraphSpacingBefore += amount
         result.paragraphSpacing += amount
         result.firstLineHeadIndent += amount
@@ -41,6 +49,19 @@ extension NSParagraphStyle {
     }
 
 }
+
+extension NSParagraphStyle {
+    
+    internal func indented(by indentation: CGFloat) -> NSParagraphStyle {
+        drop.indented(by: indentation)
+    }
+    
+    internal func inset(by amount: CGFloat) -> NSParagraphStyle {
+        drop.inset(by: amount)
+    }
+    
+}
+
 
 extension NSParagraphStyle.LineBreakStrategy: Hashable {
     

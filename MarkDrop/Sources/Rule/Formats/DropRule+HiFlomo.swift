@@ -33,6 +33,7 @@ public final class DropHashTagRule: DropRule {
             rule: .token(rule: DropHashTagRule.rule, render: DropHashTagRule.render),
             type: .hashTag
         )
+        self.renderExpandWidthMode = .both
     }
     
 }
@@ -63,6 +64,7 @@ public final class DropMentionRule: DropRule {
             rule: .token(rule: DropMentionRule.rule, render: DropMentionRule.render),
             type: .mention
         )
+        self.renderExpandWidthMode = .both
     }
     
 }
@@ -179,6 +181,7 @@ public final class DropHighlightRule: DropRule {
             rule: .tag(rule: DropHighlightRule.rule, render: DropHighlightRule.render),
             type: .highlight
         )
+        self.renderExpandWidthMode = .both
     }
     
 }
@@ -320,6 +323,7 @@ public final class DropShortHighlightRule: DropRule {
             rule: .tag(rule: DropShortHighlightRule.rule, render: DropShortHighlightRule.render),
             type: .highlight
         )
+        self.renderExpandWidthMode = .both
     }
     
 }

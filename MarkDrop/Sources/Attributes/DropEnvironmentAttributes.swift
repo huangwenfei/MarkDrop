@@ -21,87 +21,87 @@ public struct DropEnvironmentAttributes: Hashable {
     public typealias TextCharacter = EnvironmentThemeElement<TextAttributes>
     
     // MARK: Properties
-    public let paragraph: Paragraph = defaultTextParagraph()
+    public var paragraph: Paragraph = defaultTextParagraph()
     
-    public let text: TextCharacter = defaultText()
+    public var text: TextCharacter = defaultText()
     
-    public let bulletList: ListParagraph = defaultMarkTextParagraph()
-    public let numberOrderList: ListParagraph = defaultMarkTextParagraph()
-    public let letterOrderList: ListParagraph = defaultMarkTextParagraph()
+    public var bulletList: ListParagraph = defaultMarkTextParagraph()
+    public var numberOrderList: ListParagraph = defaultMarkTextParagraph()
+    public var letterOrderList: ListParagraph = defaultMarkTextParagraph()
     
-    public let hashTag: TextCharacter = {
+    public var hashTag: TextCharacter = {
         var result = defaultText()
         result.light.character.color = .systemPink.withAlphaComponent(0.5)
         result.light.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.light.backgroundBorder = .init(
             cornerRadius: 2,
             fillColor: .blue.withAlphaComponent(0.1),
-            paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
+            paddings: .init(top: -4, left: 6, bottom: -4, right: 6)
         )
         result.dark.character.color = .orange.withAlphaComponent(0.5)
         result.dark.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.dark.backgroundBorder = .init(
             cornerRadius: 2,
             fillColor: .blue.withAlphaComponent(0.1),
-            paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
+            paddings: .init(top: -4, left: 6, bottom: -4, right: 6)
         )
         return result
     }()
     
-    public let mention: TextCharacter = {
+    public var mention: TextCharacter = {
         var result = defaultText()
         result.light.character.color = .blue
         result.dark.character.color = .blue
         return result
     }()
     
-    public let bold: TextCharacter = {
+    public var bold: TextCharacter = {
         var result = defaultText()
         result.light.character.font = result.light.character.font.bold
         result.dark.character.font = result.dark.character.font.bold
         return result
     }()
     
-    public let italics: TextCharacter = {
+    public var italics: TextCharacter = {
         var result = defaultText()
         result.light.character.font = result.light.character.font.italic
         result.dark.character.font = result.dark.character.font.italic
         return result
     }()
     
-    public let underline: TextCharacter = {
+    public var underline: TextCharacter = {
         var result = defaultText()
         result.light.underline = .init(color: .systemGray, margins: 1, mode: .single)
         result.dark.underline = .init(color: .systemGray6, margins: 1, mode: .single)
         return result
     }()
     
-    public let highlight: TextCharacter = {
+    public var highlight: TextCharacter = {
         var result = defaultText()
         result.light.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.light.backgroundBorder = .init(
             cornerRadius: 2,
             fillColor: .green.withAlphaComponent(0.8),
-            paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
+            paddings: .init(top: -4, left: 6, bottom: -4, right: 6)
         )
         result.dark.character.font = .systemFont(ofSize: 16, weight: .semibold)
         result.dark.backgroundBorder = .init(
             cornerRadius: 2,
             fillColor: .green,
-            paddings: .init(top: 4, left: 6, bottom: 4, right: 6)
+            paddings: .init(top: -4, left: 6, bottom: -4, right: 6)
         )
         return result
     }()
     
-    public let stroke: TextCharacter = {
+    public var stroke: TextCharacter = {
         var result = defaultText()
         result.light.stroke = .init(color: .purple.withAlphaComponent(0.8), width: 3)
         result.dark.stroke = .init(color: .yellow, width: 3)
         return result
     }()
     
-    public let spaceIndent: TextCharacter = defaultText()
-    public let tabIndent: TextCharacter = defaultText()
+    public var spaceIndent: TextCharacter = defaultText()
+    public var tabIndent: TextCharacter = defaultText()
     
     // MARK: Init
     public init() { }

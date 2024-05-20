@@ -95,7 +95,7 @@ final class MarkDropTests: XCTestCase {
         """
         👋，吾友
         ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
-        - ::极简记录::，做笔记毫无压力#欢迎🍎
+        - ::极简记录::，做笔记毫无压力\t#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
             - ::每日回顾:，与**记录不期而遇
@@ -105,7 +105,7 @@ final class MarkDropTests: XCTestCase {
         不期, ::hiflomo: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、灵感、情绪!!等等记下来，尝试下无压记录的??愉悦??。
-        \t- #欢迎/新人??指南??
+        \t- \t#欢迎/新人??指南??
             
                 现在，试着把当前脑海中的😤
         """
@@ -120,7 +120,7 @@ final class MarkDropTests: XCTestCase {
             现在，试着把当前脑海中的!!想法、**A灵无??压记录感Z**、情??绪!!等等记下来，尝试下无压记录的??愉悦??。
         """
         
-        let dropper = Dropper(string: string2)
+        let dropper = Dropper(string: string)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

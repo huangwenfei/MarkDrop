@@ -17,12 +17,21 @@ public final class AttributedStringRender: DropRendable {
     public var document: Document
     public var rules: [DropRule]
     
+    public var charExpandSpaceWidth: CGFloat = 0
+    
     private var renderDict: [DropContants.IntRange: RenderElement] = .init()
     
     // MARK: Init
     public init(string: String, using rules: [DropRule]) {
         self.document = .init(raw: string)
         self.rules = rules
+        self.charExpandSpaceWidth = 0
+    }
+    
+    public init(string: String, using rules: [DropRule], charExpandSpaceWidth: CGFloat) {
+        self.document = .init(raw: string)
+        self.rules = rules
+        self.charExpandSpaceWidth = charExpandSpaceWidth
     }
     
     // MARK: Render
@@ -122,7 +131,7 @@ public final class AttributedStringRender: DropRendable {
                 
                 $0.beginEditing()
                 
-                let string = $1.rawRenderContent
+                var string = $1.rawRenderContent
                 
                 guard string.isEmpty == false else {
                     return $0
@@ -130,6 +139,7 @@ public final class AttributedStringRender: DropRendable {
                 
                 var attributed = AttributedDict()
                 let shouldAppendContent = append(
+                    current: $0,
                     textNode: $1,
                     text: base.text,
                     attributes: attributes,
@@ -140,6 +150,14 @@ public final class AttributedStringRender: DropRendable {
                 
                 guard shouldAppendContent else {
                     return $0
+                }
+                
+                if let content = $1 as? DropContentNodeProtocol {
+                    expandContent(
+                        content: &string,
+                        in: content.renderExpandWidthMode,
+                        using: attributed
+                    )
                 }
                 
                 if let element = renderDict[$1.intRange] {
@@ -214,7 +232,7 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
-    private func append(textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) -> Bool {
+    private func append(current: NSMutableAttributedString, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) -> Bool {
         
         if
             let textNode = node as? DropContentNode,
@@ -231,6 +249,7 @@ public final class AttributedStringRender: DropRendable {
         var shouldAppendContent: Bool = true
         
         self.attributeDict(
+            current: current,
             shouldAppendContent: &shouldAppendContent,
             type: markNode.type,
             textNode: node,
@@ -258,6 +277,7 @@ public final class AttributedStringRender: DropRendable {
                 var oldIndentList: [DropParagraphIndent] = []
                 
                 self.attributeDict(
+                    current: current,
                     shouldAppendContent: &shouldAppendContent,
                     type: parent.type,
                     textNode: parent,
@@ -281,7 +301,7 @@ public final class AttributedStringRender: DropRendable {
         return shouldAppendContent
     }
     
-    private func attributeDict(shouldAppendContent: inout Bool, type: DropContentType, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) {
+    private func attributeDict(current: NSMutableAttributedString, shouldAppendContent: inout Bool, type: DropContentType, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) {
         
         switch type {
         case .text:            dict = mapping.mapping(text: text, type: .text)
@@ -321,7 +341,14 @@ public final class AttributedStringRender: DropRendable {
             )
             
         case .tabIndent:
+            
             let dict = mapping.mapping(text: attributes.tabIndent, type: .text)
+            
+            /// 只让段首的 fillIndentList
+            guard current.string.isEmpty else {
+                break
+            }
+            
             fillIndentList(
                 indentList: &indentList,
                 in: node,
@@ -332,7 +359,14 @@ public final class AttributedStringRender: DropRendable {
             shouldAppendContent = false
             
         case .spaceIndent:
+            
             let dict = mapping.mapping(text: attributes.spaceIndent, type: .text)
+            
+            /// 只让段首的 fillIndentList
+            guard current.string.isEmpty else {
+                break
+            }
+            
             fillIndentList(
                 indentList: &indentList,
                 in: node,
@@ -351,6 +385,32 @@ public final class AttributedStringRender: DropRendable {
         let width = NSAttributedString(string: content, attributes: attributes).size().width
         indentList.append(.init(indentation: width, mode: mode))
         
+    }
+    
+    private func expandContent(content: inout String, in mode: DropDiretionExpandWidthMode, using dict: DropContants.AttributedDict) {
+        
+        guard mode.contains(.leading) || mode.contains(.trailing) else {
+            return
+        }
+        
+        let spaceString = calculateExpandSpace(with: dict)
+        
+        if mode.contains(.leading) {
+            content = spaceString + content
+        }
+        
+        if mode.contains(.trailing) {
+            content = content + spaceString
+        }
+        
+    }
+    
+    private func calculateExpandSpace(with dict: DropContants.AttributedDict) -> String {
+        
+        let spaceWidth = NSAttributedString(string: " ", attributes: dict).size().width
+        let spaceCount = Int(ceil(charExpandSpaceWidth / spaceWidth))
+        
+        return repeatElement(" ", count: spaceCount).reduce("", { $0 + $1 })
     }
     
 }

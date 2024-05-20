@@ -12,6 +12,8 @@ public class DropContentNode: DropNode, DropContentNodeProtocol {
     // MARK: Properties
     public var type: DropContentType = .text
     
+    public var renderExpandWidthMode: DropDiretionExpandWidthMode = .none
+    
     /// for capture
 //    public internal(set) var rule: DropContentRule? = nil
 //    public internal(set) var tokenState: DropContentTokenRuleState = .idle

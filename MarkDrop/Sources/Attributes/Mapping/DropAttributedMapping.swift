@@ -17,7 +17,7 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
-    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, mode: DropRenderCombineMode) {
         fatalError("Using subclass !")
     }
     
@@ -70,7 +70,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         )
     }
     
-    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, mode: DropRenderCombineMode) {
         
         let fontKey = AttributesKey.characterFont.attributed
         

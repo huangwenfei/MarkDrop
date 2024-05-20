@@ -385,13 +385,21 @@ public final class Dropper {
                         }
                         
                         /// - Tag: Render Expand Width
-                        let theFirstTextNode = (currentOpen.children as? [DropContentMarkNode])?.first(where: {
-                            $0.mark == .text
-                        })
+                        let theFirstTextNode = currentOpen.children.first(where: {
+                            if let markNode = $0 as? DropContentMarkNode {
+                                return markNode.type == currentOpen.type && markNode.mark == .text
+                            } else {
+                                return false
+                            }
+                        }) as? DropContentNodeProtocol
                         
-                        let theLastTextNode = (currentOpen.children as? [DropContentMarkNode])?.last(where: {
-                            $0.mark == .text
-                        })
+                        let theLastTextNode = currentOpen.children.last(where: {
+                            if let markNode = $0 as? DropContentMarkNode {
+                                return markNode.type == currentOpen.type && markNode.mark == .text
+                            } else {
+                                return false
+                            }
+                        }) as? DropContentNodeProtocol
                         
                         if theFirstTextNode === theLastTextNode {
                             theFirstTextNode?.renderExpandWidthMode = currentOpen.renderExpandWidthMode

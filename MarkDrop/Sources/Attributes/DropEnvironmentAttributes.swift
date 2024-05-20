@@ -71,8 +71,8 @@ public struct DropEnvironmentAttributes: Hashable {
     
     public var underline: TextCharacter = {
         var result = defaultText()
-        result.light.underline = .init(color: .systemGray, margins: 1, mode: .single)
-        result.dark.underline = .init(color: .systemGray6, margins: 1, mode: .single)
+        result.light.underline = .init(color: .systemGray, width: 1, margins: 1, mode: .single)
+        result.dark.underline = .init(color: .systemGray6, width: 1, margins: 1, mode: .single)
         return result
     }()
     

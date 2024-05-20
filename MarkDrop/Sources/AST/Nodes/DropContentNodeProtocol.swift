@@ -9,5 +9,5 @@ import Foundation
 
 public protocol DropContentNodeProtocol where Self: DropNode {
     var type: DropContentType { get set }
-    var renderExpandWidthMode: DropDiretionExpandWidthMode { get }
+    var renderExpandWidthMode: DropDiretionExpandWidthMode { get set }
 }

@@ -17,21 +17,33 @@ public final class AttributedStringRender: DropRendable {
     public var document: Document
     public var rules: [DropRule]
     
-    public var charExpandSpaceWidth: CGFloat = 0
+    public var charExpandSpaceWidthDict: [DropRenderExpandType: CGFloat] = .init()
     
-    private var renderDict: [DropContants.IntRange: RenderElement] = .init()
+    public private(set) var renderDict: [DropCaptureRenderKey: DropCaptureRenderNode] = .init()
+    
+    private var paragraphRenderDict: [DropContants.IntRange: RenderElement] = .init()
     
     // MARK: Init
     public init(string: String, using rules: [DropRule]) {
         self.document = .init(raw: string)
         self.rules = rules
-        self.charExpandSpaceWidth = 0
+        self.charExpandSpaceWidthDict = .init()
     }
     
     public init(string: String, using rules: [DropRule], charExpandSpaceWidth: CGFloat) {
         self.document = .init(raw: string)
         self.rules = rules
-        self.charExpandSpaceWidth = charExpandSpaceWidth
+        self.charExpandSpaceWidthDict = .init(
+            uniqueKeysWithValues: DropRenderExpandType.allCases.map({
+                ($0, charExpandSpaceWidth)
+            })
+        )
+    }
+    
+    public init(string: String, using rules: [DropRule], charExpandSpaceWidthDict: [DropRenderExpandType: CGFloat]) {
+        self.document = .init(raw: string)
+        self.rules = rules
+        self.charExpandSpaceWidthDict = charExpandSpaceWidthDict
     }
     
     // MARK: Render
@@ -44,7 +56,10 @@ public final class AttributedStringRender: DropRendable {
         let ast = Dropper(document: document).process(using: rules)
 
         /// - Tag: Render
+        var docOffset: Int = 0
+        
         return render(
+            docOffset: &docOffset,
             block: ast.containers(),
             isLastLine: false,
             base: attributes.paragraphText,
@@ -53,7 +68,7 @@ public final class AttributedStringRender: DropRendable {
         )
     }
     
-    private func render(block multiParagraphs: [DropContainerNode], isLastLine: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+    private func render(docOffset: inout Int, block multiParagraphs: [DropContainerNode], isLastLine: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
         
         let result = NSMutableAttributedString()
         
@@ -77,13 +92,32 @@ public final class AttributedStringRender: DropRendable {
                 }
                 
                 // TODO: 不用递归
-                paragraphText = render(block: child.containers(), isLastLine: child.isLastLine, base: base, with: attributes, mapping: mapping)
+                paragraphText = render(
+                    docOffset: &docOffset,
+                    block: child.containers(),
+                    isLastLine: child.isLastLine,
+                    base: base,
+                    with: attributes,
+                    mapping: mapping
+                )
                 
             case .paragraph:
-                paragraphText = render(paragraph: child, base: base, with: attributes, mapping: mapping)
+                paragraphText = render(
+                    docOffset: &docOffset,
+                    paragraph: child,
+                    base: base,
+                    with: attributes,
+                    mapping: mapping
+                )
                 
             case .break:
-                paragraphText = render(break: child, base: base, with: attributes, mapping: mapping)
+                paragraphText = render(
+                    docOffset: &docOffset,
+                    break: child,
+                    base: base,
+                    with: attributes,
+                    mapping: mapping
+                )
             }
             
             result.append(paragraphText)
@@ -93,9 +127,10 @@ public final class AttributedStringRender: DropRendable {
         return result
     }
     
-    private func render(paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+    private func render(docOffset: inout Int, paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
         
         render(
+            docOffset: &docOffset,
             paragraph: paragraph,
             isBreak: false,
             base: base,
@@ -104,9 +139,10 @@ public final class AttributedStringRender: DropRendable {
         )
     }
     
-    private func render(break paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+    private func render(docOffset: inout Int, break paragraph: DropContainerNode, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
         
         render(
+            docOffset: &docOffset,
             paragraph: paragraph,
             isBreak: true,
             base: base,
@@ -115,10 +151,10 @@ public final class AttributedStringRender: DropRendable {
         )
     }
     
-    private func render(paragraph: DropContainerNode, isBreak: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+    private func render(docOffset: inout Int, paragraph: DropContainerNode, isBreak: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
         
         /// - Tag: Clear
-        renderDict = .init()
+        paragraphRenderDict = .init()
         
         /// - Tag: Contents
         var offset: Int = 0
@@ -154,13 +190,14 @@ public final class AttributedStringRender: DropRendable {
                 
                 if let content = $1 as? DropContentNodeProtocol {
                     expandContent(
+                        expandType: content.type.expand,
                         content: &string,
                         in: content.renderExpandWidthMode,
                         using: attributed
                     )
                 }
                 
-                if let element = renderDict[$1.intRange] {
+                if let element = paragraphRenderDict[$1.intRange] {
                     
                     combine(
                         oldAttributes: element.bindAttributes,
@@ -172,6 +209,10 @@ public final class AttributedStringRender: DropRendable {
                     
                     element.bindAttributes = attributed
                     
+                    if let render = renderDict[DropCaptureRenderKey(nodeRange: $1.intRange)] {
+                        render.nodes.append($1)
+                    }
+                    
                 } else {
                     
                     let attributedString = NSAttributedString(string: string, attributes: attributed)
@@ -181,7 +222,21 @@ public final class AttributedStringRender: DropRendable {
                         location: offset,
                         length: attributedString.length /// min(0, attributedString.length - 1)
                     )
-                    renderDict[$1.intRange] = .init(renderRange: renderRange, bindAttributes: attributed)
+                    paragraphRenderDict[$1.intRange] = .init(renderRange: renderRange, bindAttributes: attributed)
+                    
+                    var docRenderRange = renderRange
+                    docRenderRange.location += docOffset
+                    let captureRenderRange = DropCaptureRenderKey(
+                        nodeRange: $1.intRange,
+                        docRenderRange: docRenderRange
+                    )
+                    
+                    renderDict[captureRenderRange] = .init(
+                        docRenderRange: docRenderRange,
+                        paragraphRenderRange: renderRange,
+                        bindAttributes: attributed,
+                        nodes: [$1]
+                    )
                     
                     offset += attributedString.length
                     
@@ -203,8 +258,11 @@ public final class AttributedStringRender: DropRendable {
             with: indentList
         )
         
+        /// - Tag: Increase
+        docOffset += offset
+        
         /// - Tag: Clear
-        renderDict = .init()
+        paragraphRenderDict = .init()
         
         return result
     }
@@ -225,7 +283,8 @@ public final class AttributedStringRender: DropRendable {
         
         mapping.combine(
             oldAttributes: oldAttributes,
-            in: &attributed
+            in: &attributed,
+            mode: .repeating
         )
         
         content.addAttributes(attributed, range: renderRange)
@@ -266,13 +325,18 @@ public final class AttributedStringRender: DropRendable {
             
             while let parent = parentMark {
                 
-//                print(#function, #line, markNode.rawRenderContent, markNode.type, markNode.mark, "Parent", parent.rawRenderContent, parent.type)
+                print(#function, #line, markNode.rawRenderContent, markNode.type, markNode.mark, "Parent", parent.rawRenderContent, parent.type)
                 
-                if parent.type == markNode.type, parent.type == .text {
+                if 
+                    parent.type == markNode.type,
+                    parent.type == .text,
+                    parent.rawRenderContent.isEmpty
+                {
                     parentMark = parent.parentNode as? DropContentNodeProtocol
                     continue
                 }
                 
+                #if true
                 var oldAttributes: DropContants.AttributedDict = .init()
                 var oldIndentList: [DropParagraphIndent] = []
                 
@@ -287,11 +351,28 @@ public final class AttributedStringRender: DropRendable {
                     in: &oldAttributes,
                     with: &oldIndentList
                 )
+                #else
                 
-                mapping.combine(
-                    oldAttributes: oldAttributes,
-                    in: &dict
-                )
+                var isFillChild = paragraphRenderDict[parent.intRange]?.isFillChild ?? false
+                
+                if parent.type == .hashTag {
+                    isFillChild = true
+                }
+                
+                if let oldAttributes = paragraphRenderDict[parent.intRange]?.bindAttributes {
+                    
+                    if isFillChild {
+                        dict = oldAttributes
+                    } else {
+                        mapping.combine(
+                            oldAttributes: oldAttributes,
+                            in: &dict,
+                            mode: .connection
+                        )
+                    }
+                    
+                }
+                #endif
                 
                 parentMark = parent.parentNode as? DropContentNodeProtocol
             }
@@ -387,13 +468,13 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
-    private func expandContent(content: inout String, in mode: DropDiretionExpandWidthMode, using dict: DropContants.AttributedDict) {
+    private func expandContent(expandType: DropRenderExpandType?, content: inout String, in mode: DropDiretionExpandWidthMode, using dict: DropContants.AttributedDict) {
         
         guard mode.contains(.leading) || mode.contains(.trailing) else {
             return
         }
         
-        let spaceString = calculateExpandSpace(with: dict)
+        let spaceString = calculateExpandSpace(expandType: expandType, with: dict)
         
         if mode.contains(.leading) {
             content = spaceString + content
@@ -405,10 +486,26 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
-    private func calculateExpandSpace(with dict: DropContants.AttributedDict) -> String {
+    private func calculateExpandSpace(expandType: DropRenderExpandType?, with dict: DropContants.AttributedDict) -> String {
+        
+        let expandWidth: CGFloat?
+        switch expandType {
+        case .hashTag:   expandWidth = charExpandSpaceWidthDict[.hashTag]
+        case .mention:   expandWidth = charExpandSpaceWidthDict[.mention]
+        case .bold:      expandWidth = charExpandSpaceWidthDict[.bold]
+        case .italics:   expandWidth = charExpandSpaceWidthDict[.italics]
+        case .underline: expandWidth = charExpandSpaceWidthDict[.underline]
+        case .highlight: expandWidth = charExpandSpaceWidthDict[.highlight]
+        case .stroke:    expandWidth = charExpandSpaceWidthDict[.stroke]
+        case nil:        expandWidth = nil
+        }
+        
+        guard let expandWidth else {
+            return ""
+        }
         
         let spaceWidth = NSAttributedString(string: " ", attributes: dict).size().width
-        let spaceCount = Int(ceil(charExpandSpaceWidth / spaceWidth))
+        let spaceCount = Int(ceil(expandWidth / spaceWidth))
         
         return repeatElement(" ", count: spaceCount).reduce("", { $0 + $1 })
     }
@@ -422,6 +519,7 @@ extension AttributedStringRender {
         // MARK: Properties
         var renderRange: DropContants.IntRange
         var bindAttributes: AttributedDict
+        var isFillChild = false
         
         // MARK: Init
         init(renderRange: DropContants.IntRange, bindAttributes: AttributedDict) {

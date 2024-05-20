@@ -50,7 +50,7 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         )
     }
     
-    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, mode: DropRenderCombineMode) {
         
         let fontKey = NSAttributedString.Key.font
         

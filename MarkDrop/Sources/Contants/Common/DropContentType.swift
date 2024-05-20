@@ -92,3 +92,25 @@ extension DropContentType {
     }
     
 }
+
+extension DropContentType {
+    
+    public var expand: DropRenderExpandType? {
+        switch self {
+        case .text:            return nil
+        case .bulletList:      return nil
+        case .numberOrderList: return nil
+        case .letterOrderList: return nil
+        case .hashTag:         return .hashTag
+        case .mention:         return .mention
+        case .bold:            return .bold
+        case .italics:         return .italics
+        case .underline:       return .underline
+        case .highlight:       return .highlight
+        case .stroke:          return .stroke
+        case .spaceIndent:     return nil
+        case .tabIndent:       return nil
+        }
+    }
+    
+}

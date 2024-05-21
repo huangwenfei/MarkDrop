@@ -308,7 +308,9 @@ public final class DropRuleLargeToken {
                 if isSpace || isNewline {
                     if isSpace, content.isWhitespace {
                         state = .done(isCancled: false, close: .space)
-                        captures[CaptureIndex.open.rawValue] += String(content)
+                        if token.isCaptureCloseContent {
+                            captures[CaptureIndex.open.rawValue] += String(content)
+                        }
                     }
                     else
                     if isNewline, content.isNewline {

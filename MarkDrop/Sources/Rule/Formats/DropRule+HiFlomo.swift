@@ -15,6 +15,7 @@ public final class DropHashTagRule: DropRule {
         rule.token = "#"
         rule.closeRule = [.space, .newline, .eof]
         rule.isCombineContents = true
+        rule.isCaptureCloseContent = false
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -46,6 +47,7 @@ public final class DropMentionRule: DropRule {
         rule.token = "@"
         rule.closeRule = [.space, .newline, .eof]
         rule.isCombineContents = true
+        rule.isCaptureCloseContent = false
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule

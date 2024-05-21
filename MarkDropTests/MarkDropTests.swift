@@ -78,11 +78,16 @@ final class MarkDropTests: XCTestCase {
                 let result = $0.texts
                     .sorted(by: { $0.intRange.location < $1.intRange.location })
                     .map({
-                        "(\($0.renderContents), \($0.intRange.location)-\($0.intRange.maxLocation))"
+                        if let content = $0 as? DropContentNodeProtocol {
+                            return "(\($0.renderContents), \($0.intRange.location)-\($0.intRange.maxLocation), \(content.parentContainerRenderTypes.reduce(content.type.render == nil ? "nil" : "(self:\(content.type.render!))", { $0 + "-" + "\($1)" }))"
+                        } else {
+                            return "(\($0.renderContents), \($0.intRange.location)-\($0.intRange.maxLocation))"
+                        }
                     })
                 return result.isEmpty ? ["\n"] : result
             })
         )
+        print()
     }
 
     // MARK: Process
@@ -120,7 +125,13 @@ final class MarkDropTests: XCTestCase {
             现在，试着把当前脑海中的!!想法、**A灵无??压记录感Z**、情??绪!!等等记下来，尝试下无压记录的??愉悦??。
         """
         
-        let dropper = Dropper(string: string)
+        let string3 =
+        """
+        现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下#无压记录的??愉悦??。
+        \t- \t#欢迎/新人??指南??
+        """
+        
+        let dropper = Dropper(string: string2)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

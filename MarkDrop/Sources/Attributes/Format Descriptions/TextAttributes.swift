@@ -24,6 +24,11 @@ public struct TextAttributes: Hashable {
     public var shadow: ShadowAttributes?
     
     public var action: ActionAttributes?
+
+    public var fillMode: DropRenderFillMode = .none
+    public var isFillChildAttributes: Bool {
+        fillMode != .none
+    }
     
     // MARK: Init
     public init(
@@ -33,7 +38,8 @@ public struct TextAttributes: Hashable {
         border: BorderAttributes? = nil,
         backgroundBorder: BorderAttributes? = nil,
         shadow: ShadowAttributes? = nil,
-        action: ActionAttributes? = nil
+        action: ActionAttributes? = nil,
+        fillMode: DropRenderFillMode = .none
     ) {
         self.character = character
         self.stroke = stroke
@@ -42,6 +48,7 @@ public struct TextAttributes: Hashable {
         self.backgroundBorder = backgroundBorder
         self.shadow = shadow
         self.action = action
+        self.fillMode = fillMode
     }
     
 }

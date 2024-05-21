@@ -95,7 +95,7 @@ extension DropContentType {
 
 extension DropContentType {
     
-    public var expand: DropRenderExpandType? {
+    public var render: DropRenderMarkType? {
         switch self {
         case .text:            return nil
         case .bulletList:      return nil

@@ -29,6 +29,8 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
     
     public var isCombineContents: Bool = false
     
+    public var isCaptureCloseContent: Bool = true
+    
     public var description: String {
         """
         token: \(token),

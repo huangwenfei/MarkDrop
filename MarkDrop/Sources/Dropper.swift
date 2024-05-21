@@ -423,6 +423,7 @@ public final class Dropper {
                             }
                         }
                         
+                        // TODO: 处理 Token 引入 isCaptureCloseContent 导致 “ ” 被丢弃的问题
                         addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
                         
                         upChildParent(rule: rule, currentOpen: currentOpen, in: dones)
@@ -594,6 +595,43 @@ public final class Dropper {
             text.renderContentOffsets = [0]
             text.parentNode = paragraph
             paragraph.children = [text]
+        }
+        
+        /// - Tag: Fix Leaves
+        
+        var leaves = paragraph.leaves
+        
+        while let node = leaves.popLast() {
+            
+            guard 
+                let markNode = node as? DropContentMarkNode,
+                markNode.mark == .text,
+                markNode.rawRenderContent.isEmpty == false
+            else {
+                continue
+            }
+            
+            var parent = node.parentNode
+            
+            while 
+                let currentParent = parent as? DropContentNodeProtocol,
+                let parentRender = currentParent.type.render
+            {
+                if let lastRender = markNode.parentContainerRenderTypes.last {
+                    if lastRender != parentRender {
+                        markNode.parentContainerRenderTypes.append(parentRender)
+                    }
+                } else {
+                    if 
+                        let selfRender = markNode.type.render,
+                        selfRender != parentRender
+                    {
+                        markNode.parentContainerRenderTypes.append(parentRender)
+                    }
+                }
+                parent = currentParent.parentNode
+            }
+            
         }
         
         #if false

@@ -40,3 +40,19 @@ public struct DropAttributes: Hashable {
     }
     
 }
+
+extension DropAttributes {
+    
+    public func markAttributes(_ type: DropRenderMarkType) -> TextAttributes {
+        switch type {
+        case .hashTag:   return hashTag
+        case .mention:   return mention
+        case .bold:      return bold
+        case .italics:   return italics
+        case .underline: return underline
+        case .highlight: return highlight
+        case .stroke:    return stroke
+        }
+    }
+    
+}

@@ -18,6 +18,8 @@ public struct DropLargeTokenSet: Hashable, CustomStringConvertible {
     public var isOnlyVaildOnHead: Bool = false
     public var vaildHeadSet: [DropVaildHead] = []
     
+    public var isCaptureCloseContent: Bool = true
+    
     public var shouldCapture: Bool = true
     public var firstMaxRepeatCount: Int = 1
     

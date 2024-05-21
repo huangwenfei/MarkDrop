@@ -214,4 +214,10 @@ extension DropNode {
         return nodes
     }
     
+    public func depthFirstSearch(visitor: @escaping (_ node: DropNode) -> Void) {
+        DropTree.depthFirstSearch(in: self) { node,_ in
+            visitor(node)
+        }
+    }
+    
 }

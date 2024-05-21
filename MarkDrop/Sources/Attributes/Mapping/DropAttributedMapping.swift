@@ -9,6 +9,9 @@ import Foundation
 
 open class DropAttributedMapping {
     
+    // MARK: Properties
+    public internal(set) var expandSpaces: [DropRenderMarkType: DropRenderExpandSpaces] = .init()
+    
     // MARK: Init
     public init() {}
     
@@ -17,13 +20,37 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
-    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, mode: DropRenderCombineMode) {
+    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         fatalError("Using subclass !")
     }
     
     open func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
         fatalError("Using subclass !")
     }
+    
+    public func fixAttributeTextRange(_ type: DropAttributeType, range: DropContants.IntRange) -> DropContants.IntRange {
+        
+        var leadingOffset = 0
+        var trailingOffset = 0
+        
+        print(#function, #line, self, self.expandSpaces)
+        
+        if
+            let render = type.render,
+            let expands = expandSpaces[render]
+        {
+            leadingOffset = expands.leading.count
+            trailingOffset = expands.trailing.count
+        }
+        
+        var fixRange = range
+        fixRange.location += leadingOffset
+        fixRange.length -= (leadingOffset + trailingOffset)
+        
+        return fixRange
+        
+    }
+    
 }
 
 
@@ -70,7 +97,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         )
     }
     
-    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict, mode: DropRenderCombineMode) {
+    public override func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         
         let fontKey = AttributesKey.characterFont.attributed
         

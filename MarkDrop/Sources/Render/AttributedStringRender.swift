@@ -17,7 +17,7 @@ public final class AttributedStringRender: DropRendable {
     public var document: Document
     public var rules: [DropRule]
     
-    public var charExpandSpaceWidthDict: [DropRenderExpandType: CGFloat] = .init()
+    public var charExpandSpaceWidthDict: [DropRenderMarkType: CGFloat] = .init()
     
     public private(set) var renderDict: [DropCaptureRenderKey: DropCaptureRenderNode] = .init()
     
@@ -34,13 +34,13 @@ public final class AttributedStringRender: DropRendable {
         self.document = .init(raw: string)
         self.rules = rules
         self.charExpandSpaceWidthDict = .init(
-            uniqueKeysWithValues: DropRenderExpandType.allCases.map({
+            uniqueKeysWithValues: DropRenderMarkType.allCases.map({
                 ($0, charExpandSpaceWidth)
             })
         )
     }
     
-    public init(string: String, using rules: [DropRule], charExpandSpaceWidthDict: [DropRenderExpandType: CGFloat]) {
+    public init(string: String, using rules: [DropRule], charExpandSpaceWidthDict: [DropRenderMarkType: CGFloat]) {
         self.document = .init(raw: string)
         self.rules = rules
         self.charExpandSpaceWidthDict = charExpandSpaceWidthDict
@@ -56,6 +56,8 @@ public final class AttributedStringRender: DropRendable {
         let ast = Dropper(document: document).process(using: rules)
 
         /// - Tag: Render
+        mapping.expandSpaces = .init()
+        
         var docOffset: Int = 0
         
         return render(
@@ -161,6 +163,8 @@ public final class AttributedStringRender: DropRendable {
         
         var indentList: [DropParagraphIndent] = []
         
+        var renderMarkAttributes: [RenderMarkAttributes] = []
+        
         var result = paragraph.leaves
             .sorted(by: { $0.intRange.location < $1.intRange.location })
             .reduce(NSMutableAttributedString(string: ""), {
@@ -175,6 +179,7 @@ public final class AttributedStringRender: DropRendable {
                 
                 var attributed = AttributedDict()
                 let shouldAppendContent = append(
+                    renderMarkAttributes: renderMarkAttributes,
                     current: $0,
                     textNode: $1,
                     text: base.text,
@@ -190,10 +195,11 @@ public final class AttributedStringRender: DropRendable {
                 
                 if let content = $1 as? DropContentNodeProtocol {
                     expandContent(
-                        expandType: content.type.expand,
+                        renderType: content.type.render,
                         content: &string,
                         in: content.renderExpandWidthMode,
-                        using: attributed
+                        using: attributed,
+                        captureIn: mapping
                     )
                 }
                 
@@ -242,6 +248,15 @@ public final class AttributedStringRender: DropRendable {
                     
                 }
                 
+                if 
+                    let content = $1 as? DropContentNodeProtocol,
+                    let renderType = content.type.render
+                {
+                    renderMarkAttributes.append(
+                        .init(type: renderType, intRange: content.intRange, dict: attributed)
+                    )
+                }
+                
                 $0.endEditing()
                 
                 return $0
@@ -283,15 +298,14 @@ public final class AttributedStringRender: DropRendable {
         
         mapping.combine(
             oldAttributes: oldAttributes,
-            in: &attributed,
-            mode: .repeating
+            in: &attributed
         )
         
         content.addAttributes(attributed, range: renderRange)
         
     }
     
-    private func append(current: NSMutableAttributedString, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) -> Bool {
+    private func append(renderMarkAttributes: [RenderMarkAttributes], current: NSMutableAttributedString, textNode node: DropNode, text: TextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, in dict: inout AttributedDict, with indentList: inout [DropParagraphIndent]) -> Bool {
         
         if
             let textNode = node as? DropContentNode,
@@ -307,74 +321,99 @@ public final class AttributedStringRender: DropRendable {
         
         var shouldAppendContent: Bool = true
         
-        self.attributeDict(
-            current: current,
-            shouldAppendContent: &shouldAppendContent,
-            type: markNode.type,
-            textNode: node,
-            text: text,
-            attributes: attributes,
-            mapping: mapping,
-            in: &dict,
-            with: &indentList
-        )
+        /// - Tag: Current
         
-        if markNode.type != .text {
+        func fillNewDict() {
             
-            var parentMark = markNode.parentNode as? DropContentNodeProtocol
-            
-            while let parent = parentMark {
+            if
+                let type = markNode.type.render,
+                let previousDict = renderMarkAttributes.last(where: { $0.type == type })?.dict
+            {
                 
-                print(#function, #line, markNode.rawRenderContent, markNode.type, markNode.mark, "Parent", parent.rawRenderContent, parent.type)
+                dict = previousDict
                 
-                if 
-                    parent.type == markNode.type,
-                    parent.type == .text,
-                    parent.rawRenderContent.isEmpty
-                {
-                    parentMark = parent.parentNode as? DropContentNodeProtocol
-                    continue
-                }
-                
-                #if true
-                var oldAttributes: DropContants.AttributedDict = .init()
-                var oldIndentList: [DropParagraphIndent] = []
+            } else {
                 
                 self.attributeDict(
                     current: current,
                     shouldAppendContent: &shouldAppendContent,
-                    type: parent.type,
-                    textNode: parent,
+                    type: markNode.type,
+                    textNode: node,
                     text: text,
                     attributes: attributes,
                     mapping: mapping,
-                    in: &oldAttributes,
-                    with: &oldIndentList
+                    in: &dict,
+                    with: &indentList
                 )
-                #else
                 
-                var isFillChild = paragraphRenderDict[parent.intRange]?.isFillChild ?? false
+            }
+        }
+        
+        if
+            let type = markNode.type.render,
+            attributes.markAttributes(type).isFillChildAttributes
+        {
+            
+            let parentAttributes = renderMarkAttributes.last(where: { $0.type == type })
+
+            if let parentDict = parentAttributes?.dict {
+                dict = parentDict
+            } else {
+                fillNewDict()
+            }
+            
+        } else {
+            
+            fillNewDict()
+            
+        }
+        
+        /// - Tag: Combine Parent If can
+        
+        for type in markNode.parentContainerRenderTypes {
+            
+            if attributes.markAttributes(type).isFillChildAttributes {
                 
-                if parent.type == .hashTag {
-                    isFillChild = true
-                }
+                let parentAttributes = renderMarkAttributes.last(where: { $0.type == type })
                 
-                if let oldAttributes = paragraphRenderDict[parent.intRange]?.bindAttributes {
-                    
-                    if isFillChild {
-                        dict = oldAttributes
-                    } else {
-                        mapping.combine(
-                            oldAttributes: oldAttributes,
-                            in: &dict,
-                            mode: .connection
-                        )
+                if let parentDict = parentAttributes?.dict {
+                    switch attributes.markAttributes(type).fillMode {
+                    case .none: break
+                    case .fill: dict = parentDict
+                    case .fillIgnoreFont:
+                        let fontValues = parentDict.filter({ $0.value is DropFont })
+                        if let fontKey = fontValues.first?.key {
+                            
+                            fillCombine(
+                                fontKey: fontKey,
+                                using: parentDict,
+                                in: &dict
+                            )
+                            
+                        } else {
+                            dict = parentDict
+                        }
                     }
-                    
                 }
-                #endif
                 
-                parentMark = parent.parentNode as? DropContentNodeProtocol
+            } else {
+                
+                let parentAttributes: DropContants.AttributedDict
+                switch type {
+                case .hashTag:   parentAttributes = mapping.mapping(text: attributes.hashTag, type: .hashTag)
+                case .mention:   parentAttributes = mapping.mapping(text: attributes.mention, type: .mention)
+                case .bold:      parentAttributes = mapping.mapping(text: attributes.bold, type: .bold)
+                case .italics:   parentAttributes = mapping.mapping(text: attributes.italics, type: .italics)
+                case .underline: parentAttributes = mapping.mapping(text: attributes.underline, type: .underline)
+                case .highlight: parentAttributes = mapping.mapping(text: attributes.highlight, type: .highlight)
+                case .stroke:    parentAttributes = mapping.mapping(text: attributes.stroke, type: .stroke)
+                }
+                
+                mapping.combine(
+                    oldAttributes: parentAttributes,
+                    in: &dict
+                )
+                
             }
             
         }
@@ -460,6 +499,21 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
+    private func fillCombine(fontKey: DropContants.AttributedDict.Key, using oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+        
+        let font = oldAttributes[fontKey] as? DropFont
+        let newFont = attributed[fontKey] as? DropFont
+        
+        attributed = oldAttributes
+        
+        if var font, let newFont {
+            if newFont.isBold      { font = font.bold }
+            if newFont.isItalic    { font = font.italic }
+            if newFont.isMonoSpace { font = font.monoSpace }
+            attributed[fontKey] = font
+        }
+    }
+    
     private func fillIndentList(indentList: inout [DropParagraphIndent], in node: DropNode, attributes: DropContants.AttributedDict, mode: DropParagraphIndentMode) {
         
         let content = node.rawRenderContent
@@ -468,13 +522,17 @@ public final class AttributedStringRender: DropRendable {
         
     }
     
-    private func expandContent(expandType: DropRenderExpandType?, content: inout String, in mode: DropDiretionExpandWidthMode, using dict: DropContants.AttributedDict) {
+    private func expandContent(renderType: DropRenderMarkType?, content: inout String, in mode: DropDiretionExpandWidthMode, using dict: DropContants.AttributedDict, captureIn mapping: DropAttributedMapping) {
+        
+        guard let renderType else {
+            return
+        }
         
         guard mode.contains(.leading) || mode.contains(.trailing) else {
             return
         }
         
-        let spaceString = calculateExpandSpace(expandType: expandType, with: dict)
+        let spaceString = calculateExpandSpace(renderType: renderType, with: dict)
         
         if mode.contains(.leading) {
             content = spaceString + content
@@ -484,12 +542,27 @@ public final class AttributedStringRender: DropRendable {
             content = content + spaceString
         }
         
+        if let old = mapping.expandSpaces[renderType] {
+            let leading = mode.contains(.leading) ? spaceString : ""
+            let trailing = mode.contains(.trailing) ? spaceString : ""
+            /// 不能累加
+            mapping.expandSpaces[renderType] = .init(
+                leading: old.leading.isEmpty ? leading : old.leading,
+                trailing: old.trailing.isEmpty ? trailing : old.trailing
+            )
+        } else {
+            mapping.expandSpaces[renderType] = .init(
+                leading: mode.contains(.leading) ? spaceString : "",
+                trailing: mode.contains(.trailing) ? spaceString : ""
+            )
+        }
+        
     }
     
-    private func calculateExpandSpace(expandType: DropRenderExpandType?, with dict: DropContants.AttributedDict) -> String {
+    private func calculateExpandSpace(renderType: DropRenderMarkType, with dict: DropContants.AttributedDict) -> String {
         
         let expandWidth: CGFloat?
-        switch expandType {
+        switch renderType {
         case .hashTag:   expandWidth = charExpandSpaceWidthDict[.hashTag]
         case .mention:   expandWidth = charExpandSpaceWidthDict[.mention]
         case .bold:      expandWidth = charExpandSpaceWidthDict[.bold]
@@ -497,7 +570,6 @@ public final class AttributedStringRender: DropRendable {
         case .underline: expandWidth = charExpandSpaceWidthDict[.underline]
         case .highlight: expandWidth = charExpandSpaceWidthDict[.highlight]
         case .stroke:    expandWidth = charExpandSpaceWidthDict[.stroke]
-        case nil:        expandWidth = nil
         }
         
         guard let expandWidth else {
@@ -525,6 +597,22 @@ extension AttributedStringRender {
         init(renderRange: DropContants.IntRange, bindAttributes: AttributedDict) {
             self.renderRange = renderRange
             self.bindAttributes = bindAttributes
+        }
+        
+    }
+    
+    struct RenderMarkAttributes {
+        
+        // MARK: Properties
+        public var type: DropRenderMarkType
+        public var intRange: DropContants.IntRange
+        public var dict: DropContants.AttributedDict
+        
+        // MARK: Init
+        public init(type: DropRenderMarkType, intRange: DropContants.IntRange, dict: DropContants.AttributedDict) {
+            self.type = type
+            self.intRange = intRange
+            self.dict = dict
         }
         
     }

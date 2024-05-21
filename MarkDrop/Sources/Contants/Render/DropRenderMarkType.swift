@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropRenderExpandType: Int, Hashable, CaseIterable {
+public enum DropRenderMarkType: Int, Hashable, CaseIterable {
     /// 标签
     case hashTag
     /// 关联 [内容]

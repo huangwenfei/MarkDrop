@@ -32,6 +32,7 @@ public final class Dropper {
         
         /// - Tag: Process
         processContainer(paragraphs, in: tree, using: rules)
+        rules.forEach({ $0.clear(isContainsHeadInfo: true) })
         
         self.tree = tree
         
@@ -311,7 +312,17 @@ public final class Dropper {
                     
 //                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                     
-                    addToParent(rule: rule, currentOpen: node, in: paragraph)
+                    let parent = addToParent(rule: rule, currentOpen: node, in: paragraph)
+                    
+                    fixUncaptureText(
+                        String(unicode),
+                        rule: rule,
+                        openRules: openRules,
+                        offset: offset,
+                        intOffset: intOffset,
+                        parent: parent,
+                        in: paragraph
+                    )
                     
                     upChildParent(rule: rule, currentOpen: node, in: dones)
                     
@@ -340,7 +351,13 @@ public final class Dropper {
                         currentOpen.renderContents = rule.source.contents
                         currentOpen.renderContentOffsets = rule.source.contentOffsets
                         currentOpen.renderExpandWidthMode = rule.source.renderExpandWidthMode
-                        currentOpen.range = currentOpen.range.lowerBound ... offset
+                        
+                        let start = currentOpen.range.lowerBound
+                        let end = rule.source.isCaptureCloseContent
+                            ? offset
+                            : previousOffset(offset, limit: start, in: paragraph)
+                        currentOpen.range = start ... end
+                        
                         increaseLength(&currentOpen.intRange, by: rule.source.totalContent, in: paragraph)
                         currentOpen.documentRange = .init(
                             location: currentOpen.intRange.location + paragraph.intRange.location,
@@ -423,8 +440,17 @@ public final class Dropper {
                             }
                         }
                         
-                        // TODO: 处理 Token 引入 isCaptureCloseContent 导致 “ ” 被丢弃的问题
-                        addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
+                        let parent = addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
+                        
+                        fixUncaptureText(
+                            String(unicode),
+                            rule: rule,
+                            openRules: openRules,
+                            offset: offset,
+                            intOffset: intOffset,
+                            parent: parent,
+                            in: paragraph
+                        )
                         
                         upChildParent(rule: rule, currentOpen: currentOpen, in: dones)
                         
@@ -720,9 +746,36 @@ public final class Dropper {
         range.length = result
     }
     
-    private func addToParent(rule: ProcessRule, currentOpen: DropContentNode, in paragraph: DropContainerNode) {
-        let previous = (rule.parentNode ?? rule.parent?.openNode) ?? paragraph
-        previous.append(currentOpen)
+    @discardableResult
+    private func addToParent(rule: ProcessRule, currentOpen: DropContentNode, in paragraph: DropContainerNode) -> DropNode {
+        let parent = (rule.parentNode ?? rule.parent?.openNode) ?? paragraph
+        parent.append(currentOpen)
+        return parent
+    }
+    
+    private func fixUncaptureText(_ content: String, rule: ProcessRule, openRules: [ProcessRule], offset: String.Index, intOffset: Int, parent: DropNode, in paragraph: DropContainerNode) {
+        
+        guard 
+            rule.source.isCaptureCloseContent == false,
+            openRules.isEmpty == false
+        else {
+            return
+        }
+        
+        let text = self.content(.text)
+        text.contents = [content]
+        text.rawContentIndices = [0]
+        text.renderContents = text.contents
+        text.renderContentOffsets = [0]
+        text.renderExpandWidthMode = .none
+        text.range = offset ... offset
+        text.intRange = .init(location: intOffset, length: content.count)
+        text.documentRange = .init(
+            location: text.intRange.location + paragraph.intRange.location,
+            length: text.intRange.length
+        )
+        parent.append(text)
+        
     }
     
     private func upChildParent(rule: ProcessRule, currentOpen: DropContentNode, in dones: [ProcessRule]) {

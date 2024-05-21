@@ -19,9 +19,11 @@ public final class AttributedStringRender: DropRendable {
     
     public var charExpandSpaceWidthDict: [DropRenderMarkType: CGFloat] = .init()
     
-    public private(set) var renderDict: [DropCaptureRenderKey: DropCaptureRenderNode] = .init()
-    
     private var paragraphRenderDict: [DropContants.IntRange: RenderElement] = .init()
+    
+    private var renderAST: DropTree? = nil
+    private var attributes: DropAttributes? = nil
+    private var mapping: DropAttributedMapping? = nil
     
     // MARK: Init
     public init(string: String, using rules: [DropRule]) {
@@ -52,22 +54,16 @@ public final class AttributedStringRender: DropRendable {
     }
     
     public func render(with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+        
+        /// - Tag: Mapping
+        self.attributes = attributes
+        self.mapping = mapping
+        
         /// - Tag: AST
         let ast = Dropper(document: document).process(using: rules)
+        self.renderAST = ast
 
-        /// - Tag: Render
-        mapping.expandSpaces = .init()
-        
-        var docOffset: Int = 0
-        
-        return render(
-            docOffset: &docOffset,
-            block: ast.containers(),
-            isLastLine: false,
-            base: attributes.paragraphText,
-            with: attributes,
-            mapping: mapping
-        )
+        return rerender(attributes: attributes, mapping: mapping)
     }
     
     private func render(docOffset: inout Int, block multiParagraphs: [DropContainerNode], isLastLine: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
@@ -215,10 +211,6 @@ public final class AttributedStringRender: DropRendable {
                     
                     element.bindAttributes = attributed
                     
-                    if let render = renderDict[DropCaptureRenderKey(nodeRange: $1.intRange)] {
-                        render.nodes.append($1)
-                    }
-                    
                 } else {
                     
                     let attributedString = NSAttributedString(string: string, attributes: attributed)
@@ -229,20 +221,6 @@ public final class AttributedStringRender: DropRendable {
                         length: attributedString.length /// min(0, attributedString.length - 1)
                     )
                     paragraphRenderDict[$1.intRange] = .init(renderRange: renderRange, bindAttributes: attributed)
-                    
-                    var docRenderRange = renderRange
-                    docRenderRange.location += docOffset
-                    let captureRenderRange = DropCaptureRenderKey(
-                        nodeRange: $1.intRange,
-                        docRenderRange: docRenderRange
-                    )
-                    
-                    renderDict[captureRenderRange] = .init(
-                        docRenderRange: docRenderRange,
-                        paragraphRenderRange: renderRange,
-                        bindAttributes: attributed,
-                        nodes: [$1]
-                    )
                     
                     offset += attributedString.length
                     
@@ -280,6 +258,53 @@ public final class AttributedStringRender: DropRendable {
         paragraphRenderDict = .init()
         
         return result
+    }
+    
+    // MARK: Rerender
+    public func rerender(ast rules: [DropRule]) {
+        self.rules = rules
+        
+        let ast = Dropper(document: document).process(using: rules)
+        self.renderAST = ast
+    }
+    
+    public func rerender(using attributes: DropAttributes) -> Result {
+        guard let mapping = mapping else {
+            return .init(string: "")
+        }
+        
+        return rerender(attributes: attributes, mapping: mapping)
+    }
+    
+    public func rerender(using mapping: DropAttributedMapping) -> Result {
+        guard let attributes = attributes else {
+            return .init(string: "")
+        }
+        
+        return rerender(attributes: attributes, mapping: mapping)
+    }
+    
+    public func rerender(attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+        guard let ast = renderAST else {
+            return .init(string: "")
+        }
+        
+        self.attributes = attributes
+        self.mapping = mapping
+        
+        /// - Tag: Render
+        mapping.expandSpaces = .init()
+        
+        var docOffset: Int = 0
+        
+        return render(
+            docOffset: &docOffset,
+            block: ast.containers(),
+            isLastLine: false,
+            base: attributes.paragraphText,
+            with: attributes,
+            mapping: mapping
+        )
     }
     
     // MARK: Attributes

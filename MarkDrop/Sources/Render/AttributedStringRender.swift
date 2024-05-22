@@ -140,6 +140,7 @@ public final class AttributedStringRender: DropRendable {
         
         var renderMarkAttributes: [RenderMarkAttributes] = []
         
+        var expandRenders: [RenderActionMark] = []
         var actionRenders: [RenderActionMark] = []
         
         var result = paragraph.leaves
@@ -217,6 +218,14 @@ public final class AttributedStringRender: DropRendable {
                     )
                 }
                 
+                /// - Tag: Capture Expands & Actions
+                captureExpandRenderRange(
+                    &expandRenders,
+                    renderRange: renderRange,
+                    text: $1,
+                    attributes: attributes
+                )
+                
                 captureActionRenderRange(
                     &actionRenders,
                     renderRange: renderRange,
@@ -229,7 +238,15 @@ public final class AttributedStringRender: DropRendable {
                 return $0
             })
         
-        /// - Tag: Dealing Actions
+        /// - Tag: Dealing Expands & Actions
+        dealingExpandContents(
+            expandRenders,
+            content: &result,
+            mapping: mapping,
+            attributes: attributes,
+            paragraph: base.paragraph
+        )
+        
         dealingActionContents(
             actionRenders,
             content: &result,
@@ -402,7 +419,7 @@ public final class AttributedStringRender: DropRendable {
                 let parentAttributes = renderMarkAttributes.last(where: { $0.type == type })
                 
                 if let previousMappingResult = parentAttributes?.mappingResult {
-                    switch attributes.markAttributes(type).fillMode {
+                    switch attributes.markAttributes(type).fillChildMode {
                     case .none: break
                     case .fill: mappingResult = previousMappingResult
                     case .fillIgnoreFont:
@@ -574,6 +591,84 @@ public final class AttributedStringRender: DropRendable {
         indentList.append(.init(indentation: width, mode: mode))
         
     }
+    
+    // MARK: Expand
+    private func captureExpandRenderRange(_ actions: inout [RenderActionMark], renderRange: DropContants.IntRange, text node: DropNode, attributes: DropAttributes) {
+        
+        guard
+            let text = node as? DropContentNodeProtocol,
+            let renderType = text.type.render
+        else {
+            return
+        }
+        
+        if
+            var last = actions.popLast(),
+            text.parentContainerRenderTypes.contains(last.type),
+            attributes.markAttributes(last.type).isFillChildAttributes,
+            /// maxLocation = location + length + 1, 挨着并相接
+            last.intRange.maxLocation == renderRange.location
+        {
+            
+            last.intRange.length += renderRange.length
+            actions.append(last)
+            
+        } else {
+            actions.append(.init(type: renderType, intRange: renderRange))
+        }
+        
+    }
+    
+    private func dealingExpandContents(_ actions: [RenderActionMark], content: inout NSMutableAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
+        
+        guard actions.isEmpty == false else {
+            return
+        }
+        
+        for actionRender in actions {
+            
+            let attributed = attributes.markAttributes(actionRender.type)
+            
+            guard attributed.shouldExpandContent else {
+                continue
+            }
+            
+            let range = actionRender.intRange
+            
+            let renderContent = content.attributedSubstring(from: range)
+            
+            guard
+                let result = mapping.mapping(
+                    expand: attributed,
+                    content: renderContent,
+                    renderRange: range,
+                    in: paragraph
+                )
+            else {
+                continue
+            }
+            
+            var oldAttributes: DropContants.AttributedDict = .init()
+            content.enumerateAttributes(in: range) { keyValues, range, isStop in
+                
+                oldAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
+                
+            }
+            
+            let newContent = NSMutableAttributedString(attributedString: result.content)
+            newContent.addAttributes(
+                oldAttributes,
+                range: .init(location: 0, length: result.content.length)
+            )
+            
+            // TODO: 奇怪的崩溃点 。。。
+            content.replaceCharacters(in: range, with: newContent)
+            
+        }
+        
+    }
+    
+    // MARK: Action
 
     private func captureActionRenderRange(_ actions: inout [RenderActionMark], renderRange: DropContants.IntRange, text node: DropNode, attributes: DropAttributes) {
         
@@ -586,10 +681,6 @@ public final class AttributedStringRender: DropRendable {
         
         let textAttributes = attributes.markAttributes(renderType)
         
-        guard textAttributes.action != nil else {
-            return
-        }
-
         if 
             var last = actions.popLast(),
             text.parentContainerRenderTypes.contains(last.type),

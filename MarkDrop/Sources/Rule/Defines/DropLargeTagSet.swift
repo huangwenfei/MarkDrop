@@ -35,6 +35,7 @@ public struct DropLargeTagSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     

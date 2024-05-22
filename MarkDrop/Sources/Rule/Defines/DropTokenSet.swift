@@ -37,6 +37,7 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     public func isVaildHead(_ value: String) -> Bool {

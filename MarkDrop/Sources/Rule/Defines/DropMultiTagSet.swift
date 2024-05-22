@@ -28,6 +28,7 @@ public struct DropMultiTagSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     

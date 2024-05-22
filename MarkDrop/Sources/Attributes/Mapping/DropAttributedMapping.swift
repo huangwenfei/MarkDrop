@@ -23,6 +23,10 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
+    open func mapping(expand text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        fatalError("Using subclass !")
+    }
+    
     open func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         fatalError("Using subclass !")
     }
@@ -93,6 +97,12 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
             if newFont.isMonoSpace { font = font.monoSpace }
             attributed[fontKey] = font
         }
+        
+    }
+    
+    public override func mapping(expand text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
         
     }
     

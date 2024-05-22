@@ -45,8 +45,8 @@ public struct DropEnvironmentAttributes: Hashable {
             fillColor: .blue.withAlphaComponent(0.1),
             paddings: .init(top: -4, left: 6, bottom: -4, right: 6)
         )
-        result.light.fillMode = .fill
-        result.dark.fillMode = .fill
+        result.light.fillChildMode = .fill
+        result.dark.fillChildMode = .fill
         return result
     }()
     
@@ -54,8 +54,8 @@ public struct DropEnvironmentAttributes: Hashable {
         var result = defaultText()
         result.light.character.color = .blue
         result.dark.character.color = .blue
-        result.light.fillMode = .fillIgnoreFont
-        result.dark.fillMode = .fillIgnoreFont
+        result.light.fillChildMode = .fillIgnoreFont
+        result.dark.fillChildMode = .fillIgnoreFont
         return result
     }()
     

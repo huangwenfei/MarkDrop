@@ -630,6 +630,7 @@ public final class AttributedStringRender: DropRendable {
                     action: action,
                     text: attributed,
                     content: renderContent,
+                    renderRange: range,
                     in: paragraph
                 )
             else {

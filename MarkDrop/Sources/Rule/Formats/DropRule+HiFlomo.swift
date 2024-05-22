@@ -15,7 +15,6 @@ public final class DropHashTagRule: DropRule {
         rule.token = "#"
         rule.closeRule = [.space, .newline, .eof]
         rule.isCombineContents = true
-        rule.isCaptureCloseContent = false
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -24,7 +23,7 @@ public final class DropHashTagRule: DropRule {
     public static let render: MarkRuleDict<DropTokenRenderType> = {
         var dict = MarkRuleDict<DropTokenRenderType>()
         dict[.open] = .keepItAsIs
-        dict[.close] = .keepItAsIs
+        dict[.close] = .remove
         return dict
     }()
     
@@ -34,7 +33,6 @@ public final class DropHashTagRule: DropRule {
             rule: .token(rule: DropHashTagRule.rule, render: DropHashTagRule.render),
             type: .hashTag
         )
-        self.renderExpandWidthMode = .both
     }
     
 }
@@ -47,7 +45,6 @@ public final class DropMentionRule: DropRule {
         rule.token = "@"
         rule.closeRule = [.space, .newline, .eof]
         rule.isCombineContents = true
-        rule.isCaptureCloseContent = false
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -56,7 +53,7 @@ public final class DropMentionRule: DropRule {
     public static let render: MarkRuleDict<DropTokenRenderType> = {
         var dict = MarkRuleDict<DropTokenRenderType>()
         dict[.open] = .keepItAsIs
-        dict[.close] = .keepItAsIs
+        dict[.close] = .remove
         return dict
     }()
     
@@ -66,7 +63,6 @@ public final class DropMentionRule: DropRule {
             rule: .token(rule: DropMentionRule.rule, render: DropMentionRule.render),
             type: .mention
         )
-        self.renderExpandWidthMode = .both
     }
     
 }
@@ -183,7 +179,6 @@ public final class DropHighlightRule: DropRule {
             rule: .tag(rule: DropHighlightRule.rule, render: DropHighlightRule.render),
             type: .highlight
         )
-        self.renderExpandWidthMode = .both
     }
     
 }
@@ -325,7 +320,6 @@ public final class DropShortHighlightRule: DropRule {
             rule: .tag(rule: DropShortHighlightRule.rule, render: DropShortHighlightRule.render),
             type: .highlight
         )
-        self.renderExpandWidthMode = .both
     }
     
 }

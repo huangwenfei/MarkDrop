@@ -131,7 +131,7 @@ final class MarkDropTests: XCTestCase {
         \t- \t#欢迎/新人??指南??
         """
         
-        let dropper = Dropper(string: string2)
+        let dropper = Dropper(string: string3)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

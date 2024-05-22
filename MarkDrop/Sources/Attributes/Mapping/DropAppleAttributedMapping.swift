@@ -69,7 +69,12 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    public override func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
+    }
+    
+    public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
         
         var result = DropContants.AttributedDict()
         

@@ -10,7 +10,6 @@ import Foundation
 open class DropAttributedMapping {
     
     // MARK: Properties
-    public internal(set) var expandSpaces: [DropRenderMarkType: DropRenderExpandSpaces] = .init()
     
     // MARK: Init
     public init() {}
@@ -24,33 +23,14 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
-    open func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    open func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         fatalError("Using subclass !")
     }
     
-    public func fixAttributeTextRange(_ type: DropAttributeType, range: DropContants.IntRange) -> DropContants.IntRange {
-        
-        var leadingOffset = 0
-        var trailingOffset = 0
-        
-        print(#function, #line, self, self.expandSpaces)
-        
-        if
-            let render = type.render,
-            let expands = expandSpaces[render]
-        {
-            leadingOffset = expands.leading.count
-            trailingOffset = expands.trailing.count
-        }
-        
-        var fixRange = range
-        fixRange.location += leadingOffset
-        fixRange.length -= (leadingOffset + trailingOffset)
-        
-        return fixRange
-        
+    open func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
+        fatalError("Using subclass !")
     }
-    
+
 }
 
 
@@ -116,7 +96,13 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    public override func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
+        
+    }
+    
+    public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
         
         var result = DropContants.AttributedDict()
         

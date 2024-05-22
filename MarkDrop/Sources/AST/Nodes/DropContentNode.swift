@@ -12,8 +12,6 @@ public class DropContentNode: DropNode, DropContentNodeProtocol {
     // MARK: Properties
     public var type: DropContentType = .text
     
-    public var renderExpandWidthMode: DropDiretionExpandWidthMode = .none
-    
     public var parentContainerRenderTypes: [DropRenderMarkType] = []
     
     /// for capture

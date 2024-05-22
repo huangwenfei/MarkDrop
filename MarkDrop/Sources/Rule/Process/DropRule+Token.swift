@@ -27,6 +27,8 @@ public final class DropRuleToken {
     
     public internal(set) var captures: [String] = []
     
+    public private(set) var shouldOnRenderClose: Bool = false
+    
     public internal(set) var previousVaildHeadList: [Bool] = []
     
     public internal(set) var isOpenDone: Bool = false
@@ -49,7 +51,31 @@ public final class DropRuleToken {
             renderToken = token.token
         }
         
-        let result = [renderToken] + (token.shouldCapture ? captures : [])
+        var openCapture = captures.first
+        
+        if 
+            shouldOnRenderClose,
+            token.shouldCapture,
+            let capture = openCapture
+        {
+            
+            switch render[.close] {
+            case .keepItAsIs:
+                openCapture = capture
+                
+            case .remove:
+                openCapture = String(capture.dropLast(1))
+                
+            case .replace(let new):
+                openCapture = String(capture.dropLast(1)) + new
+                
+            case .none:
+                openCapture = capture
+            }
+            
+        }
+        
+        let result = [renderToken] + (token.shouldCapture ? [openCapture ?? ""] : [])
         
         return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
     }
@@ -223,9 +249,8 @@ public final class DropRuleToken {
                 if isSpace || isNewline {
                     if isSpace, content.isWhitespace {
                         state = .done(isCancled: false, close: .space)
-                        if token.isCaptureCloseContent {
-                            captures[CaptureIndex.open.rawValue] += String(content)
-                        }
+                        captures[CaptureIndex.open.rawValue] += String(content)
+                        shouldOnRenderClose = true
                     }
                     else
                     if isNewline, content.isNewline {
@@ -258,6 +283,7 @@ public final class DropRuleToken {
         state = .idle
         captures = []
         isOpenDone = false
+        shouldOnRenderClose = false
         
         if isContainsHeadInfo {
             previousVaildHeadList = []

@@ -297,14 +297,12 @@ public final class Dropper {
                         location: node.intRange.location + paragraph.intRange.location,
                         length: node.intRange.length
                     )
-                    node.renderExpandWidthMode = rule.source.renderExpandWidthMode
                     
                     let markNode = self.contentMark(rule.source.type)
                     markNode.contents = node.contents
                     markNode.rawContentIndices = node.rawContentIndices
                     markNode.renderContents = node.renderContents
                     markNode.renderContentOffsets = node.renderContentOffsets
-                    markNode.renderExpandWidthMode = node.renderExpandWidthMode
                     markNode.range = node.range
                     markNode.intRange = node.intRange
                     markNode.documentRange = node.documentRange
@@ -312,17 +310,7 @@ public final class Dropper {
                     
 //                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                     
-                    let parent = addToParent(rule: rule, currentOpen: node, in: paragraph)
-                    
-                    fixUncaptureText(
-                        String(unicode),
-                        rule: rule,
-                        openRules: openRules,
-                        offset: offset,
-                        intOffset: intOffset,
-                        parent: parent,
-                        in: paragraph
-                    )
+                    addToParent(rule: rule, currentOpen: node, in: paragraph)
                     
                     upChildParent(rule: rule, currentOpen: node, in: dones)
                     
@@ -350,14 +338,7 @@ public final class Dropper {
                         currentOpen.rawContentIndices = rule.source.contentIndices
                         currentOpen.renderContents = rule.source.contents
                         currentOpen.renderContentOffsets = rule.source.contentOffsets
-                        currentOpen.renderExpandWidthMode = rule.source.renderExpandWidthMode
-                        
-                        let start = currentOpen.range.lowerBound
-                        let end = rule.source.isCaptureCloseContent
-                            ? offset
-                            : previousOffset(offset, limit: start, in: paragraph)
-                        currentOpen.range = start ... end
-                        
+                        currentOpen.range = currentOpen.range.lowerBound ... offset
                         increaseLength(&currentOpen.intRange, by: rule.source.totalContent, in: paragraph)
                         currentOpen.documentRange = .init(
                             location: currentOpen.intRange.location + paragraph.intRange.location,
@@ -401,56 +382,7 @@ public final class Dropper {
 //                            print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                         }
                         
-                        /// - Tag: Render Expand Width
-                        let theFirstTextNode = currentOpen.children.first(where: {
-                            if let markNode = $0 as? DropContentMarkNode {
-                                return markNode.type == currentOpen.type && markNode.mark == .text
-                            } else {
-                                return false
-                            }
-                        }) as? DropContentNodeProtocol
-                        
-                        let theLastTextNode = currentOpen.children.last(where: {
-                            if let markNode = $0 as? DropContentMarkNode {
-                                return markNode.type == currentOpen.type && markNode.mark == .text
-                            } else {
-                                return false
-                            }
-                        }) as? DropContentNodeProtocol
-                        
-                        if theFirstTextNode === theLastTextNode {
-                            theFirstTextNode?.renderExpandWidthMode = currentOpen.renderExpandWidthMode
-                        } else {
-                            switch currentOpen.renderExpandWidthMode {
-                            case .none:
-                                break
-                            case .leading:
-                                theFirstTextNode?.renderExpandWidthMode = .leading
-                                theLastTextNode?.renderExpandWidthMode = .none
-                                
-                            case .trailing:
-                                theFirstTextNode?.renderExpandWidthMode = .none
-                                theLastTextNode?.renderExpandWidthMode = .trailing
-                                
-                            case .both:
-                                theFirstTextNode?.renderExpandWidthMode = .leading
-                                theLastTextNode?.renderExpandWidthMode = .trailing
-                            default:
-                                break
-                            }
-                        }
-                        
-                        let parent = addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
-                        
-                        fixUncaptureText(
-                            String(unicode),
-                            rule: rule,
-                            openRules: openRules,
-                            offset: offset,
-                            intOffset: intOffset,
-                            parent: parent,
-                            in: paragraph
-                        )
+                        addToParent(rule: rule, currentOpen: currentOpen, in: paragraph)
                         
                         upChildParent(rule: rule, currentOpen: currentOpen, in: dones)
                         
@@ -753,31 +685,6 @@ public final class Dropper {
         return parent
     }
     
-    private func fixUncaptureText(_ content: String, rule: ProcessRule, openRules: [ProcessRule], offset: String.Index, intOffset: Int, parent: DropNode, in paragraph: DropContainerNode) {
-        
-        guard 
-            rule.source.isCaptureCloseContent == false,
-            openRules.isEmpty == false
-        else {
-            return
-        }
-        
-        let text = self.content(.text)
-        text.contents = [content]
-        text.rawContentIndices = [0]
-        text.renderContents = text.contents
-        text.renderContentOffsets = [0]
-        text.renderExpandWidthMode = .none
-        text.range = offset ... offset
-        text.intRange = .init(location: intOffset, length: content.count)
-        text.documentRange = .init(
-            location: text.intRange.location + paragraph.intRange.location,
-            length: text.intRange.length
-        )
-        parent.append(text)
-        
-    }
-    
     private func upChildParent(rule: ProcessRule, currentOpen: DropContentNode, in dones: [ProcessRule]) {
         /// 父节点完成的时候，子节点应该已经完成才对，
         /// 如果子节点还没完成，把它的 父节点 提升为 合适的父节点
@@ -863,20 +770,6 @@ public final class Dropper {
                 text.renderContents = text.contents
                 text.renderContentOffsets = [0]
                 minParent.append(text)
-                
-                if 
-                    let content = minParent as? DropContentNodeProtocol,
-                    content.renderExpandWidthMode.contains(.leading)
-                {
-                    text.renderExpandWidthMode = .leading
-                    
-                    if 
-                        tailOffset <= 0,
-                        content.renderExpandWidthMode.contains(.trailing)
-                    {
-                        text.renderExpandWidthMode = .both
-                    }
-                }
             }
             
             if tailOffset > 0 {
@@ -894,20 +787,6 @@ public final class Dropper {
                 text.renderContents = text.contents
                 text.renderContentOffsets = [0]
                 maxParent.append(text)
-                
-                if
-                    let content = maxParent as? DropContentNodeProtocol,
-                    content.renderExpandWidthMode.contains(.trailing)
-                {
-                    text.renderExpandWidthMode = .trailing
-                    
-                    if
-                        headOffset <= 0,
-                        content.renderExpandWidthMode.contains(.leading)
-                    {
-                        text.renderExpandWidthMode = .both
-                    }
-                }
             }
             
             if headOffset > 0 {
@@ -976,20 +855,6 @@ public final class Dropper {
                 text.renderContents = text.contents
                 text.renderContentOffsets = [0]
                 minParent.append(text)
-                
-                if
-                    let content = minParent as? DropContentNodeProtocol,
-                    content.renderExpandWidthMode.contains(.leading)
-                {
-                    text.renderExpandWidthMode = .leading
-                    
-                    if
-                        tailOffset <= 0,
-                        content.renderExpandWidthMode.contains(.trailing)
-                    {
-                        text.renderExpandWidthMode = .both
-                    }
-                }
             }
             
             if tailOffset > 0 {
@@ -1007,20 +872,6 @@ public final class Dropper {
                 text.renderContents = text.contents
                 text.renderContentOffsets = [0]
                 maxParent.append(text)
-                
-                if
-                    let content = minParent as? DropContentNodeProtocol,
-                    content.renderExpandWidthMode.contains(.trailing)
-                {
-                    text.renderExpandWidthMode = .trailing
-                    
-                    if
-                        headOffset <= 0,
-                        content.renderExpandWidthMode.contains(.leading)
-                    {
-                        text.renderExpandWidthMode = .both
-                    }
-                }
             }
             
             if headOffset > 0 {
@@ -1123,17 +974,6 @@ public final class Dropper {
                     node.renderContents = node.contents
                     node.renderContentOffsets = [0]
                     text.append(node)
-                    
-                    if text.renderExpandWidthMode.contains(.leading) {
-                        node.renderExpandWidthMode = .leading
-                        
-                        if
-                            tailOffset <= 0,
-                            node.renderExpandWidthMode.contains(.trailing)
-                        {
-                            text.renderExpandWidthMode = .both
-                        }
-                    }
                 }
                 
                 if tailOffset > 0 {
@@ -1151,17 +991,6 @@ public final class Dropper {
                     node.renderContents = node.contents
                     node.renderContentOffsets = [0]
                     text.append(node)
-                    
-                    if text.renderExpandWidthMode.contains(.trailing) {
-                        node.renderExpandWidthMode = .trailing
-                        
-                        if
-                            headOffset <= 0,
-                            node.renderExpandWidthMode.contains(.leading)
-                        {
-                            text.renderExpandWidthMode = .both
-                        }
-                    }
                 }
                 
                 if headOffset > 0 || tailOffset > 0 {

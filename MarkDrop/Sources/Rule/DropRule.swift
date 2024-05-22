@@ -16,21 +16,10 @@ public class DropRule: Hashable, CustomStringConvertible {
     public let rule: DropContentRule
     public let type: DropContentType
     
-    public var renderExpandWidthMode: DropDiretionExpandWidthMode = .none
-    
     public private(set) lazy var tokenProcess: DropRuleToken = .init(state: .idle)
     public private(set) lazy var largeTokenProcess: DropRuleLargeToken = .init(state: .idle)
     public private(set) lazy var tagProcess: DropRuleTag = .init(state: .idle)
     public private(set) lazy var largeTagProcess: DropRuleLargeTag = .init(state: .idle)
-    
-    public var isCaptureCloseContent: Bool {
-        switch rule {
-        case .token(let rule,_):      return rule.isCaptureCloseContent
-        case .largeToken(let rule,_): return rule.isCaptureCloseContent
-        case .tag:                    return true
-        case .largeTag:               return true
-        }
-    }
     
     public private(set) var captures: [String] {
         get {

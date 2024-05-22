@@ -10,6 +10,10 @@ import Foundation
 open class DropAttributedMapping {
     
     // MARK: Properties
+    /// index 越小优先级越高
+    public var markCombinePriority: [DropRenderMarkType] = [
+        .hashTag, .mention, .highlight, .bold, .italics, .underline, .stroke
+    ]
     
     // MARK: Init
     public init() {}

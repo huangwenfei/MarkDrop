@@ -239,20 +239,33 @@ public final class AttributedStringRender: DropRendable {
             })
         
         /// - Tag: Dealing Expands & Actions
+        
         dealingExpandContents(
-            expandRenders,
-            content: &result,
+            &expandRenders,
+            content: result,
             mapping: mapping,
             attributes: attributes,
             paragraph: base.paragraph
         )
         
         dealingActionContents(
-            actionRenders,
-            content: &result,
+            &actionRenders,
+            content: result,
             mapping: mapping,
             attributes: attributes,
             paragraph: base.paragraph
+        )
+        
+        /// - Tag: Combine
+        let renders = combine(
+            expandRenders: expandRenders, 
+            actionRenders: actionRenders,
+            in: mapping
+        )
+        
+        replace(
+            content: &result,
+            using: renders
         )
         
         /// - Tag: Empty line
@@ -603,7 +616,7 @@ public final class AttributedStringRender: DropRendable {
         }
         
         if
-            var last = actions.popLast(),
+            let last = actions.popLast(),
             text.parentContainerRenderTypes.contains(last.type),
             attributes.markAttributes(last.type).isFillChildAttributes,
             /// maxLocation = location + length + 1, 挨着并相接
@@ -614,16 +627,22 @@ public final class AttributedStringRender: DropRendable {
             actions.append(last)
             
         } else {
-            actions.append(.init(type: renderType, intRange: renderRange))
+            if actions.isEmpty {
+                actions.append(.init(type: renderType, intRange: renderRange))
+            } else if actions.contains(where: { $0.intRange != renderRange }) {
+                actions.append(.init(type: renderType, intRange: renderRange))
+            }
         }
         
     }
     
-    private func dealingExpandContents(_ actions: [RenderActionMark], content: inout NSMutableAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
+    private func dealingExpandContents(_ actions: inout [RenderActionMark], content: NSAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
         
         guard actions.isEmpty == false else {
             return
         }
+        
+        var offset = 0
         
         for actionRender in actions {
             
@@ -633,7 +652,8 @@ public final class AttributedStringRender: DropRendable {
                 continue
             }
             
-            let range = actionRender.intRange
+            var range = actionRender.intRange
+            range.location += offset
             
             let renderContent = content.attributedSubstring(from: range)
             
@@ -661,8 +681,16 @@ public final class AttributedStringRender: DropRendable {
                 range: .init(location: 0, length: result.content.length)
             )
             
-            // TODO: 奇怪的崩溃点 。。。
-            content.replaceCharacters(in: range, with: newContent)
+            let newRange: DropContants.IntRange = .init(
+                location: range.location,
+                length: newContent.length
+            )
+            
+            offset += newContent.length - content.length
+            
+            actionRender.newRange = newRange
+            actionRender.content = newContent
+            actionRender.date = .init()
             
         }
         
@@ -679,10 +707,8 @@ public final class AttributedStringRender: DropRendable {
             return
         }
         
-        let textAttributes = attributes.markAttributes(renderType)
-        
         if 
-            var last = actions.popLast(),
+            let last = actions.popLast(),
             text.parentContainerRenderTypes.contains(last.type),
             attributes.markAttributes(last.type).isFillChildAttributes,
             /// maxLocation = location + length + 1, 挨着并相接
@@ -693,16 +719,22 @@ public final class AttributedStringRender: DropRendable {
             actions.append(last)
             
         } else {
-            actions.append(.init(type: renderType, intRange: renderRange))
+            if actions.isEmpty {
+                actions.append(.init(type: renderType, intRange: renderRange))
+            } else if actions.contains(where: { $0.intRange != renderRange }) {
+                actions.append(.init(type: renderType, intRange: renderRange))
+            }
         }
         
     }
     
-    private func dealingActionContents(_ actions: [RenderActionMark], content: inout NSMutableAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
+    private func dealingActionContents(_ actions: inout [RenderActionMark], content: NSAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
         
         guard actions.isEmpty == false else {
             return
         }
+        
+        var offset = 0
         
         for actionRender in actions {
             
@@ -712,11 +744,12 @@ public final class AttributedStringRender: DropRendable {
                 continue
             }
             
-            let range = actionRender.intRange
+            var range = actionRender.intRange
+            range.location += offset
             
             let renderContent = content.attributedSubstring(from: range)
             
-            guard 
+            guard
                 let result = mapping.mapping(
                     action: action,
                     text: attributed,
@@ -741,7 +774,117 @@ public final class AttributedStringRender: DropRendable {
                 range: .init(location: 0, length: result.content.length)
             )
             
-            content.replaceCharacters(in: range, with: newContent)
+            let newRange: DropContants.IntRange = .init(
+                location: range.location,
+                length: newContent.length
+            )
+            
+            offset += newContent.length - content.length
+            
+            actionRender.newRange = newRange
+            actionRender.content = newContent
+            actionRender.date = .init()
+            
+        }
+        
+    }
+    
+    // MARK: Combine Renders
+    private func combine(expandRenders: [RenderActionMark], actionRenders: [RenderActionMark], in mapping: DropAttributedMapping) -> [RenderActionMark] {
+        
+        let all = [expandRenders, actionRenders].sorted(by: { $0.count < $1.count })
+        
+        guard 
+            var minRenders = all.first,
+            let maxRenders = all.last
+        else {
+            return []
+        }
+        
+        var result = maxRenders
+        
+        for maxRender in maxRenders {
+            
+            if minRenders.isEmpty { break }
+            
+            guard
+                let index = minRenders.firstIndex(where: {
+                    $0.intRange == maxRender.intRange
+                })
+            else {
+                continue
+            }
+            
+            let minRender = minRenders[index]
+            
+            let minPriority = mapping.markCombinePriority.firstIndex(of: minRender.type)!
+            let maxPriority = mapping.markCombinePriority.firstIndex(of: maxRender.type)!
+            
+            var minAttributes: DropContants.AttributedDict = .init()
+            minRender.content.enumerateAttributes(
+                in: .init(location: 0, length: minRender.content.length)
+            ) { keyValues, range, isStop in
+                
+                minAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
+                
+            }
+            
+            var maxAttributes: DropContants.AttributedDict = .init()
+            maxRender.content.enumerateAttributes(
+                in: .init(location: 0, length: maxRender.content.length)
+            ) { keyValues, range, isStop in
+                
+                maxAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
+                
+            }
+            
+            let attributes: DropContants.AttributedDict
+            
+            if minPriority == maxPriority {
+                if minRender.date < maxRender.date {
+                    maxAttributes.merge(minAttributes, uniquingKeysWith: { current,_ in current })
+                    attributes = maxAttributes
+                } else {
+                    minAttributes.merge(maxAttributes, uniquingKeysWith: { current,_ in current })
+                    attributes = minAttributes
+                }
+            }
+            else if minPriority > maxPriority {
+                minAttributes.merge(maxAttributes, uniquingKeysWith: { current,_ in current })
+                attributes = minAttributes
+            } else {
+                maxAttributes.merge(minAttributes, uniquingKeysWith: { current,_ in current })
+                attributes = maxAttributes
+            }
+            
+            maxRender.content = .init(
+                string: maxRender.content.string,
+                attributes: attributes
+            )
+            
+            minRenders.remove(at: index)
+            
+        }
+        
+        result.append(contentsOf: minRenders)
+        
+        return result
+    }
+    
+    // TODO: 替换要处理
+    private func replace(content: inout NSMutableAttributedString, using renders: [RenderActionMark]) {
+        
+        var offset: Int = 0
+        
+        for render in renders {
+            
+            var range = render.intRange
+            range.location += offset
+            range.length = render.content.length
+            
+            content.replaceCharacters(in: range, with: render.content)
+            
+            offset += render.content.length - render.intRange.length
             
         }
         
@@ -782,11 +925,16 @@ extension AttributedStringRender {
         
     }
     
-    struct RenderActionMark {
+    final class RenderActionMark {
         
         // MARK: Properties
         public var type: DropRenderMarkType
         public var intRange: DropContants.IntRange
+        
+        public var newRange: DropContants.IntRange = .init()
+        public var content: NSAttributedString = .init()
+        
+        public var date: Date = .init()
         
         // MARK: Init
         public init(type: DropRenderMarkType, intRange: DropContants.IntRange) {

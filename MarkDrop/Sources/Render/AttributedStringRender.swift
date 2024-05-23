@@ -258,55 +258,8 @@ public final class AttributedStringRender: DropRendable {
                 
             }
             
-//            captureExpandRenderRange(
-//                &expandRenders,
-//                renderRange: renderRange,
-//                text: leave,
-//                attributes: attributes
-//            )
-//            
-//            captureActionRenderRange(
-//                &actionRenders,
-//                renderRange: renderRange,
-//                text: leave,
-//                attributes: attributes
-//            )
-            
-//            print(#function, #line, expandRenders, actionRenders)
-            
             paragraphContent.endEditing()
         }
-        
-        /// - Tag: Dealing Expands & Actions
-        
-//        dealingExpandContents(
-//            &expandRenders,
-//            content: paragraphContent,
-//            mapping: mapping,
-//            attributes: attributes,
-//            paragraph: base.paragraph
-//        )
-//        
-//        dealingActionContents(
-//            &actionRenders,
-//            content: paragraphContent,
-//            mapping: mapping,
-//            attributes: attributes,
-//            paragraph: base.paragraph
-//        )
-        
-        /// - Tag: Combine
-//        let renders = combine(
-//            expandRenders: expandRenders, 
-//            actionRenders: actionRenders,
-//            attributes: attributes,
-//            in: mapping
-//        )
-//        
-//        replace(
-//            content: &paragraphContent,
-//            using: renders
-//        )
         
         /// - Tag: Combine
         
@@ -374,11 +327,27 @@ public final class AttributedStringRender: DropRendable {
         
         for combineContentRender in combineContentRenders {
             
-            var compact: RenderContentSpecial? = combineContentRender.first
+            var subCompactDict: [DropContants.IntRange: RenderContentSpecial] = .init()
+            combineContentRender.forEach({
+                subCompactDict[$0.range] = $0
+            })
             
-            for index in stride(from: 1, to: combineContentRender.count, by: 1) {
+            let subCompacts = Array(subCompactDict.values).sorted(by: {
+                $0.range.location < $1.range.location
+            })
+            
+            print(
+                #function, #line,
+                subCompacts.map({
+                    ($0.mode, paragraphContent.attributedSubstring(from: $0.range).string)
+                })
+            )
+            
+            var compact: RenderContentSpecial? = subCompacts.first
+            
+            for index in stride(from: 1, to: subCompacts.count, by: 1) {
                 
-                let render = combineContentRender[index]
+                let render = subCompacts[index]
                 
                 compact?.range.length += render.range.length
                 compact?.content += render.content
@@ -389,16 +358,25 @@ public final class AttributedStringRender: DropRendable {
                 
             }
             
+            print(#function, #line, compactContentRenders.count)
+            
+            print(
+                #function, #line,
+                (compact!.mode, paragraphContent.attributedSubstring(from: compact!.range).string)
+            )
+            
             if let compact {
                 compactContentRenders.append(compact)
             }
+            
+            print(#function, #line, compactContentRenders.count)
             
         }
         
         print(
             #function, #line,
             compactContentRenders.map({
-                ($0.mode, paragraphContent.attributedSubstring(from: $0.range).string)
+                ($0.mode, $0.content, paragraphContent.attributedSubstring(from: $0.range).string)
             })
         )
         
@@ -610,11 +588,14 @@ public final class AttributedStringRender: DropRendable {
         }
         
         if
-            let type = markNode.type.render,
-            attributes.markAttributes(type).isFillChildAttributes
+            let _ = markNode.type.render,
+            markNode.parentContainerRenderTypes.filter({
+                attributes.markAttributes($0).isFillChildAttributes
+            })
+            .isEmpty == false
         {
             
-            let parentAttributes = renderMarkAttributes.last(where: { $0.type == type })
+            let parentAttributes = renderMarkAttributes.last
 
             if let previousMappingResult = parentAttributes?.mappingResult {
                 mappingResult = previousMappingResult
@@ -807,361 +788,6 @@ public final class AttributedStringRender: DropRendable {
         let content = node.rawRenderContent
         let width = NSAttributedString(string: content, attributes: attributes).size().width
         indentList.append(.init(indentation: width, mode: mode))
-        
-    }
-    
-    // MARK: Expand
-    private func captureExpandRenderRange(_ actions: inout [RenderActionMark], renderRange: DropContants.IntRange, text node: DropNode, attributes: DropAttributes) {
-        
-        print(#function, #line, actions.count)
-        
-        guard
-            let text = node as? DropContentNodeProtocol,
-            let renderType = text.type.render
-        else {
-            return
-        }
-        
-        if
-            let last = actions.last,
-            text.parentContainerRenderTypes.contains(last.type),
-            attributes.markAttributes(last.type).isFillChildAttributes,
-            /// maxLocation = location + length + 1, 挨着并相接
-            last.intRange.maxLocation == renderRange.location
-        {
-            
-            var newLast = last
-            newLast.intRange.length += renderRange.length
-            actions.removeLast()
-            actions.append(newLast)
-            
-        } else {
-            if actions.isEmpty, attributes.markAttributes(renderType).shouldExpandContent {
-                actions.append(.init(
-                    type: renderType,
-                    parentTypes: text.parentContainerRenderTypes,
-                    intRange: renderRange
-                ))
-            } else if actions.contains(where: { $0.intRange != renderRange }) {
-                actions.append(.init(
-                    type: renderType,
-                    parentTypes: text.parentContainerRenderTypes,
-                    intRange: renderRange
-                ))
-            }
-        }
-        
-    }
-    
-    private func dealingExpandContents(_ actions: inout [RenderActionMark], content: NSAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
-        
-        print(#function, #line, actions.count)
-        
-        guard actions.isEmpty == false else {
-            return
-        }
-        
-        var offset = 0
-        
-        for (index, actionRender) in actions.enumerated() {
-            
-            let attributed = attributes.markAttributes(actionRender.type)
-            
-            guard attributed.shouldExpandContent else {
-                continue
-            }
-            
-            var range = actionRender.intRange
-            
-            let renderContent = content.attributedSubstring(from: range)
-            
-            guard
-                let result = mapping.mapping(
-                    expand: attributed,
-                    content: renderContent,
-                    renderRange: range,
-                    in: paragraph
-                )
-            else {
-                continue
-            }
-            
-            var oldAttributes: DropContants.AttributedDict = .init()
-            renderContent.enumerateAttributes(
-                in: .init(location: 0, length: renderContent.length)
-            ) { keyValues, range, isStop in
-                
-                oldAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
-                
-            }
-            
-            let newContent = NSMutableAttributedString(attributedString: result.content)
-            newContent.addAttributes(
-                oldAttributes,
-                range: .init(location: 0, length: result.content.length)
-            )
-            
-            range.location += offset
-            
-            offset += newContent.length - content.length
-            
-            var newRender = actionRender
-            newRender.newRange = range
-            newRender.content = newContent
-            newRender.date = .init()
-            actions[index] = newRender
-            
-        }
-        
-    }
-    
-    // MARK: Action
-
-    private func captureActionRenderRange(_ actions: inout [RenderActionMark], renderRange: DropContants.IntRange, text node: DropNode, attributes: DropAttributes) {
-        
-        guard
-            let text = node as? DropContentNodeProtocol,
-            let renderType = text.type.render
-        else {
-            return
-        }
-        
-        if 
-            let last = actions.last,
-            text.parentContainerRenderTypes.contains(last.type),
-            attributes.markAttributes(last.type).isFillChildAttributes,
-            /// maxLocation = location + length + 1, 挨着并相接
-            last.intRange.maxLocation == renderRange.location
-        {
-            
-            var newLast = last
-            newLast.intRange.length += renderRange.length
-            actions.removeLast()
-            actions.append(newLast)
-            
-        } else {
-            if actions.isEmpty, attributes.markAttributes(renderType).action != nil {
-                actions.append(.init(
-                    type: renderType,
-                    parentTypes: text.parentContainerRenderTypes,
-                    intRange: renderRange
-                ))
-            } else if actions.contains(where: { $0.intRange != renderRange }) {
-                actions.append(.init(
-                    type: renderType,
-                    parentTypes: text.parentContainerRenderTypes,
-                    intRange: renderRange
-                ))
-            }
-        }
-        
-    }
-    
-    private func dealingActionContents(_ actions: inout [RenderActionMark], content: NSAttributedString, mapping: DropAttributedMapping, attributes: DropAttributes, paragraph: ParagraphAttributes) {
-        
-        guard actions.isEmpty == false else {
-            return
-        }
-        
-        var offset = 0
-        
-        for (index, actionRender) in actions.enumerated() {
-            
-            let attributed = attributes.markAttributes(actionRender.type)
-            
-            guard let action = attributed.action else {
-                continue
-            }
-            
-            var range = actionRender.intRange
-            let renderContent = content.attributedSubstring(from: range)
-            
-            guard
-                let result = mapping.mapping(
-                    action: action,
-                    text: attributed,
-                    content: renderContent,
-                    renderRange: range,
-                    in: paragraph
-                )
-            else {
-                continue
-            }
-            
-            var oldAttributes: DropContants.AttributedDict = .init()
-            renderContent.enumerateAttributes(
-                in: .init(location: 0, length: renderContent.length)
-            ) { keyValues, range, isStop in
-                
-                oldAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
-                
-            }
-            
-            let newContent = NSMutableAttributedString(attributedString: result.content)
-            newContent.addAttributes(
-                oldAttributes,
-                range: .init(location: 0, length: result.content.length)
-            )
-            
-            range.location += offset
-            
-            offset += newContent.length - content.length
-            
-            var newRender = actionRender
-            newRender.newRange = range
-            newRender.content = newContent
-            newRender.date = .init()
-            actions[index] = newRender
-            
-        }
-        
-    }
-    
-    // MARK: Combine Renders
-    private func combine(expandRenders: [RenderActionMark], actionRenders: [RenderActionMark], attributes: DropAttributes, in mapping: DropAttributedMapping) -> [RenderActionMiniMark] {
-        
-        let all = (expandRenders + actionRenders).sorted(by: {
-            $0.intRange.length > $1.intRange.length
-        })
-        
-        var stackRenders: [DropContants.IntRange: [RenderActionMark]] = .init()
-        
-        for render in all {
-            
-            if
-                let contains = stackRenders.first(where: {
-                    (render.intRange.location >= $0.key.location &&
-                     render.intRange.maxLocation <= $0.key.maxLocation)
-                })
-            {
-                
-                let shouldAppend = contains.value.filter({
-                    render.parentTypes.contains($0.type) &&
-                    attributes.markAttributes($0.type).isFillChildAttributes
-                })
-                    .isEmpty == false
-                
-                if shouldAppend {
-                    stackRenders[contains.key]?.append(render)
-                } else {
-                    if stackRenders[render.intRange] == nil {
-                        stackRenders[render.intRange] = []
-                    }
-                    stackRenders[render.intRange]?.append(render)
-                }
-                
-            } else {
-                if stackRenders[render.intRange] == nil {
-                    stackRenders[render.intRange] = []
-                }
-                stackRenders[render.intRange]?.append(render)
-            }
-        }
-        
-        var combines: [RenderActionMiniMark] = []
-        
-        for (key, currentRender) in stackRenders {
-            
-            guard currentRender.count > 1 else {
-                if let first = currentRender.first {
-                    combines.append(
-                        .init(intRange: first.newRange, content: first.content)
-                    )
-                }
-                continue
-            }
-            
-            let intRange = key
-            
-            var string = currentRender[0].content.string
-            
-            var previousAttributes: DropContants.AttributedDict = .init()
-            currentRender[0].content.enumerateAttributes(
-                in: .init(location: 0, length: currentRender[0].content.length)
-            ) { keyValues, range, isStop in
-                
-                previousAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
-                
-            }
-            
-            var previous = currentRender[0]
-            
-            for index in stride(from: 1, to: currentRender.count, by: 1) {
-                
-                let current = currentRender[index]
-                
-                /// index 越小 优先级越高
-                let priority = mapping.markCombinePriority
-                
-                let previousPriority = priority.firstIndex(of: previous.type)!
-                let currentPriority = priority.firstIndex(of: current.type)!
-                
-                var currentAttributes: DropContants.AttributedDict = .init()
-                current.content.enumerateAttributes(
-                    in: .init(location: 0, length: current.content.length)
-                ) { keyValues, range, isStop in
-                    
-                    currentAttributes.merge(keyValues, uniquingKeysWith: { _,new in new })
-                    
-                }
-                
-                if previousPriority == currentPriority {
-                    if current.date > previous.date {
-                        previousAttributes.merge(currentAttributes, uniquingKeysWith: { _,current in current })
-                        string = current.content.string
-                    } else {
-                        previousAttributes.merge(currentAttributes, uniquingKeysWith: { previous,_ in previous })
-                        string = previous.content.string
-                    }
-                }
-                else if currentPriority < previousPriority {
-                    previousAttributes.merge(currentAttributes, uniquingKeysWith: { _,current in current })
-                    string = current.content.string
-                } else {
-                    previousAttributes.merge(currentAttributes, uniquingKeysWith: { previous,_ in previous })
-                    string = previous.content.string
-                }
-                
-                previous = current
-                
-            }
-            
-            combines.append(
-                .init(
-                    intRange: intRange,
-                    content: .init(string: string, attributes: previousAttributes)
-                )
-            )
-            
-        }
-        
-        return combines.sorted(by: {
-            $0.intRange.location < $1.intRange.location
-        })
-        
-    }
-    
-    // TODO: 替换要处理
-    private func replace(content: inout NSMutableAttributedString, using renders: [RenderActionMiniMark]) {
-        
-        var offset: Int = 0
-        
-        for render in renders {
-            
-            var range = render.intRange
-            range.location += offset
-            
-            content.replaceCharacters(in: range, with: render.content)
-            
-            offset += render.content.length - range.length
-            
-        }
-        
-        print(#function, #line, renders.map({ $0.intRange }))
-        
-//        print(#function, #line, renders.map({
-//            ($0.content.attributes(at: 0, effectiveRange: nil)[NSAttributedString.Key(rawValue: "YYTextAttachment")] as? NSObject)?.value(forKeyPath: "content")
-//        }))
         
     }
     

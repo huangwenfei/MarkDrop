@@ -80,6 +80,11 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         nil
     }
     
+    public override func mappingConflict(expand: DropAttributedMappingResult, action: DropAttributedMappingResult) -> DropAttributedMappingResult {
+        
+        action
+    }
+    
     public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
         
         var result = DropContants.AttributedDict()

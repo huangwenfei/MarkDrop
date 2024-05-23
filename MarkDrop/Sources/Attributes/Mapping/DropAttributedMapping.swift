@@ -35,6 +35,10 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
+    open func mappingConflict(expand: DropAttributedMappingResult, action: DropAttributedMappingResult) -> DropAttributedMappingResult {
+        fatalError("Using subclass !")
+    }
+    
     open func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
         fatalError("Using subclass !")
     }
@@ -114,6 +118,11 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         
         nil
         
+    }
+    
+    public override func mappingConflict(expand: DropAttributedMappingResult, action: DropAttributedMappingResult) -> DropAttributedMappingResult {
+        
+        action
     }
     
     public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {

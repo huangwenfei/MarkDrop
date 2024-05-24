@@ -197,7 +197,7 @@ public final class Dropper {
         
         for unicode in paragraph.rawContent {
             
-            print(unicode)
+//            print(unicode)
             
             // MARK: Batch judge
             var dones:   [ProcessRule] = []

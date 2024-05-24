@@ -290,8 +290,24 @@ public final class AttributedStringRender: DropRendable {
         self.renderAST = ast
     }
     
+    public func rerender(document string: String) -> Result {
+        self.document.raw = string
+        
+        let ast = Dropper(document: self.document).process(using: rules)
+        self.renderAST = ast
+        
+        guard
+            let attributes,
+            let mapping
+        else {
+            return .init(string: "")
+        }
+        
+        return rerender(attributes: attributes, mapping: mapping)
+    }
+    
     public func rerender(using attributes: DropAttributes) -> Result {
-        guard let mapping = mapping else {
+        guard let mapping else {
             return .init(string: "")
         }
         
@@ -299,7 +315,7 @@ public final class AttributedStringRender: DropRendable {
     }
     
     public func rerender(using mapping: DropAttributedMapping) -> Result {
-        guard let attributes = attributes else {
+        guard let attributes else {
             return .init(string: "")
         }
         
@@ -684,6 +700,7 @@ public final class AttributedStringRender: DropRendable {
             
         }
         
+        #if false
         print(
             #function, #line,
             contentRenders.map({
@@ -698,6 +715,7 @@ public final class AttributedStringRender: DropRendable {
                 })
             })
         )
+        #endif
         
         return combineContentRenders
     }
@@ -720,6 +738,7 @@ public final class AttributedStringRender: DropRendable {
                 subCompactDict[$0.range] = $0
             })
             
+            #if false
             print(
                 #function, #line,
                 Array(subCompactDict.values).sorted(by: {
@@ -728,6 +747,7 @@ public final class AttributedStringRender: DropRendable {
                     ($0.mode, paragraphContent.attributedSubstring(from: $0.range).string)
                 })
             )
+            #endif
             
             /// 内连接，连接(相邻)合并压缩
             let subCompacts = Array(subCompactDict.values).sorted(by: {
@@ -749,12 +769,14 @@ public final class AttributedStringRender: DropRendable {
 
             }
 
+            #if false
             print(#function, #line, compactContentRenders.count)
 
             print(
                 #function, #line,
                 (compact!.mode, compact!.range, paragraphContent.attributedSubstring(from: compact!.range).string)
             )
+            #endif
             
             /// 前置交叠/连接压缩
             if let previous = previousCompactRender, let current = compact {
@@ -809,18 +831,22 @@ public final class AttributedStringRender: DropRendable {
                 }
             }
             
+            #if false
             print(#function, #line, compactContentRenders.count)
+            #endif
             
             previousCompactRender = compact
             
         }
         
+        #if false
         print(
             #function, #line,
             compactContentRenders.map({
                 ($0.mode, $0.content, $0.range, paragraphContent.attributedSubstring(from: $0.range).string)
             })
         )
+        #endif
         
         return compactContentRenders
     }

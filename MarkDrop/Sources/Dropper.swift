@@ -197,7 +197,7 @@ public final class Dropper {
         
         for unicode in paragraph.rawContent {
             
-//            print(unicode)
+            print(unicode)
             
             // MARK: Batch judge
             var dones:   [ProcessRule] = []
@@ -311,7 +311,7 @@ public final class Dropper {
                     markNode.documentRange = node.documentRange
                     node.append(markNode)
                     
-//                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
+                    print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                     
                     addToParent(rule: rule, currentOpen: node, in: paragraph)
                     
@@ -412,7 +412,7 @@ public final class Dropper {
                                 markOffset = nextOffset(markOffset, count: count, limit: markOffsetLimit, in: paragraph)
                                 markIntOffset += count
                                 
-//                                print(#function, #line, "mark", paragraph.rawContent[markNode.range])
+                                print(#function, #line, "mark", paragraph.rawContent[markNode.range])
                                 
                                 if markNode.mark == .text {
                                     markTexts.append(markNode)

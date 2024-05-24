@@ -27,9 +27,20 @@ public final class AttributedStringRender: DropRendable {
         self.rules = rules
     }
     
+    public init(using rules: [DropRule], attributes: DropAttributes? = nil, mapping: DropAttributedMapping) {
+        
+        self.document = .init(raw: "")
+        self.rules = rules
+        self.attributes = attributes
+        self.mapping = mapping
+    }
+    
     // MARK: Render
     public func render() -> Result {
-        render(with: DropAttributes(), mapping: DropDefaultAttributedMapping())
+        render(
+            with: attributes ?? DropAttributes(),
+            mapping: mapping ?? DropDefaultAttributedMapping()
+        )
     }
     
     public func render(with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
@@ -37,6 +48,11 @@ public final class AttributedStringRender: DropRendable {
         /// - Tag: Mapping
         self.attributes = attributes
         self.mapping = mapping
+        
+        /// - Tag: Vaild Raw
+        guard document.raw.isEmpty == false else {
+            return .init()
+        }
         
         /// - Tag: AST
         let ast = Dropper(document: document).process(using: rules)
@@ -290,17 +306,15 @@ public final class AttributedStringRender: DropRendable {
         self.renderAST = ast
     }
     
-    public func rerender(document string: String) -> Result {
+    public func rerender(document string: String, using attributes: DropAttributes) -> Result {
         self.document.raw = string
+        self.attributes = attributes
         
         let ast = Dropper(document: self.document).process(using: rules)
         self.renderAST = ast
         
-        guard
-            let attributes,
-            let mapping
-        else {
-            return .init(string: "")
+        guard let mapping else {
+            return .init(string: string)
         }
         
         return rerender(attributes: attributes, mapping: mapping)
@@ -341,6 +355,11 @@ public final class AttributedStringRender: DropRendable {
             with: attributes,
             mapping: mapping
         )
+    }
+    
+    // MARK: Content
+    public func isContentUpdate(_ new: String) -> Bool {
+        document.raw != new
     }
     
     // MARK: Attributes

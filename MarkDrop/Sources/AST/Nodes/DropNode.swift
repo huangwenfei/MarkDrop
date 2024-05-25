@@ -37,7 +37,6 @@ public class DropNode: Hashable, CustomStringConvertible {
         renderContents.reduce("", { $0 + $1 })
     }
     
-    public var range: DropContants.Range
     public var intRange: DropContants.IntRange = .init()
     public var documentRange: DropContants.IntRange = .init()
     
@@ -45,7 +44,7 @@ public class DropNode: Hashable, CustomStringConvertible {
     public var children: [DropNode] = []
     
     public var lineDescription: String {
-        "{ contents: \(contents), rawContentIndices: \(rawContentIndices), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public var description: String {
@@ -53,7 +52,6 @@ public class DropNode: Hashable, CustomStringConvertible {
         \nparent: \(parentNode?.lineDescription ?? "nil"),
         contents: \(contents),
         rawContentIndices: \(rawContentIndices),
-        range: \(range),
         intRange: \(intRange),
         docRange: \(documentRange),
         children.count: \(children.count),
@@ -62,24 +60,43 @@ public class DropNode: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
-    public init() {
-        range = "".startIndex ... "".endIndex
-    }
+    public init() { }
     
     // MARK: Methods
     public var isRoot: Bool { parentNode == nil }
     public var haveChildren: Bool { children.isEmpty == false }
     public var isLeafNode: Bool { haveChildren == false }
     
-    public var exculdeNewlineRange: DropContants.ExculdeNewlineRange {
-        range.lowerBound ..< range.upperBound
-    }
-    
     public var exculdeNewlineIntRange: DropContants.IntRange {
         .init(location: intRange.location, length: max(0, intRange.length - 1))
     }
     
     public var attributedContent: NSAttributedString { fatalError() }
+    
+    // MARK: Content
+    public func offset(current: String.Index, offset: Int) -> String.Index {
+        let limit = offset > 0 ? rawContent.endIndex : rawContent.startIndex
+        return rawContent.index(current, offsetBy: offset, limitedBy: limit) ?? limit
+    }
+    
+    public func content(in range: DropContants.IntRange, isClose: Bool = true) -> String {
+        guard range.length > 0 else { return "" }
+        
+        let start = offset(current: rawContent.startIndex, offset: range.location)
+        
+        /// 超出范围
+        if start == rawContent.endIndex {
+            return ""
+        }
+        
+        var endLocation = range.vaildMaxLocation
+        if endLocation >= rawContent.count {
+            endLocation = rawContent.count - 1
+        }
+        let end = offset(current: rawContent.startIndex, offset: endLocation)
+        
+        return String(isClose ? rawContent[start ... end] : rawContent[start ..< end])
+    }
     
     // MARK: Node
     public var first: DropNode? { children.first }
@@ -105,7 +122,6 @@ public class DropNode: Hashable, CustomStringConvertible {
     public static func equal(lhs: DropNode, rhs: DropNode) -> Bool {
         lhs.contents == rhs.contents &&
         lhs.rawContentIndices == rhs.rawContentIndices &&
-        lhs.range == rhs.range &&
         lhs.parentNode?.lineDescription == rhs.parentNode?.lineDescription &&
         lhs.children.reduce("", { $0 + $1.lineDescription }) == rhs.children.reduce("", { $0 + $1.lineDescription })
     }
@@ -117,7 +133,6 @@ public class DropNode: Hashable, CustomStringConvertible {
     public static func hash(_ node: DropNode, into hasher: inout Hasher) {
         hasher.combine(node.contents)
         hasher.combine(node.rawContentIndices)
-        hasher.combine(node.range)
         hasher.combine(node.parentNode?.lineDescription)
         hasher.combine(node.children.reduce("", { $0 + $1.lineDescription }))
     }

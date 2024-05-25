@@ -58,7 +58,7 @@ public final class Document: Hashable {
         if endLocation >= raw.count {
             endLocation = raw.count - 1
         }
-        var end = offset(current: raw.startIndex, offset: endLocation)
+        let end = offset(current: raw.startIndex, offset: endLocation)
         
         return String(isClose ? raw[start ... end] : raw[start ..< end])
     }

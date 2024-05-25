@@ -27,15 +27,6 @@ public class DropContainerNode: DropNode {
         String(children.reduce("", { $0 + "\n" + $1.rawContent }).dropFirst(1))
     }
     
-    public var allRange: DropContants.Range {
-        guard let first = children.first, let last = children.last else {
-            /// 随便一个值
-            return "".startIndex ... "".endIndex
-        }
-        
-        return first.range.lowerBound ... last.range.upperBound
-    }
-    
     public var allIntRange: DropContants.IntRange {
         guard let first = children.first else {
             /// 随便一个值
@@ -63,7 +54,7 @@ public class DropContainerNode: DropNode {
     }
     
     public override var lineDescription: String {
-        "{ type: \(type), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ type: \(type), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public override var description: String {
@@ -72,7 +63,6 @@ public class DropContainerNode: DropNode {
             \ntype: \(type),
             lineIndex: \(lineIndex),
             content: \(allContent),
-            range: \(allRange),
             intRange: \(allIntRange),
             docRange: \(documentRange),
             parent: \(parentNode?.lineDescription ?? "nil"),
@@ -85,7 +75,6 @@ public class DropContainerNode: DropNode {
             lineIndex: \(lineIndex),
             contents: \(contents),
             rawContentIndices: \(rawContentIndices),
-            range: \(range),
             intRange: \(intRange),
             docRange: \(documentRange),
             parent: \(parentNode?.lineDescription ?? "nil")\n

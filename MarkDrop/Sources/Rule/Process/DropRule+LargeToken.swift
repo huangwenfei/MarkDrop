@@ -405,6 +405,47 @@ public final class DropRuleLargeToken {
         return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
     }
     
+    public var contentRange: DropContants.IntRange {
+        
+        guard let openRange, let closeRange else {
+            return .init()
+        }
+        
+        return .init(location: openRange.location, length: closeRange.vaildMaxLocation)
+        
+    }
+    
+    public var rawContentRanges: [DropContants.IntRange] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        var capture: DropContants.IntRange? = nil
+        if token.shouldCapture {
+            
+            if closeRange.location == openRange.vaildMaxLocation {
+                capture = nil
+            } else {
+                capture = (
+                    closeRange.length == 0
+                        ? nil
+                        : DropContants.IntRange(
+                              location: openRange.maxLocation,
+                              length: closeRange.maxLocation - openRange.maxLocation
+                          )
+                )
+            }
+            
+        }
+        
+        /// token.string + capture
+        let result = [openRange] + (capture != nil ? [capture!] : [])
+        
+        return token.isCombineContents ? [contentRange] : result
+        
+    }
+    
     public var contentIndices: [Int] {
         /// [token.string] + capture
         let result = [token.shouldCapture ? 1 : 0]

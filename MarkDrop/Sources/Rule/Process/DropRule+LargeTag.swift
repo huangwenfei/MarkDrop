@@ -276,6 +276,32 @@ public final class DropRuleLargeTag {
         return [openTag, openCapture, tag.closeTag]
     }
     
+    public var contentRange: DropContants.IntRange {
+        
+        guard let openRange, let closeRange else {
+            return .init()
+        }
+        
+        return .init(location: openRange.location, length: closeRange.vaildMaxLocation)
+        
+    }
+    
+    public var rawContentRanges: [DropContants.IntRange] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// openTag + capture + closeTag
+        let openCapture = DropContants.IntRange(
+            location: openRange.maxLocation,
+            length: closeRange.location - openRange.maxLocation
+        )
+        
+        return [openRange, openCapture, closeRange]
+        
+    }
+    
     public var contentIndices: [Int] {
         /// [tag.string] + capture
         return [1]

@@ -412,6 +412,7 @@ final class MarkDropTests: XCTestCase {
                 rule.openTag = mark
                 rule.meidanTag = nil
                 rule.closeTag = mark
+                rule.isLooseModeOn = true
                 return rule
             }()
             
@@ -506,7 +507,13 @@ final class MarkDropTests: XCTestCase {
         """
             - \(bo)每日回顾\(io)，农女吃#披萨与\(ic)记\(bc)\(so)录\(uo)不期\(sc)而遇\(uc)
         """
-        let dropper = Dropper(string: string)
+        
+        let string1 =
+        """
+        \(bo)\(so)录\(bc)不期\(sc)而遇
+        """
+        
+        let dropper = Dropper(string: string1)
         let ast = dropper.process(using: [
             DropHashTagRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

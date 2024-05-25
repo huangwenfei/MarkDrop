@@ -165,7 +165,31 @@ open class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
+    open var contentRange: DropContants.IntRange {
+        guard document != nil else { return .init() }
+        
+        switch rule {
+        case .token:      return tokenProcess.contentRange
+        case .largeToken: return largeTokenProcess.contentRange
+        case .tag:        return tagProcess.contentRange
+        case .largeTag:   return largeTagProcess.contentRange
+        }
+    }
+    
+    open var rawContentRanges: [DropContants.IntRange] {
+        guard document != nil else { return [] }
+        
+        switch rule {
+        case .token:      return tokenProcess.rawContentRanges
+        case .largeToken: return largeTokenProcess.rawContentRanges
+        case .tag:        return tagProcess.rawContentRanges
+        case .largeTag:   return largeTagProcess.rawContentRanges
+        }
+    }
+    
     open var contentIndices: [Int] {
+        guard document != nil else { return [] }
+        
         switch rule {
         case .token:      return tokenProcess.contentIndices
         case .largeToken: return largeTokenProcess.contentIndices

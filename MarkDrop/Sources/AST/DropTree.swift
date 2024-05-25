@@ -20,7 +20,6 @@ public final class DropTree: Hashable {
     public init(document: Document) {
         let container = DropContainerNode()
         container.type = .document
-        container.range = document.startIndex ... document.endIndex
         container.intRange = .init(location: 0, length: document.raw.count)
         self.root = container
     }
@@ -48,15 +47,6 @@ public final class DropTree: Hashable {
         var result: [DropNode] = []
         depthFirstSearch(in: root) { node, _ in
             result.append(node)
-        }
-        return result
-    }
-    
-    public func node(by range: DropContants.Range) -> DropNode? {
-        var result: DropNode? = nil
-        depthFirstSearch { node, isStop in
-            isStop = (node.range == range)
-            if isStop { result = node }
         }
         return result
     }

@@ -16,6 +16,14 @@ public struct DropTagSet: Hashable, CustomStringConvertible {
     public var meidanTag: String? = nil
     public var closeTag: String = .init()
     
+    /// control close point
+    public var isLooseModeOn: Bool = false
+    public var looseCanSpanParagraphs: Bool = false
+    
+    public var isMultiParagraphMode: Bool {
+        isLooseModeOn && looseCanSpanParagraphs
+    }
+    
     public var description: String {
         """
         openTag: \(openTag),

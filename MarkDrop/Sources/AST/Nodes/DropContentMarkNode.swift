@@ -17,7 +17,7 @@ public class DropContentMarkNode: DropNode, DropContentNodeProtocol {
     public var parentContainerRenderTypes: [DropRenderMarkType] = []
     
     public override var lineDescription: String {
-        "{ markType: \(type), mark: \(mark), rawContent: \(rawContent), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ markType: \(type), mark: \(mark), rawContent: \(rawContent), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public override var description: String {
@@ -25,7 +25,6 @@ public class DropContentMarkNode: DropNode, DropContentNodeProtocol {
         \ntype: \(type),
         mark: \(mark)
         rawContent: \(rawContent),
-        range: \(range),
         intRange: \(intRange),
         docRange: \(documentRange),
         parent: \(parentNode?.lineDescription ?? "nil"),

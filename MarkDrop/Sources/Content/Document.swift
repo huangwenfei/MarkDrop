@@ -44,18 +44,23 @@ public final class Document: Hashable {
     }
     
     // MARK: Content
-    public func content(in range: DropContants.IntRange) -> String {
+    public func content(in range: DropContants.IntRange, isClose: Bool = true) -> String {
         guard range.length > 0 else { return "" }
+        
         let start = offset(current: raw.startIndex, offset: range.location)
-        var end = offset(current: start, offset: range.length)
-        if end == raw.endIndex {
-            end = offset(current: end, offset: -1)
-        }
-        if start == end, start == raw.endIndex {
+        
+        /// 超出范围
+        if start == raw.endIndex {
             return ""
-        } else {
-            return String(raw[start ... end])
         }
+        
+        var endLocation = range.vaildMaxLocation
+        if endLocation >= raw.count {
+            endLocation = raw.count - 1
+        }
+        var end = offset(current: raw.startIndex, offset: endLocation)
+        
+        return String(isClose ? raw[start ... end] : raw[start ..< end])
     }
     
     // MARK: Hashable

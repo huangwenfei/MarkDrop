@@ -14,7 +14,6 @@ public class DropNode: Hashable, CustomStringConvertible {
     public var rawContentIndices: [Int] = []
     
     public var renderContents: [String] = []
-    public var renderContentOffsets: [Int] = []
     
     public var allContent: String {
         contents.reduce("", { $0 + $1 })
@@ -27,7 +26,11 @@ public class DropNode: Hashable, CustomStringConvertible {
     }
     
     public var rawContent: String {
-        rawContents.reduce("", { $0 + $1 })
+        if rawContents.count == 1 {
+            return rawContents.first ?? ""
+        } else {
+            return rawContents.reduce("", { $0 + $1 })
+        }
     }
     
     public var rawRenderContent: String {

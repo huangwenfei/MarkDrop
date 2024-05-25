@@ -15,6 +15,10 @@ public class DropContainerNode: DropNode {
     public var lineCount: Int = -1
     public var lineIndex: Int = -1
     
+    public var isFirstLine: Bool {
+        lineIndex == 0
+    }
+    
     public var isLastLine: Bool {
         lineIndex == lineCount - 1
     }

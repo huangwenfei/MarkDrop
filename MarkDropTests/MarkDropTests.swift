@@ -136,7 +136,7 @@ final class MarkDropTests: XCTestCase {
             \t现在，试着把当前#脑海 中的!!想法、**A灵无??压Press记录感Z**、情??绪!!等等记下来，尝试下!!#无压记录的??愉悦??。!!
         """
         
-        let dropper = Dropper(string: string4)
+        let dropper = Dropper(string: string1)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)
@@ -396,6 +396,121 @@ final class MarkDropTests: XCTestCase {
         
         let dropper = Dropper(string: string)
         let ast = dropper.process(using: shortRules)
+        
+        printNodes(tree: ast)
+        
+    }
+    
+    func testRichStackString() {
+        
+        class Special: DropRule {
+            
+            // MARK: Class
+            public static var rule: DropTagSet = {
+                var rule = DropTagSet()
+                let mark = "|flomoBold|"
+                rule.openTag = mark
+                rule.meidanTag = nil
+                rule.closeTag = mark
+                return rule
+            }()
+            
+            public static let render: MarkRuleDict<DropTagRenderType> = {
+                var dict = MarkRuleDict<DropTagRenderType>()
+                dict[.open] = .remove
+                dict[.close] = .remove
+                return dict
+            }()
+            
+            // MARK: Init
+            public init(mark: String, type: DropContentType) {
+                var rule = Special.rule
+                rule.openTag = mark
+                rule.closeTag = mark
+                super.init(
+                    rule: .tag(rule: rule, render: Special.render),
+                    type: type
+                )
+            }
+            
+        }
+        
+        final class Bold: Special {
+            
+            static let mark: String = "|flomoBold|"
+            
+            // MARK: Init
+            public init() {
+                super.init(mark: Bold.mark, type: .bold)
+            }
+            
+        }
+        
+        final class Italics: Special {
+            
+            static let mark: String = "|flomoItalics|"
+            
+            // MARK: Init
+            public init() {
+                super.init(mark: Italics.mark, type: .italics)
+            }
+            
+        }
+        
+        final class Underline: Special {
+            
+            static let mark: String = "|flomoUnderline|"
+            
+            // MARK: Init
+            public init() {
+                super.init(mark: Underline.mark, type: .underline)
+            }
+            
+        }
+        
+        final class Highlight: Special {
+            
+            static let mark: String = "|flomoHighlight|"
+            
+            // MARK: Init
+            public init() {
+                super.init(mark: Highlight.mark, type: .highlight)
+            }
+            
+        }
+        
+        final class Stroke: Special {
+            
+            static let mark: String = "|flomoStroke|"
+            
+            // MARK: Init
+            public init() {
+                super.init(mark: Stroke.mark, type: .stroke)
+            }
+            
+        }
+        
+        let bo = Bold.mark
+        let bc = bo
+        let io = Italics.mark
+        let ic = io
+        let uo = Underline.mark
+        let uc = uo
+        let ho = Highlight.mark
+        let hc = ho
+        let so = Stroke.mark
+        let sc = so
+        
+        
+        let string =
+        """
+            - \(bo)每日回顾\(io)，农女吃#披萨与\(ic)记\(bc)\(so)录\(uo)不期\(sc)而遇\(uc)
+        """
+        let dropper = Dropper(string: string)
+        let ast = dropper.process(using: [
+            DropHashTagRule(),
+            Bold(), Italics(), Underline(), Highlight(), Stroke()
+        ])
         
         printNodes(tree: ast)
         

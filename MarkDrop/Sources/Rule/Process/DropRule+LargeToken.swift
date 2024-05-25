@@ -19,98 +19,12 @@ public final class DropRuleLargeToken {
     
     public internal(set) var render: RenderDict = .init()
     
-    public enum CaptureIndex: Int {
-        case open
-    }
-    
-    public let captureMaxCount: Int = 1
-    
-    public internal(set) var tokenOpenCapture: String = ""
-    
-    public private(set) var shouldOnRenderClose: Bool = false
-    
-    public internal(set) var captures: [String] = []
+    public internal(set) var openRange: DropContants.IntRange? = nil
+    public internal(set) var closeRange: DropContants.IntRange? = nil
     
     public internal(set) var previousVaildHeadList: [Bool] = []
     
     public internal(set) var isOpenDone: Bool = false
-    
-    public var contents: [String] {
-        /// token.string.count + capture
-        let renderToken: String
-        
-        switch render[.open] {
-        case .keepItAsIs:
-            renderToken = tokenOpenCapture
-            
-        case .remove:
-            renderToken = ""
-            
-        case .replace(let new):
-            renderToken = new
-            
-        case .none:
-            renderToken = tokenOpenCapture
-        }
-        
-        var openCapture = captures.first
-        
-        if
-            shouldOnRenderClose,
-            token.shouldCapture,
-            let capture = openCapture
-        {
-            
-            switch render[.close] {
-            case .keepItAsIs:
-                openCapture = capture
-                
-            case .remove:
-                openCapture = String(capture.dropLast(1))
-                
-            case .replace(let new):
-                openCapture = String(capture.dropLast(1)) + new
-                
-            case .none:
-                openCapture = capture
-            }
-            
-        }
-        
-        return [renderToken] + (token.shouldCapture ? [openCapture ?? ""] : [])
-    }
-    
-    public var contentOffsets: [Int] {
-        /// token.string.count + capture
-        let offset: Int
-        
-        switch render[.open] {
-        case .keepItAsIs:
-            offset = 0
-            
-        case .remove:
-            offset = -tokenOpenCapture.count
-            
-        case .replace(let new):
-            offset = new.count - tokenOpenCapture.count
-            
-        case .none:
-            offset = 0
-        }
-        
-        return [offset, 0]
-    }
-    
-    public var rawContents: [String] {
-        /// token.string.count + capture
-        [tokenOpenCapture] + (token.shouldCapture ? captures : [])
-    }
-    
-    public var contentIndices: [Int] {
-        /// token.string.count + capture
-        [token.shouldCapture ? 1 : 0]
-    }
-    
     
     // MARK: Init
     public init(state: DropContentLargeTokenRuleState) {
@@ -120,21 +34,21 @@ public final class DropRuleLargeToken {
     public init(other: DropRuleLargeToken) {
         self.state = other.state
         self.token = other.token
-        self.tokenOpenCapture = other.tokenOpenCapture
-        self.captures = other.captures
+        self.openRange = other.openRange
+        self.closeRange = other.closeRange
         self.previousVaildHeadList = other.previousVaildHeadList
         self.isOpenDone = other.isOpenDone
     }
     
     // MARK: Process
-    public func append(token: DropLargeTokenSet, render: RenderDict, content: Character, previousContent: String, isFirstChar: Bool, isEndChar: Bool) {
+    public func append(token: DropLargeTokenSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
         
         self.token = token
         self.render = render
         
         switch state {
         case .idle:
-            if token.isOnlyVaildOnHead {
+            if token.isOnlyVaildOnHead, let previousContent {
                 previousVaildHeadList.append(token.isVaildHead(previousContent))
             }
             
@@ -145,38 +59,51 @@ public final class DropRuleLargeToken {
                 
                 if token.isOnlyVaildOnHead {
                     if previousVaildHeadList.reduce(true, { $0 && $1 }) {
-                        if isEndChar {
+                        if isDocEndChar {
                             state = .done(isCancled: false, close: nil)
                             isOpenDone = true
-                            tokenOpenCapture = String(content)
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
                         } else {
                             state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
                             isOpenDone = token.shouldCapture ? false : true
-                            captures = .init(repeating: "", count: captureMaxCount)
-                            tokenOpenCapture = String(content)
                         }
                     } else {
-                        if isEndChar {
+                        if isDocEndChar {
                             state = .done(isCancled: false, close: nil)
                             isOpenDone = true
-                            tokenOpenCapture = String(content)
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
                         } else {
                             state = .idle
-                            tokenOpenCapture = ""
+                            isOpenDone = false
                         }
                     }
                 } else {
-                    if isEndChar {
+                    if isDocEndChar {
                         state = .done(isCancled: false, close: nil)
                         isOpenDone = true
-                        tokenOpenCapture = String(content)
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        isOpenDone = true
                     } else {
                         state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
                         isOpenDone = token.shouldCapture ? false : true
-                        captures = .init(repeating: "", count: captureMaxCount)
-                        tokenOpenCapture = String(content)
                     }
                 }
+                
+                if isOpenDone {
+                    openRange = .init(location: offset, length: 1)
+                    closeRange = .init(location: offset, length: 0)
+                } else {
+                    openRange = .init(location: offset, length: 1)
+                }
+                
             }
             else
             if token.token.first?.contains(content) == true {
@@ -187,30 +114,38 @@ public final class DropRuleLargeToken {
                 
                 if token.isOnlyVaildOnHead {
                     if previousVaildHeadList.reduce(true, { $0 && $1 }) {
-                        if isEndChar {
+                        if isDocEndChar {
                             state = .idle
-                            tokenOpenCapture = ""
+                            openRange = nil
+                        }
+                        else if isParagraphEndChar {
+                            state = .idle
+                            openRange = nil
                         } else {
                             state = .token(tag: open, index: 0)
-                            tokenOpenCapture = open[0]
+                            openRange = .init(location: offset, length: 1)
                         }
                     } else {
                         state = .idle
-                        tokenOpenCapture = ""
+                        openRange = nil
                     }
                 } else {
-                    if isEndChar {
+                    if isDocEndChar {
                         state = .idle
-                        tokenOpenCapture = ""
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .idle
+                        openRange = nil
                     } else {
                         state = .token(tag: open, index: 0)
-                        tokenOpenCapture = open[0]
+                        openRange = .init(location: offset, length: 1)
                     }
                 }
             }
             else {
                 state = .idle
-                tokenOpenCapture = ""
+                openRange = nil
             }
             
         case .token(tag: var tag, index: let index):
@@ -221,13 +156,18 @@ public final class DropRuleLargeToken {
                 
                 if theLastMarks?.contains(content) == true {
                     
-                    if isEndChar {
+                    if isDocEndChar {
                         state = .done(isCancled: false, close: nil)
-                        tokenOpenCapture = tag.reduce("", { $0 + $1 }) + String(content)
+                        closeRange = .init(location: offset, length: 1)
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        closeRange = .init(location: offset, length: 1)
                     } else {
                         state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                        captures = .init(repeating: "", count: captureMaxCount)
-                        tokenOpenCapture = tag.reduce("", { $0 + $1 }) + String(content)
+                        if token.shouldCapture == false {
+                            closeRange = .init(location: offset, length: 1)
+                        }
                     }
                     
                 } else {
@@ -261,27 +201,36 @@ public final class DropRuleLargeToken {
                         
                         if contains.filter({ $0 }).count == token.token.count {
                             
-                            if isEndChar {
+                            if isDocEndChar {
                                 state = .done(isCancled: false, close: nil)
-                                tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                                closeRange = .init(location: offset, length: 0)
+                            }
+                            else if isParagraphEndChar {
+                                state = .done(isCancled: false, close: nil)
+                                closeRange = .init(location: offset, length: 0)
                             } else {
                                 state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                                captures = .init(repeating: "", count: captureMaxCount)
-                                tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                                if token.shouldCapture == false {
+                                    closeRange = .init(location: offset, length: 0)
+                                }
                             }
                             
                         } else {
-                            if isEndChar {
+                            if isDocEndChar {
                                 state = .done(isCancled: true, close: nil)
-                                tokenOpenCapture = ""
+                                openRange = nil
+                            }
+                            else if isParagraphEndChar {
+                                state = .done(isCancled: true, close: nil)
+                                openRange = nil
                             } else {
                                 state = .token(tag: tag, index: next)
-                                tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                                openRange?.length += 1
                             }
                         }
                     } else {
                         state = .done(isCancled: true, close: nil)
-                        tokenOpenCapture = ""
+                        openRange = nil
                     }
                     
                 }
@@ -297,56 +246,70 @@ public final class DropRuleLargeToken {
                     
                     if tag.enumerated().filter({ token.token[$0].contains($1) }).count == token.tokenCount {
                         
-                        if isEndChar {
+                        if isDocEndChar {
                             state = .done(isCancled: false, close: nil)
-                            tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                            closeRange = .init(location: offset, length: 0)
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            closeRange = .init(location: offset, length: 0)
                         } else {
                             state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                            captures = .init(repeating: "", count: captureMaxCount)
-                            tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                            if token.shouldCapture == false {
+                                closeRange = .init(location: offset, length: 0)
+                            }
                         }
                         
                     } else {
-                        if isEndChar {
+                        if isDocEndChar {
                             state = .done(isCancled: true, close: nil)
-                            tokenOpenCapture = ""
+                            openRange = nil
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: true, close: nil)
+                            openRange = nil
                         } else {
                             state = .token(tag: tag, index: next)
-                            tokenOpenCapture = tag.reduce("", { $0 + $1 })
+                            openRange?.length += 1
                         }
                     }
                 } else {
                     state = .done(isCancled: true, close: nil)
-                    tokenOpenCapture = ""
+                    openRange = nil
                 }
                 
             }
             
         case .tokenCapture:
             
-            if isEndChar {
+            if isDocEndChar {
                 let haveEof = token.closeRule.contains(.eof)
-                state = .done(isCancled: haveEof == false, close: haveEof ? .eof : nil)
-                captures[CaptureIndex.open.rawValue] += String(content)
+                if haveEof {
+                    state = .done(isCancled: false, close: nil)
+                    closeRange = .init(location: offset + 1, length: 0)
+                } else {
+                    state = .done(isCancled: true, close: nil)
+                    openRange = nil
+                }
+            }
+            else if isParagraphEndChar {
+                state = .done(isCancled: false, close: nil)
+                closeRange = .init(location: offset + 1, length: 0)
             } else {
                 let isSpace = token.closeRule.contains(.space)
                 let isNewline = token.closeRule.contains(.newline)
                 if isSpace || isNewline {
+                    
                     if isSpace, content.isWhitespace {
                         state = .done(isCancled: false, close: .space)
-                        captures[CaptureIndex.open.rawValue] += String(content)
-                        shouldOnRenderClose = true
+                        closeRange = .init(location: offset, length: 1)
                     }
-                    else
+                    
                     if isNewline, content.isNewline {
                         state = .done(isCancled: false, close: .newline)
-//                        captures[CaptureIndex.open.rawValue] += String(content)
+                        closeRange = .init(location: offset, length: 1)
                     }
-                    else {
-                        captures[CaptureIndex.open.rawValue] += String(content)
-                    }
-                } else {
-                    captures[CaptureIndex.open.rawValue] += String(content)
+                    
                 }
             }
             
@@ -355,13 +318,106 @@ public final class DropRuleLargeToken {
         }
     }
     
+    // MARK: Content
+    public func contents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        let renderToken: String
+        switch render[.open] {
+        case .keepItAsIs:
+            renderToken = document.content(in: openRange)
+            
+        case .remove:
+            renderToken = ""
+            
+        case .replace(let new):
+            renderToken = new
+            
+        case .none:
+            renderToken = document.content(in: openRange)
+        }
+        
+        var capture = ""
+        if token.shouldCapture {
+            capture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
+            let close = (
+                closeRange.location == openRange.vaildMaxLocation
+                    ? ""
+                    : document.content(in: closeRange)
+            )
+            
+            switch render[.close] {
+            case .keepItAsIs:
+                capture += close
+                
+            case .remove:
+                break
+                
+            case .replace(let new):
+                capture += new
+                
+            case .none:
+                capture += close
+            }
+        }
+        
+        let result = [renderToken] + (token.shouldCapture ? [capture] : [])
+        
+        return self.token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
+    }
+    
+    public func rawContents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        let renderToken = document.content(in: openRange)
+        
+        var close = ""
+        if token.shouldCapture {
+            let capture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
+            close = capture + (
+                closeRange.location == openRange.vaildMaxLocation
+                    ? ""
+                    : document.content(in: closeRange)
+            )
+        }
+        
+        /// [token.string] + capture
+        let result = [renderToken] + (token.shouldCapture ? [close] : [])
+        
+        return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
+    }
+    
+    public var contentIndices: [Int] {
+        /// [token.string] + capture
+        let result = [token.shouldCapture ? 1 : 0]
+        
+        return token.isCombineContents ? [0] : result
+    }
+    
     // MARK: Clear
     public func clear(isContainsHeadInfo: Bool) {
         state = .idle
-        tokenOpenCapture = ""
-        captures = []
+        openRange = nil
+        closeRange = nil
         isOpenDone = false
-        shouldOnRenderClose = false
         
         if isContainsHeadInfo {
             previousVaildHeadList = []

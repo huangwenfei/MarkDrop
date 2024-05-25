@@ -19,24 +19,244 @@ public final class DropRuleToken {
     
     public internal(set) var render: RenderDict = .init()
     
-    public enum CaptureIndex: Int {
-        case open
-    }
-    
-    public let captureMaxCount: Int = 1
-    
-    public internal(set) var captures: [String] = []
-    
-    public private(set) var shouldOnRenderClose: Bool = false
-    
+    public internal(set) var openRange: DropContants.IntRange? = nil
+    public internal(set) var closeRange: DropContants.IntRange? = nil
+
     public internal(set) var previousVaildHeadList: [Bool] = []
     
     public internal(set) var isOpenDone: Bool = false
     
-    public var contents: [String] {
-        /// token.string + capture
-        let renderToken: String
+    // MARK: Init
+    public init(state: DropContentTokenRuleState) {
+        self.state = state
+    }
+    
+    public init(other: DropRuleToken) {
+        self.state = other.state
+        self.token = other.token
+        self.openRange = other.openRange
+        self.closeRange = other.closeRange
+        self.previousVaildHeadList = other.previousVaildHeadList
+        self.isOpenDone = other.isOpenDone
+    }
+    
+    // MARK: Process
+    public func append(token: DropTokenSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
         
+        self.token = token
+        self.render = render
+        
+        switch state {
+        /// 能否进入 open 态
+        case .idle:
+            if token.isOnlyVaildOnHead, let previousContent {
+                previousVaildHeadList.append(token.isVaildHead(previousContent))
+            }
+            
+            if token.token == String(content) {
+                
+                if token.isOnlyVaildOnHead {
+                    
+                    if previousVaildHeadList.reduce(true, { $0 && $1 }) {
+                        if isDocEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
+                        } else {
+                            state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
+                            isOpenDone = token.shouldCapture ? false : true
+                        }
+                    } else {
+                        if isDocEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
+                        }
+                        else if isParagraphEndChar {
+                            state = .done(isCancled: false, close: nil)
+                            isOpenDone = true
+                        } else {
+                            state = .idle
+                            isOpenDone = false
+                        }
+                    }
+                }
+                else {
+                    if isDocEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        isOpenDone = true
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        isOpenDone = true
+                    } else {
+                        state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
+                        isOpenDone = token.shouldCapture ? false : true
+                    }
+                }
+                
+                if isOpenDone {
+                    openRange = .init(location: offset, length: 1)
+                    closeRange = .init(location: offset, length: 0)
+                } else {
+                    openRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else
+            if token.token.first == content {
+                var open: [String] = .init(
+                    repeating: "", count: token.token.count
+                )
+                open[0] = String(content)
+                
+                if token.isOnlyVaildOnHead {
+                    if previousVaildHeadList.reduce(true, { $0 && $1 }) {
+                        if isDocEndChar {
+                            state = .idle
+                            openRange = nil
+                        }
+                        else if isParagraphEndChar {
+                            state = .idle
+                            openRange = nil
+                        } else {
+                            state = .token(tag: open, index: 0)
+                            openRange = .init(location: offset, length: 1)
+                        }
+                    } else {
+                        state = .idle
+                        openRange = nil
+                    }
+                } else {
+                    if isDocEndChar {
+                        state = .idle
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .idle
+                        openRange = nil
+                    } else {
+                        state = .token(tag: open, index: 0)
+                        openRange = .init(location: offset, length: 1)
+                    }
+                }
+            }
+            else {
+                state = .idle
+                openRange = nil
+            }
+            
+        /// open 态能否正常完成，并切换到下一个状态
+        case .token(tag: var tag, index: let index):
+            
+            let next = index + 1
+            let start = token.token.startIndex
+            let strIndex = token.token.index(start, offsetBy: next)
+            let nextChar = token.token[strIndex]
+            if nextChar == content {
+                tag[next] = String(content)
+                
+                if tag.reduce("", { $0 + $1 }) == token.token {
+                    
+                    openRange?.length += 1
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        closeRange = .init(location: offset, length: 0)
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: false, close: nil)
+                        closeRange = .init(location: offset, length: 0)
+                    }
+                    else {
+                        state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
+                        if token.shouldCapture == false {
+                            closeRange = .init(location: offset, length: 0)
+                        }
+                    }
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true, close: nil)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true, close: nil)
+                        openRange = nil
+                    } else {
+                        state = .token(tag: tag, index: next)
+                        openRange?.length += 1
+                    }
+                }
+            } else {
+                state = .done(isCancled: true, close: nil)
+                openRange = nil
+            }
+        
+        /// 捕获 open 到 close 间的内容，能否切换到 close 态，正常结束
+        case .tokenCapture:
+            
+            if isDocEndChar {
+                let haveEof = token.closeRule.contains(.eof)
+                if haveEof {
+                    if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
+                        state = .done(isCancled: true, close: nil)
+                        openRange = nil
+                    } else {
+                        state = .done(isCancled: false, close: nil)
+                        closeRange = .init(location: offset + 1, length: 0)
+                    }
+                } else {
+                    state = .done(isCancled: true, close: nil)
+                    openRange = nil
+                }
+            }
+            else if isParagraphEndChar {
+                if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
+                    state = .done(isCancled: true, close: nil)
+                    openRange = nil
+                } else {
+                    state = .done(isCancled: false, close: nil)
+                    closeRange = .init(location: offset + 1, length: 0)
+                }
+            } else {
+                let isSpace = token.closeRule.contains(.space)
+                let isNewline = token.closeRule.contains(.newline)
+                if isSpace || isNewline {
+                    
+                    if isSpace, content.isWhitespace {
+                        state = .done(isCancled: false, close: .space)
+                        closeRange = .init(location: offset, length: 1)
+                    }
+                    
+                    if isNewline, content.isNewline {
+                        state = .done(isCancled: false, close: .newline)
+                        closeRange = .init(location: offset, length: 1)
+                    }
+                    
+                } else {
+                    if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
+                        state = .done(isCancled: true, close: nil)
+                        openRange = nil
+                    }
+                }
+            }
+            
+        case .done:
+            break
+        }
+    }
+    
+    // MARK: Content
+    public func contents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        let renderToken: String
         switch render[.open] {
         case .keepItAsIs:
             renderToken = token.token
@@ -51,61 +271,67 @@ public final class DropRuleToken {
             renderToken = token.token
         }
         
-        var openCapture = captures.first
-        
-        if 
-            shouldOnRenderClose,
-            token.shouldCapture,
-            let capture = openCapture
-        {
+        var capture = ""
+        if token.shouldCapture {
+            capture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
+            let close = (
+                closeRange.location == openRange.vaildMaxLocation
+                    ? ""
+                    : document.content(in: closeRange)
+            )
             
             switch render[.close] {
             case .keepItAsIs:
-                openCapture = capture
+                capture += close
                 
             case .remove:
-                openCapture = String(capture.dropLast(1))
+                break
                 
             case .replace(let new):
-                openCapture = String(capture.dropLast(1)) + new
+                capture += new
                 
             case .none:
-                openCapture = capture
+                capture += close
             }
-            
         }
         
-        let result = [renderToken] + (token.shouldCapture ? [openCapture ?? ""] : [])
+        let result = [renderToken] + (token.shouldCapture ? [capture] : [])
         
-        return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
+        return self.token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
     }
     
-    public var contentOffsets: [Int] {
-        /// token.string + capture
-        let offset: Int
+    public func rawContents(inDoc document: Document) -> [String] {
         
-        switch render[.open] {
-        case .keepItAsIs:
-            offset = 0
-            
-        case .remove:
-            offset = -token.token.count
-            
-        case .replace(let new):
-            offset = new.count - token.token.count
-            
-        case .none:
-            offset = 0
+        guard let openRange, let closeRange else {
+            return []
         }
         
-        let result = [offset, 0]
+        let renderToken = token.token
         
-        return token.isCombineContents ? [result.reduce(0, { $0 + $1 })] : result
-    }
-    
-    public var rawContents: [String] {
+        var close = ""
+        if token.shouldCapture {
+            let capture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
+            close = capture + (
+                closeRange.location == openRange.vaildMaxLocation
+                    ? ""
+                    : document.content(in: closeRange)
+            )
+        }
+        
         /// token.string + capture
-        let result = [token.token] + (token.shouldCapture ? captures : [])
+        let result = [renderToken] + (token.shouldCapture ? [close] : [])
         
         return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
     }
@@ -117,173 +343,12 @@ public final class DropRuleToken {
         return token.isCombineContents ? [0] : result
     }
     
-    // MARK: Init
-    public init(state: DropContentTokenRuleState) {
-        self.state = state
-    }
-    
-    public init(other: DropRuleToken) {
-        self.state = other.state
-        self.token = other.token
-        self.captures = other.captures
-        self.previousVaildHeadList = other.previousVaildHeadList
-        self.isOpenDone = other.isOpenDone
-    }
-    
-    // MARK: Process
-    public func append(token: DropTokenSet, render: RenderDict, content: Character, previousContent: String, isFirstChar: Bool, isEndChar: Bool) {
-        
-        self.token = token
-        self.render = render
-        
-        switch state {
-        case .idle:
-            if token.isOnlyVaildOnHead {
-                previousVaildHeadList.append(token.isVaildHead(previousContent))
-            }
-            
-            if token.token == String(content) {
-                
-                if token.isOnlyVaildOnHead {
-                    if previousVaildHeadList.reduce(true, { $0 && $1 }) {
-                        if isEndChar {
-                            state = .done(isCancled: false, close: nil)
-                            isOpenDone = true
-                        } else {
-                            state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                            isOpenDone = token.shouldCapture ? false : true
-                            captures = .init(repeating: "", count: captureMaxCount)
-                        }
-                    } else {
-                        if isEndChar {
-                            state = .done(isCancled: false, close: nil)
-                            isOpenDone = true
-                        } else {
-                            state = .idle
-                        }
-                    }
-                } 
-                else {
-                    if isEndChar {
-                        state = .done(isCancled: false, close: nil)
-                        isOpenDone = true
-                    } else {
-                        state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                        isOpenDone = token.shouldCapture ? false : true
-                        captures = .init(repeating: "", count: captureMaxCount)
-                    }
-                }
-                
-            }
-            else
-            if token.token.first == content {
-                var open: [String] = .init(
-                    repeating: "", count: token.token.count
-                )
-                open[0] = String(content)
-                
-                if token.isOnlyVaildOnHead {
-                    if previousVaildHeadList.reduce(true, { $0 && $1 }) {
-                        if isEndChar {
-                            state = .idle
-                        } else {
-                            state = .token(tag: open, index: 0)
-                        }
-                    } else {
-                        state = .idle
-                    }
-                } else {
-                    if isEndChar {
-                        state = .idle
-                    } else {
-                        state = .token(tag: open, index: 0)
-                    }
-                }
-            }
-            else {
-                state = .idle
-            }
-            
-        case .token(tag: var tag, index: let index):
-            
-            let next = index + 1
-            let start = token.token.startIndex
-            let strIndex = token.token.index(start, offsetBy: next)
-            let nextChar = token.token[strIndex]
-            if nextChar == content {
-                tag[next] = String(content)
-                
-                if tag.reduce("", { $0 + $1 }) == token.token {
-                    
-                    if isEndChar {
-                        state = .done(isCancled: false, close: nil)
-                    } else {
-                        state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
-                        captures = .init(repeating: "", count: captureMaxCount)
-                    }
-                    
-                } else {
-                    if isEndChar {
-                        state = .done(isCancled: true, close: nil)
-                    } else {
-                        state = .token(tag: tag, index: next)
-                    }
-                }
-            } else {
-                state = .done(isCancled: true, close: nil)
-            }
-            
-        case .tokenCapture:
-            
-            if isEndChar {
-                if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
-                    state = .done(isCancled: true, close: nil)
-                } else {
-                    let haveEof = token.closeRule.contains(.eof)
-                    state = .done(isCancled: haveEof == false, close: haveEof ? .eof : nil)
-                    captures[CaptureIndex.open.rawValue] += String(content)
-                }
-            } else {
-                let isSpace = token.closeRule.contains(.space)
-                let isNewline = token.closeRule.contains(.newline)
-                if isSpace || isNewline {
-                    if isSpace, content.isWhitespace {
-                        state = .done(isCancled: false, close: .space)
-                        captures[CaptureIndex.open.rawValue] += String(content)
-                        shouldOnRenderClose = true
-                    }
-                    else
-                    if isNewline, content.isNewline {
-                        state = .done(isCancled: false, close: .newline)
-//                        captures[CaptureIndex.open.rawValue] += String(content)
-                    }
-                    else {
-                        if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
-                            state = .done(isCancled: true, close: nil)
-                        } else {
-                            captures[CaptureIndex.open.rawValue] += String(content)
-                        }
-                    }
-                } else {
-                    if token.isInvalidCaptureOn, token.invaildCaptureSet.contains(content) {
-                        state = .done(isCancled: true, close: nil)
-                    } else {
-                        captures[CaptureIndex.open.rawValue] += String(content)
-                    }
-                }
-            }
-            
-        case .done:
-            break
-        }
-    }
-    
     // MARK: Clear
     public func clear(isContainsHeadInfo: Bool) {
         state = .idle
-        captures = []
+        openRange = nil
+        closeRange = nil
         isOpenDone = false
-        shouldOnRenderClose = false
         
         if isContainsHeadInfo {
             previousVaildHeadList = []

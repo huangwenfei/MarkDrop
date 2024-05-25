@@ -500,3 +500,34 @@ public final class DropLetterOrderRule: DropRule {
     }
     
 }
+
+public final class DropChineseLetterOrderRule: DropRule {
+    
+    // MARK: Class
+    public static let rule: DropLargeTokenSet = {
+        var rule = DropLargeTokenSet()
+        rule.token = ["一二三四五六七八九十", ".", " "]
+        rule.closeRule = [.space]
+        rule.shouldCapture = false
+        rule.isOnlyVaildOnHead = true
+        rule.vaildHeadSet = [.leadingHead, .space, .value("\t")]
+        /// 一一一一一一 ~ 十十十十十十.
+        rule.firstMaxRepeatCount = 6
+        return rule
+    }()
+    
+    public static let render: MarkRuleDict<DropLargeTokenRenderType> = {
+        var dict = MarkRuleDict<DropLargeTokenRenderType>()
+        dict[.open] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .largeToken(rule: DropChineseLetterOrderRule.rule, render: DropChineseLetterOrderRule.render),
+            type: .letterOrderList
+        )
+    }
+    
+}

@@ -41,7 +41,12 @@ public final class Dropper {
     
     private func processContainer(_ paragraphs: [String], in tree: DropTree, using rules: [DropRule]) {
         
-        let containerRules = rules.isEmpty ? createBlockRules() : rules.map({ .init($0) })
+        let containerRules = rules.isEmpty
+            ? createBlockRules()
+            : rules.map({
+                  $0.document = document
+                  return .init($0)
+              })
         
         var offset = document.raw.startIndex
         var intOffset = 0
@@ -84,7 +89,6 @@ public final class Dropper {
                 newlineText.contents = ["\n"]
                 newlineText.rawContentIndices = [0]
                 newlineText.renderContents = ["\n"]
-                newlineText.renderContentOffsets = [0]
                 newlineText.range = end ... end
                 newlineText.intRange = .init(location: count, length: 1)
                 newlineText.documentRange = .init(
@@ -193,23 +197,29 @@ public final class Dropper {
         var offset = paragraph.rawContent.startIndex
         var intOffset = 0
         
-        var previousUnicodes: String = ""
+        var previousUnicodes: String? = nil
         
         for unicode in paragraph.rawContent {
             
-//            print(unicode)
+            print(unicode)
             
             // MARK: Batch judge
             var dones:   [ProcessRule] = []
             var cancles: [ProcessRule] = []
             var opens:   [ProcessRule] = []
             
+            let isParagraphFirstChar = (intOffset == 0)
+            let isParagraphEndChar = (intOffset == paragraph.rawContent.count - 1)
+            
             rules.forEach({
                 $0.source.append(
                     content: unicode,
                     previousContent: previousUnicodes,
-                    isFirstChar: intOffset == 0,
-                    isEndChar: intOffset == paragraph.rawContent.count - 1
+                    offset: paragraph.intRange.location + intOffset,
+                    isParagraphFirstChar: isParagraphFirstChar,
+                    isParagraphEndChar: isParagraphEndChar,
+                    isDocFirstChar: paragraph.isLastLine && isParagraphFirstChar,
+                    isDocEndChar: paragraph.isLastLine && isParagraphEndChar
                 )
                 
                 if $0.source.isDone    { dones.append($0)   }
@@ -257,7 +267,7 @@ public final class Dropper {
             // MARK: Cancles rules
             for rule in cancles {
                 
-//                print(#function, #line, "cancle block: ", rule.source.type)
+                print(#function, #line, "cancle block: ", rule.source.type)
                 
                 openRules.removeAll(where: { $0 === rule })
                 rule.parent?.children.removeAll(where: { $0 === rule })
@@ -285,7 +295,7 @@ public final class Dropper {
                 
                 guard rule.isWorkingDone == false else { continue }
                 
-//                print(#function, #line, "done block: ", rule.source.type)
+                print(#function, #line, "done block: ", rule.source.type)
                 
                 if rule.source.isOpenDone {
                     
@@ -293,7 +303,6 @@ public final class Dropper {
                     node.contents = [String(unicode)]
                     node.rawContentIndices = [0]
                     node.renderContents = rule.source.contents
-                    node.renderContentOffsets = rule.source.contentOffsets
                     node.range = offset ... offset
                     node.intRange = .init(location: intOffset, length: 1)
                     node.documentRange = .init(
@@ -305,7 +314,6 @@ public final class Dropper {
                     markNode.contents = node.contents
                     markNode.rawContentIndices = node.rawContentIndices
                     markNode.renderContents = node.renderContents
-                    markNode.renderContentOffsets = node.renderContentOffsets
                     markNode.range = node.range
                     markNode.intRange = node.intRange
                     markNode.documentRange = node.documentRange
@@ -318,17 +326,6 @@ public final class Dropper {
                     upChildParent(rule: rule, currentOpen: node, in: dones)
                     
 //                    print(#function, #line, node.intRange, node.contents, "parent: ", node.parentNode ?? "None Parent")
-                    
-//                    if node.parentNode === paragraph {
-//                        splitSelfTextWholeContains(
-//                            currentOpen: node,
-//                            currentNode: node,
-//                            in: paragraph,
-//                            isDepth: true
-//                        )
-//                    } else {
-//                        splitSelfText(currentOpen: node, in: paragraph)
-//                    }
                     
                     adjustmentChildParent(currentOpen: node)
                     
@@ -348,7 +345,6 @@ public final class Dropper {
                         currentOpen.contents = rule.source.rawContents
                         currentOpen.rawContentIndices = rule.source.contentIndices
                         currentOpen.renderContents = rule.source.contents
-                        currentOpen.renderContentOffsets = rule.source.contentOffsets
                         currentOpen.range = currentOpen.range.lowerBound ... offset
                         increaseLength(&currentOpen.intRange, by: rule.source.totalContent, in: paragraph)
                         currentOpen.documentRange = .init(
@@ -362,7 +358,6 @@ public final class Dropper {
                             markNode.contents = currentOpen.contents
                             markNode.rawContentIndices = currentOpen.rawContentIndices
                             markNode.renderContents = currentOpen.renderContents
-                            markNode.renderContentOffsets = currentOpen.renderContentOffsets
                             markNode.range = currentOpen.range
                             markNode.intRange = currentOpen.intRange
                             markNode.documentRange = currentOpen.documentRange
@@ -384,11 +379,10 @@ public final class Dropper {
                             var markIntOffset = currentOpen.intRange.location
                             
                             let loopContents = zip(
-                                currentOpen.contents,
-                                zip(currentOpen.renderContents, currentOpen.renderContentOffsets)
+                                currentOpen.contents, currentOpen.renderContents
                             )
                             
-                            for (index, (content, (renderContent, renderContentOffset))) in loopContents.enumerated() {
+                            for (index, (content, renderContent)) in loopContents.enumerated() {
                                 
                                 let count = content.count
                                 
@@ -400,7 +394,6 @@ public final class Dropper {
                                 markNode.contents = [content]
                                 markNode.rawContentIndices = [0] /// [index]
                                 markNode.renderContents = [renderContent]
-                                markNode.renderContentOffsets = [renderContentOffset]
                                 markNode.range = markOffset ... nextOffset(markOffset, count: count - 1, limit: markOffsetLimit, in: paragraph)
                                 markNode.intRange = .init(location: markIntOffset, length: count)
                                 markNode.documentRange = .init(
@@ -431,17 +424,6 @@ public final class Dropper {
                         
 //                        print(#function, #line, currentOpen.intRange, currentOpen.contents, "parent: ", currentOpen.parentNode ?? "None Parent")
                         
-//                        if currentOpen.parentNode === paragraph {
-//                            splitSelfTextWholeContains(
-//                                currentOpen: currentOpen,
-//                                currentNode: currentOpen,
-//                                in: paragraph,
-//                                isDepth: true
-//                            )
-//                        } else {
-//                            splitSelfText(currentOpen: currentOpen, in: paragraph)
-//                        }
-                        
                         adjustmentChildParent(currentOpen: currentOpen)
                         
                     }
@@ -451,60 +433,7 @@ public final class Dropper {
                 openRules.removeAll(where: { $0 === rule })
                 
                 rule.isWorkingDone = true
-                
-//                if 
-//                    let parentNode = rule.parentOpenNode,
-//                    let currentNode = rule.openNode
-//                {
-//                    /// split parent node
-//                    
-//                    /// the knife
-//                    let childMarks = currentNode.children.filter({
-//                        guard let markNode = $0 as? DropContentMarkNode else { return false }
-//                        return markNode.mark != .text && markNode.mark != .none
-//                    })
-//                    
-//                    /// the content
-//                    let parentTexts = parentNode.children.filter({
-//                        guard let markNode = $0 as? DropContentMarkNode else { return false }
-//                        return markNode.mark == .text
-//                    })
-//                    
-//                    
-//                    /// the knife
-//                    let parentMarks = parentNode.children.filter({
-//                        guard let markNode = $0 as? DropContentMarkNode else { return false }
-//                        return markNode.mark != .text && markNode.mark != .none
-//                    })
-//                    
-//                    /// the content
-//                    let childTexts = currentNode.children.filter({
-//                        guard let markNode = $0 as? DropContentMarkNode else { return false }
-//                        return markNode.mark == .text
-//                    })
-//                    
-//                    /// 完全被 parent 包裹
-//                    let parentIntRange = parentNode.intRange
-//                    let currentIntRange = currentNode.intRange
-//                    
-//                    if
-//                        currentIntRange.location >= parentIntRange.location,
-//                        currentIntRange.maxLocation <= parentIntRange.maxLocation
-//                    {
-//                        
-//                        if let currentOpen = parentNode as? DropContentNode {
-//                            splitSelfTextWholeContains(currentOpen: currentOpen, currentNode: currentNode, in: paragraph)
-//                        }
-//                        
-//                    }
-//                    /// 与 parent 有重叠的部分
-//                    else {
-//                        splitTextNode(byMarks: childMarks, texts: parentTexts, in: paragraph)
-//                        splitTextNode(byMarks: parentMarks, texts: childTexts, in: paragraph)
-//                    }
-//                    
-//                }
-                
+
                 childCaptureParent(rule: rule)
                 
                 /// clear for reuse
@@ -548,7 +477,6 @@ public final class Dropper {
                 text.contents = [String(paragraph.rawContent[text.range])]
                 text.rawContentIndices = [0]
                 text.renderContents = text.contents
-                text.renderContentOffsets = [0]
                 text.parentNode = paragraph
                 newChildren.append(text)
             }
@@ -574,7 +502,6 @@ public final class Dropper {
             text.contents = [String(paragraph.rawContent[text.range])]
             text.rawContentIndices = [0]
             text.renderContents = text.contents
-            text.renderContentOffsets = [0]
             text.parentNode = paragraph
             newChildren.append(text)
         }
@@ -593,7 +520,6 @@ public final class Dropper {
             text.contents = [String(paragraph.rawContent[text.range])]
             text.rawContentIndices = [0]
             text.renderContents = text.contents
-            text.renderContentOffsets = [0]
             text.parentNode = paragraph
             paragraph.children = [text]
         }
@@ -630,7 +556,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                     
                     if 
@@ -656,7 +581,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                     
                     if
@@ -679,7 +603,6 @@ public final class Dropper {
                 text.contents = []
                 text.rawContentIndices = []
                 text.renderContents = []
-                text.renderContentOffsets = []
             }
             
         }
@@ -894,7 +817,6 @@ public final class Dropper {
                 text.contents = [String(paragraph.rawContent[text.range])]
                 text.rawContentIndices = [0]
                 text.renderContents = text.contents
-                text.renderContentOffsets = [0]
                 minParent.append(text)
             }
             
@@ -911,7 +833,6 @@ public final class Dropper {
                 text.contents = [String(paragraph.rawContent[text.range])]
                 text.rawContentIndices = [0]
                 text.renderContents = text.contents
-                text.renderContentOffsets = [0]
                 maxParent.append(text)
             }
             
@@ -919,14 +840,12 @@ public final class Dropper {
                 minParent.contents = []
                 minParent.rawContentIndices = []
                 minParent.renderContents = []
-                minParent.renderContentOffsets = []
             }
             
             if tailOffset > 0 {
                 maxParent.contents = []
                 maxParent.rawContentIndices = []
                 minParent.renderContents = []
-                minParent.renderContentOffsets = []
             }
             
         }
@@ -984,7 +903,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                 }
                 
@@ -1001,7 +919,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                 }
                 
@@ -1015,79 +932,9 @@ public final class Dropper {
                 text.contents = []
                 text.rawContentIndices = []
                 text.renderContents = []
-                text.renderContentOffsets = []
             }
             
         }
-        
-//        let minChild = texts.first
-//        let maxChild = texts.last
-//        
-//        if
-//            let min = minChild,
-//            let max = maxChild,
-//            let minParent = marks.first(where: {
-//                $0.intRange.contains(min.intRange.location)
-//            }),
-//            let maxParent = marks.first(where: {
-//                $0.intRange.contains(max.intRange.maxLocation) ||
-//                $0.intRange.maxLocation == max.intRange.maxLocation
-//            })
-//        {
-//            /// using child split self nodes
-//        
-//            let headOffset = min.intRange.location - minParent.intRange.location
-//            let tailOffset = maxParent.intRange.maxLocation - max.intRange.maxLocation
-//            
-//            if headOffset > 0 {
-//                let text = self.contentMark(currentOpen.type, mark: .text)
-//                let start = minParent.range.lowerBound
-//                let intStart = minParent.intRange.location
-//                text.range = start ... previousOffset(min.range.lowerBound, limit: start, in: paragraph)
-//                text.intRange = .init(location: intStart, length: headOffset)
-//                text.documentRange = .init(
-//                    location: text.intRange.location + minParent.intRange.location,
-//                    length: text.intRange.length
-//                )
-//                text.contents = [String(paragraph.rawContent[text.range])]
-//                text.rawContentIndices = [0]
-//                text.renderContents = text.contents
-//                text.renderContentOffsets = [0]
-//                minParent.append(text)
-//            }
-//            
-//            if tailOffset > 0 {
-//                let text = self.contentMark(currentOpen.type, mark: .text)
-//                let start = nextOffset(max.range.upperBound, limit: maxParent.range.upperBound, in: paragraph)
-//                let intStart = max.intRange.maxLocation
-//                text.range = start ... maxParent.range.upperBound
-//                text.intRange = .init(location: intStart, length: tailOffset)
-//                text.documentRange = .init(
-//                    location: text.intRange.location + maxParent.intRange.location,
-//                    length: text.intRange.length
-//                )
-//                text.contents = [String(paragraph.rawContent[text.range])]
-//                text.rawContentIndices = [0]
-//                text.renderContents = text.contents
-//                text.renderContentOffsets = [0]
-//                maxParent.append(text)
-//            }
-//            
-//            if headOffset > 0 {
-//                minParent.contents = []
-//                minParent.rawContentIndices = []
-//                minParent.renderContents = []
-//                minParent.renderContentOffsets = []
-//            }
-//            
-//            if tailOffset > 0 {
-//                maxParent.contents = []
-//                maxParent.rawContentIndices = []
-//                maxParent.renderContents = []
-//                maxParent.renderContentOffsets = []
-//            }
-//            
-//        }
         
     }
     
@@ -1171,7 +1018,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                 }
                 
@@ -1188,7 +1034,6 @@ public final class Dropper {
                     node.contents = [String(paragraph.rawContent[node.range])]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
-                    node.renderContentOffsets = [0]
                     text.append(node)
                 }
                 
@@ -1196,7 +1041,6 @@ public final class Dropper {
                     text.contents = []
                     text.rawContentIndices = []
                     text.renderContents = []
-                    text.renderContentOffsets = []
                 }
                 
             }
@@ -1248,7 +1092,6 @@ public final class Dropper {
         result.contents = []
         result.rawContentIndices = []
         result.renderContents = []
-        result.renderContentOffsets = []
         return result
     }
     

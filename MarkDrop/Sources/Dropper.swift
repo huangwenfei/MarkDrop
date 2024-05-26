@@ -188,7 +188,7 @@ public final class Dropper {
         
         for unicode in paragraph.rawContent {
             
-            print(unicode)
+//            print(unicode)
             
             // MARK: Batch judge
             var dones:   [ProcessRule] = []
@@ -217,7 +217,7 @@ public final class Dropper {
             // MARK: Open rules
             for rule in opens {
                 
-                print(#function, #line, "open block: ", rule.source.type)
+//                print(#function, #line, "open block: ", rule.source.type)
                 
                 guard rule.isWorking == false else { continue }
                 rule.isWorking = true
@@ -252,7 +252,7 @@ public final class Dropper {
             // MARK: Cancles rules
             for rule in cancles {
                 
-                print(#function, #line, "cancle block: ", rule.source.type)
+//                print(#function, #line, "cancle block: ", rule.source.type)
                 
                 openRules.removeAll(where: { $0 === rule })
                 rule.parent?.children.removeAll(where: { $0 === rule })
@@ -280,7 +280,7 @@ public final class Dropper {
                 
                 guard rule.isWorkingDone == false else { continue }
                 
-                print(#function, #line, "done block: ", rule.source.type)
+//                print(#function, #line, "done block: ", rule.source.type)
                 
                 if rule.source.isOpenDone {
                     

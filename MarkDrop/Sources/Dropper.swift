@@ -313,13 +313,8 @@ public final class Dropper {
                     
                     adjustmentChildParent(currentOpen: node)
                     
-                    if markNode.mark == .text {
-                        markTexts.append(markNode)
-                    }
-                    
-                    if markNode.mark != .text && markNode.mark != .none {
-                        marks.append(markNode)
-                    }
+                    /// total content as special mark to split real text content nodes
+                    marks.append(markNode)
                     
                 } else {
                     
@@ -346,13 +341,8 @@ public final class Dropper {
                             markNode.documentRange = currentOpen.documentRange
                             currentOpen.append(markNode)
                             
-                            if markNode.mark == .text {
-                                markTexts.append(markNode)
-                            }
-                            
-                            if markNode.mark != .text && markNode.mark != .none {
-                                marks.append(markNode)
-                            }
+                            /// total content as special mark to split real text content nodes
+                            marks.append(markNode)
                             
                         } else {
                             

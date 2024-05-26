@@ -531,9 +531,14 @@ final class MarkDropTests: XCTestCase {
         “人生本来就\(ho)不太公平\(hc)，有人天生长得可爱，有人天生干吃不胖，有人生下来就坐享其成，但我希望你也有自己的超能力，比如\(bo)不会被生活打败\(bc)。 ”
         """
         
-        let dropper = Dropper(string: string2)
+        let string4 =
+        """
+        \(bo)@屈原 流放汉北\(bc), 现在，试着把@弹谷 当前脑海中的😤, @谷海鸥
+        """
+        
+        let dropper = Dropper(string: string4)
         let ast = dropper.process(using: [
-            DropHashTagRule(),
+            DropHashTagRule(), DropMentionRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()
         ])
         
@@ -695,6 +700,19 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         现在，试着把@弹谷 当前脑海中的😤, @谷海鸥
+        """
+        
+        let dropper = Dropper(string: string)
+        let ast = dropper.process(using: shortRules)
+        
+        printNodes(tree: ast)
+        
+    }
+    
+    func testMention1() throws {
+        let string =
+        """
+        @屈原 流放汉北, 现在，试着把@弹谷 当前脑海中的😤, @谷海鸥
         """
         
         let dropper = Dropper(string: string)

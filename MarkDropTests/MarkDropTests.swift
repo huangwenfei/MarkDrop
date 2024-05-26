@@ -69,7 +69,7 @@ final class MarkDropTests: XCTestCase {
             }
             guard node.isLeafNode, node.rawRenderContent.isEmpty == false else { return }
             
-            print("(\(node.renderContents), \(node.intRange.location)-\(node.intRange.maxLocation))")
+            print("(\(node.renderContents), \(node.intRange))")
         }
         
         print()
@@ -79,9 +79,9 @@ final class MarkDropTests: XCTestCase {
                     .sorted(by: { $0.intRange.location < $1.intRange.location })
                     .map({
                         if let content = $0 as? DropContentNodeProtocol {
-                            return "(\($0.renderContents), \($0.intRange.location)-\($0.intRange.maxLocation), \(content.parentContainerRenderTypes.reduce(content.type.render == nil ? "nil" : "(self:\(content.type.render!))", { $0 + "-" + "\($1)" }))"
+                            return "(\($0.renderContents), \($0.intRange), \(content.parentContainerRenderTypes.reduce(content.type.render == nil ? "nil" : "(self:\(content.type.render!))", { $0 + "-" + "\($1)" }))"
                         } else {
-                            return "(\($0.renderContents), \($0.intRange.location)-\($0.intRange.maxLocation))"
+                            return "(\($0.renderContents), \($0.intRange)"
                         }
                     })
                 return result.isEmpty ? ["\n"] : result
@@ -136,7 +136,7 @@ final class MarkDropTests: XCTestCase {
             \t现在，试着把当前#脑海 中的!!想法、**A灵无??压Press记录感Z**、情??绪!!等等记下来，尝试下!!#无压记录的??愉悦??。!!
         """
         
-        let dropper = Dropper(string: string1)
+        let dropper = Dropper(string: string4)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)
@@ -513,7 +513,25 @@ final class MarkDropTests: XCTestCase {
         \(bo)\(so)录\(bc)不期\(sc)而遇
         """
         
-        let dropper = Dropper(string: string)
+        let string2 =
+        """
+        没有人因为多活👿几年几岁而变老：人老🥰只是由于他抛弃了理想。\(uo)岁月使皮肤起皱\(uc)，而失去热情却让灵魂出现皱纹。你像你的信仰那样年轻，像你的疑虑那样衰老；像你的自由那样年轻，像你的恐惧那样衰老；像你的希望那样年轻，像你的绝望那样衰老。在你的心灵中央有一个无线电台。只要它从大地，从人们......\(uo)收到\(bo)美\(bc)、\(bo)希望\(bc)、\(bo)欢欣\(bc)、\(bo)勇敢\(bc)、\(bo)庄严\(bc)和\(bo)力量\(bc)的信息，你就永远这样\(ho)\(bo)年轻\(bc)\(hc)\(uc)。@巴金
+        
+        找一个\(bo)好朋友\(bc)，找一个\(bo)好天气\(bc)，找一棵结满果子的树，摇下几颗甜美的果子。找一个安安静静的\(uo)角落\(uc)，分享彼此无聊的生活点滴。等待微风轻轻吹拂，观看白云静静流散。但千万要记住，关掉你的手机。@几米
+        """
+        
+        let string3 =
+        """
+        一个人最好的生活状态，是\(io)该看书时看书，该玩时尽情玩\(ic)，看见优秀的人欣赏，看到落魄的人也不轻视，\(io)有自己的小生活和小情趣\(ic)，\(bo)不用去想改变世界，努力去活出自己\(bc)。没人爱时专注自己，有人爱时，有能力拥抱彼此。
+        
+        “还是喜欢一些#仪式感 ，很小很轻在某一瞬间，气泡在杯沿爆裂，\(ho)瓜果丰盈，睡莲妩媚\(hc)，钟意的香水影片，地毯边光影昏暗。像是少年时把喜欢一个人，作为心头大愿，\(uo)饱满，热忱\(uc)，像一颗夏日的果实。”
+        
+        我生怕自己本#非美玉 ，故而不敢加以刻苦琢磨，却又半信自己是块#美玉  ，故又不肯庸庸碌碌，与瓦砾为伍。@中岛敦《山月记》
+        
+        “人生本来就\(ho)不太公平\(hc)，有人天生长得可爱，有人天生干吃不胖，有人生下来就坐享其成，但我希望你也有自己的超能力，比如\(bo)不会被生活打败\(bc)。 ”
+        """
+        
+        let dropper = Dropper(string: string2)
         let ast = dropper.process(using: [
             DropHashTagRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

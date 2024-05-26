@@ -433,19 +433,19 @@ public final class Dropper {
         }
         
         /// - Tag: Slpit text nodes
+        let paragraphChildren = paragraph.children.sorted(by: {
+            $0.intRange.location < $1.intRange.location
+        })
+        
         var newChildren: [DropNode] = []
-        var previousChild: DropNode? = nil
         var currentLocation: Int = 0
-        for child in paragraph.children {
-            if child.intRange.location > currentLocation {
+        for child in paragraphChildren {
+            
+            let contentOffset = child.intRange.location - currentLocation
+            
+            if contentOffset > 0 {
                 let text = self.content(.text)
-                if let previous = previousChild {
-                    let intStart = previous.intRange.maxLocation
-                    text.intRange = .init(location: intStart, length: child.intRange.location - intStart)
-                } else {
-                    let intStart = 0
-                    text.intRange = .init(location: intStart, length: child.intRange.location - intStart)
-                }
+                text.intRange = .init(location: currentLocation, length: contentOffset)
                 text.documentRange = .init(
                     location: text.intRange.location + paragraph.intRange.location,
                     length: text.intRange.length
@@ -456,8 +456,8 @@ public final class Dropper {
                 text.parentNode = paragraph
                 newChildren.append(text)
             }
-            previousChild = child
-            currentLocation = child.intRange.vaildMaxLocation
+            
+            currentLocation = child.intRange.maxLocation
             newChildren.append(child)
         }
         
@@ -499,13 +499,17 @@ public final class Dropper {
         
         /// - Tag: Split Texts
         var markNodes = markTexts
+        marks.sort(by: { $0.intRange.location < $1.intRange.location })
         
         while let text = markNodes.popLast() {
             
-            var isClearText = false
+//            print()
+//            print((#file as NSString).lastPathComponent, #function.split(separator: "(").first!, #line, "before", text.rawContent)
+            
+            var splitMarks: [DropContentMarkNode] = []
             
             for mark in marks {
-                guard 
+                guard
                     text.rawContent.isEmpty == false,
                     mark.intRange.location >= text.intRange.location,
                     mark.intRange.maxLocation <= text.intRange.maxLocation
@@ -513,66 +517,65 @@ public final class Dropper {
                     continue
                 }
                 
-                let headOffset = mark.intRange.location - text.intRange.location
-                let tailOffset = text.intRange.maxLocation - mark.intRange.maxLocation
+                splitMarks.append(mark)
+            }
+            
+            guard splitMarks.isEmpty == false else {
+                continue
+            }
+            
+//            print((#file as NSString).lastPathComponent, #function.split(separator: "(").first!, #line, "marks", splitMarks.map({ ($0.rawContent, $0.intRange) }))
+            
+            var currentRange = text.intRange
+            
+            for mark in splitMarks {
                 
-                if headOffset > 0 {
+                let contentOffset = mark.intRange.location - currentRange.location
+                
+                if contentOffset > 0 {
                     let node = self.contentMark(text.type, mark: .text)
-                    let intStart = text.intRange.location
-                    node.intRange = .init(location: intStart, length: headOffset)
+                    let intStart = currentRange.location
+                    node.intRange = .init(location: intStart, length: contentOffset)
                     node.documentRange = .init(
-                        location: text.documentRange.location,
+                        location: paragraph.intRange.location + node.intRange.location,
                         length: node.intRange.length
                     )
                     node.contents = [document.content(in: node.documentRange)]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
                     text.append(node)
-                    
-                    if 
-                        marks.filter({
-                            $0.intRange.location >= node.intRange.location &&
-                            $0.intRange.maxLocation <= node.intRange.maxLocation
-                        }).isEmpty == false
-                    {
-                        markNodes.append(node)
-                    }
                 }
                 
-                if tailOffset > 0 {
-                    let node = self.contentMark(text.type, mark: .text)
-                    let intStart = mark.intRange.maxLocation
-                    node.intRange = .init(location: intStart, length: tailOffset)
-                    node.documentRange = .init(
-                        location: text.documentRange.maxLocation - tailOffset,
-                        length: node.intRange.length
-                    )
-                    node.contents = [document.content(in: node.documentRange)]
-                    node.rawContentIndices = [0]
-                    node.renderContents = node.contents
-                    text.append(node)
-                    
-                    if
-                        marks.filter({
-                            $0.intRange.location >= node.intRange.location &&
-                            $0.intRange.maxLocation <= node.intRange.maxLocation
-                        }).isEmpty == false
-                    {
-                        markNodes.append(node)
-                    }
-                }
-                
-                if headOffset > 0 || tailOffset > 0 {
-                    isClearText = true
-                }
+                currentRange.location = mark.intRange.maxLocation
                 
             }
             
-            if isClearText {
-                text.contents = []
-                text.rawContentIndices = []
-                text.renderContents = []
+            /// the last content text
+            let theLast = splitMarks.last!.intRange.vaildMaxLocation
+            let contentOffset = text.intRange.vaildMaxLocation - theLast
+            
+            if contentOffset > 0 {
+                let node = self.contentMark(text.type, mark: .text)
+                node.intRange = .init(
+                    location: splitMarks.last!.intRange.maxLocation,
+                    length: contentOffset
+                )
+                node.documentRange = .init(
+                    location: paragraph.intRange.location + node.intRange.location,
+                    length: node.intRange.length
+                )
+                node.contents = [document.content(in: node.documentRange)]
+                node.rawContentIndices = [0]
+                node.renderContents = node.contents
+                text.append(node)
             }
+            
+//            print((#file as NSString).lastPathComponent, #function.split(separator: "(").first!, #line, "after", text.leaves.map({ $0.rawContent }))
+//            print()
+            
+            text.contents = []
+            text.rawContentIndices = []
+            text.renderContents = []
             
         }
         

@@ -338,14 +338,24 @@ public final class DropRuleToken {
     
     public var contentRange: DropContants.IntRange {
         
-        guard let openRange, let closeRange else {
+        let ranges = rawContentRanges
+        
+        guard ranges.isEmpty == false else {
             return .init()
         }
         
-        return .init(
-            location: openRange.location,
-            length: closeRange.maxLocation - openRange.location
-        )
+        if ranges.count == 1 {
+            return ranges.first!
+        } else {
+            guard let first = ranges.first, let last = ranges.last else {
+                return .init()
+            }
+            
+            return .init(
+                location: first.location,
+                length: last.maxLocation - first.location
+            )
+        }
         
     }
     
@@ -363,7 +373,10 @@ public final class DropRuleToken {
             } else {
                 capture = (
                     closeRange.length == 0
-                        ? nil
+                        ? DropContants.IntRange(
+                              location: openRange.maxLocation,
+                              length: closeRange.vaildMaxLocation - openRange.maxLocation - 1
+                          )
                         : DropContants.IntRange(
                               location: openRange.maxLocation,
                               length: closeRange.maxLocation - openRange.maxLocation
@@ -374,9 +387,14 @@ public final class DropRuleToken {
         }
         
         /// token.string + capture
-        let result = [openRange] + (capture != nil ? [capture!] : [])
-        
-        return token.isCombineContents ? [contentRange] : result
+        if let capture {
+            let result = [openRange, capture]
+            return token.isCombineContents
+                ? [.init(location: openRange.location, length: capture.maxLocation - openRange.location)]
+                : result
+        } else {
+            return [openRange]
+        }
         
     }
     

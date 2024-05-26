@@ -264,7 +264,8 @@ public final class AttributedStringRender: DropRendable {
         /// - Tag: Compact Content
         let compactContentRenders = compactExpandActions(
             combineContentRenders: combineContentRenders,
-            paragraphContent: paragraphContent
+            paragraphContent: paragraphContent,
+            attributes: attributes
         )
         
         /// - Tag: Replace Content
@@ -662,6 +663,7 @@ public final class AttributedStringRender: DropRendable {
                     mode: mode,
                     isUsingParentAttributes: isUsingParentAttributes,
                     renderType: renderType,
+                    parentTypes: content.parentContainerRenderTypes,
                     markNode: content,
                     range: renderRange,
                     content: string,
@@ -675,6 +677,8 @@ public final class AttributedStringRender: DropRendable {
     }
     
     private func combineExpandActions(contentRenders: [RenderContentSpecial], attributes: DropAttributes, paragraphContent: NSAttributedString) -> [[RenderContentSpecial]] {
+        
+//        print((#file as NSString).lastPathComponent, #function, #line, contentRenders.map({ ($0.range, $0.content) }))
         
         var combineContentRenders: [[RenderContentSpecial]] = []
         
@@ -739,11 +743,9 @@ public final class AttributedStringRender: DropRendable {
         return combineContentRenders
     }
     
-    private func compactExpandActions(combineContentRenders: [[RenderContentSpecial]], paragraphContent: NSAttributedString) -> [RenderContentSpecial] {
+    private func compactExpandActions(combineContentRenders: [[RenderContentSpecial]], paragraphContent: NSAttributedString, attributes: DropAttributes) -> [RenderContentSpecial] {
         
         var compactContentRenders: [RenderContentSpecial] = []
-        
-        var previousCompactRender: RenderContentSpecial? = nil
         
         for combineContentRender in combineContentRenders {
             
@@ -763,7 +765,7 @@ public final class AttributedStringRender: DropRendable {
                 Array(subCompactDict.values).sorted(by: {
                     $0.range.location < $1.range.location
                 }).map({
-                    ($0.mode, paragraphContent.attributedSubstring(from: $0.range).string)
+                    ($0.mode, $0.range, paragraphContent.attributedSubstring(from: $0.range).string)
                 })
             )
             #endif
@@ -773,19 +775,65 @@ public final class AttributedStringRender: DropRendable {
                 $0.range.location < $1.range.location
             })
 
-            var compact: RenderContentSpecial? = subCompacts.first
+            var compacts: [RenderContentSpecial] = []
+            
+            var previousCompact: RenderContentSpecial? = nil
 
-            for index in stride(from: 1, to: subCompacts.count, by: 1) {
+            for index in 0 ..< subCompacts.count {
 
-                let render = subCompacts[index]
+                var render = subCompacts[index]
+                
+                if let previous = previousCompact {
+                    
+                    if previous.range.vaildMaxLocation >= render.range.location {
+                        
+                        var newPrevious = previous
+                        
+                        let offset = render.range.vaildMaxLocation - previous.range.vaildMaxLocation
+                        
+                        newPrevious.range.length += offset
+                        
+                        newPrevious.content = paragraphContent.attributedSubstring(
+                            from: newPrevious.range
+                        ).string
+                        
+                        /// current or previous ???
+                        newPrevious.mappingResult.merge(
+                            render.mappingResult, uniquingKeysWith: { current,_ in current }
+                        )
+                        
+                        compacts.removeLast()
+                        compacts.append(newPrevious)
+                        
+                        render = newPrevious
+                        
+                    } 
+                    else if previous.range.maxLocation == render.range.location {
+                        
+                        var newPrevious = previous
+                        
+                        newPrevious.range.length += render.range.length
+                        newPrevious.content += render.content
 
-                compact?.range.length += render.range.length
-                compact?.content += render.content
-
-                compact?.mappingResult.merge(
-                    render.mappingResult, uniquingKeysWith: { current,_ in current }
-                )
-
+                        newPrevious.mappingResult.merge(
+                            render.mappingResult, uniquingKeysWith: { current,_ in current }
+                        )
+                        
+                        compacts.removeLast()
+                        compacts.append(newPrevious)
+                        
+                        render = newPrevious
+                        
+                    } else {
+                        compacts.append(render)
+                    }
+                    
+                } else {
+                    compacts.append(render)
+                }
+                
+                previousCompact = render
+                
             }
 
             #if false
@@ -793,15 +841,22 @@ public final class AttributedStringRender: DropRendable {
 
             print(
                 #function, #line,
-                (compact!.mode, compact!.range, paragraphContent.attributedSubstring(from: compact!.range).string)
+                compacts.map{
+                    ($0.mode, $0.range, paragraphContent.attributedSubstring(from: $0.range).string)
+                }
             )
             #endif
             
             /// 前置交叠/连接压缩
-            if let previous = previousCompactRender, let current = compact {
+            if 
+                let previous = compactContentRenders.last,
+                let current = compacts.first
+            {
                 
                 /// 交叠压缩
-                if previous.range.vaildMaxLocation >= current.range.location {
+                if 
+                    previous.range.vaildMaxLocation >= current.range.location
+                {
                     
                     var newPrevious = previous
                     
@@ -818,9 +873,12 @@ public final class AttributedStringRender: DropRendable {
                         current.mappingResult, uniquingKeysWith: { current,_ in current }
                     )
                     
-                    compactContentRenders[compactContentRenders.count - 1] = newPrevious
+                    compactContentRenders.removeLast()
+                    compactContentRenders.append(newPrevious)
                     
-                    compact = newPrevious
+                    compacts.removeFirst()
+                    compactContentRenders.append(contentsOf: compacts)
+                    
                 }
                 /// 连接(相邻)合并压缩
                 else if previous.range.maxLocation == current.range.location {
@@ -837,24 +895,22 @@ public final class AttributedStringRender: DropRendable {
                         current.mappingResult, uniquingKeysWith: { current,_ in current }
                     )
                     
-                    compactContentRenders[compactContentRenders.count - 1] = newPrevious
+                    compactContentRenders.removeLast()
+                    compactContentRenders.append(newPrevious)
                     
-                    compact = newPrevious
+                    compacts.removeFirst()
+                    compactContentRenders.append(contentsOf: compacts)
                 }
                 else {
-                    compactContentRenders.append(current)
+                    compactContentRenders.append(contentsOf: compacts)
                 }
             } else {
-                if let compact {
-                    compactContentRenders.append(compact)
-                }
+                compactContentRenders.append(contentsOf: compacts)
             }
             
             #if false
             print(#function, #line, compactContentRenders.count)
             #endif
-            
-            previousCompactRender = compact
             
         }
         
@@ -1023,6 +1079,7 @@ extension AttributedStringRender {
         public var mode: RenderContentSpecialMode
         public var isUsingParentAttributes: Bool
         public var renderType: DropRenderMarkType
+        public var parentTypes: [DropRenderMarkType]
         public var markNode: DropContentNodeProtocol
         public var range: DropContants.IntRange
         public var content: String
@@ -1033,6 +1090,7 @@ extension AttributedStringRender {
             mode: RenderContentSpecialMode,
             isUsingParentAttributes: Bool,
             renderType: DropRenderMarkType,
+            parentTypes: [DropRenderMarkType],
             markNode: DropContentNodeProtocol,
             range: DropContants.IntRange,
             content: String,
@@ -1041,6 +1099,7 @@ extension AttributedStringRender {
             self.mode = mode
             self.isUsingParentAttributes = isUsingParentAttributes
             self.renderType = renderType
+            self.parentTypes = parentTypes
             self.markNode = markNode
             self.range = range
             self.content = content

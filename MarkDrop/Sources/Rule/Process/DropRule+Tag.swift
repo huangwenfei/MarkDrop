@@ -1035,14 +1035,24 @@ public final class DropRuleTag {
     
     public var contentRange: DropContants.IntRange {
         
-        guard let openRange, let closeRange else {
+        let ranges = rawContentRanges
+        
+        guard ranges.isEmpty == false else {
             return .init()
         }
         
-        return .init(
-            location: openRange.location,
-            length: closeRange.maxLocation - openRange.location
-        )
+        if ranges.count == 1 {
+            return ranges.first!
+        } else {
+            guard let first = ranges.first, let last = ranges.last else {
+                return .init()
+            }
+            
+            return .init(
+                location: first.location,
+                length: last.maxLocation - first.location
+            )
+        }
     }
     
     public var rawContentRanges: [DropContants.IntRange] {

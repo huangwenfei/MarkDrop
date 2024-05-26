@@ -363,6 +363,10 @@ public final class AttributedStringRender: DropRendable {
         document.raw != new
     }
     
+    public func isAttributesUpdate(_ new: DropAttributes) -> Bool {
+        attributes != new
+    }
+    
     // MARK: Attributes
     private func append(paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         

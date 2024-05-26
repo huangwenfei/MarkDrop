@@ -286,7 +286,7 @@ public final class DropRuleLargeToken {
                 let haveEof = token.closeRule.contains(.eof)
                 if haveEof {
                     state = .done(isCancled: false, close: nil)
-                    closeRange = .init(location: offset + 1, length: 0)
+                    closeRange = .init(location: offset + 1, length: -1)
                 } else {
                     state = .done(isCancled: true, close: nil)
                     openRange = nil
@@ -294,7 +294,7 @@ public final class DropRuleLargeToken {
             }
             else if isParagraphEndChar {
                 state = .done(isCancled: false, close: nil)
-                closeRange = .init(location: offset + 1, length: 0)
+                closeRange = .init(location: offset + 1, length: -1)
             } else {
                 let isSpace = token.closeRule.contains(.space)
                 let isNewline = token.closeRule.contains(.newline)
@@ -441,10 +441,10 @@ public final class DropRuleLargeToken {
                 capture = nil
             } else {
                 capture = (
-                    closeRange.length == 0
+                    closeRange.length == -1
                         ? DropContants.IntRange(
-                            location: openRange.maxLocation,
-                            length: closeRange.vaildMaxLocation - openRange.maxLocation - 1
+                              location: openRange.maxLocation,
+                              length: closeRange.location - openRange.maxLocation
                           )
                         : DropContants.IntRange(
                               location: openRange.maxLocation,

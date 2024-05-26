@@ -206,7 +206,7 @@ public final class DropRuleToken {
                         openRange = nil
                     } else {
                         state = .done(isCancled: false, close: nil)
-                        closeRange = .init(location: offset + 1, length: 0)
+                        closeRange = .init(location: offset + 1, length: -1)
                     }
                 } else {
                     state = .done(isCancled: true, close: nil)
@@ -219,7 +219,7 @@ public final class DropRuleToken {
                     openRange = nil
                 } else {
                     state = .done(isCancled: false, close: nil)
-                    closeRange = .init(location: offset + 1, length: 0)
+                    closeRange = .init(location: offset + 1, length: -1)
                 }
             } else {
                 let isSpace = token.closeRule.contains(.space)
@@ -372,10 +372,10 @@ public final class DropRuleToken {
                 capture = nil
             } else {
                 capture = (
-                    closeRange.length == 0
+                    closeRange.length == -1
                         ? DropContants.IntRange(
                               location: openRange.maxLocation,
-                              length: closeRange.vaildMaxLocation - openRange.maxLocation - 1
+                              length: closeRange.location - openRange.maxLocation
                           )
                         : DropContants.IntRange(
                               location: openRange.maxLocation,

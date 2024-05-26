@@ -908,10 +908,6 @@ public final class AttributedStringRender: DropRendable {
                 compactContentRenders.append(contentsOf: compacts)
             }
             
-            #if false
-            print(#function, #line, compactContentRenders.count)
-            #endif
-            
         }
         
         #if false

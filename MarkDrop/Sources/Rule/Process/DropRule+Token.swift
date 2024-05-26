@@ -342,7 +342,10 @@ public final class DropRuleToken {
             return .init()
         }
         
-        return .init(location: openRange.location, length: closeRange.vaildMaxLocation)
+        return .init(
+            location: openRange.location,
+            length: closeRange.maxLocation - openRange.location
+        )
         
     }
     

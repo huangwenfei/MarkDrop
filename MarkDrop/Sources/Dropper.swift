@@ -457,7 +457,7 @@ public final class Dropper {
                 newChildren.append(text)
             }
             previousChild = child
-            currentLocation = child.intRange.maxLocation
+            currentLocation = child.intRange.vaildMaxLocation
             newChildren.append(child)
         }
         

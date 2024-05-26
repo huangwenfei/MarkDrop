@@ -513,7 +513,7 @@ final class MarkDropTests: XCTestCase {
         \(bo)\(so)录\(bc)不期\(sc)而遇
         """
         
-        let dropper = Dropper(string: string1)
+        let dropper = Dropper(string: string)
         let ast = dropper.process(using: [
             DropHashTagRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

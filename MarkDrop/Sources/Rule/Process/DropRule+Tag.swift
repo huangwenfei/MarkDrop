@@ -1039,8 +1039,10 @@ public final class DropRuleTag {
             return .init()
         }
         
-        return .init(location: openRange.location, length: closeRange.vaildMaxLocation)
-        
+        return .init(
+            location: openRange.location,
+            length: closeRange.maxLocation - openRange.location
+        )
     }
     
     public var rawContentRanges: [DropContants.IntRange] {

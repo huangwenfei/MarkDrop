@@ -282,7 +282,10 @@ public final class DropRuleLargeTag {
             return .init()
         }
         
-        return .init(location: openRange.location, length: closeRange.vaildMaxLocation)
+        return .init(
+            location: openRange.location,
+            length: closeRange.maxLocation - openRange.location
+        )
         
     }
     

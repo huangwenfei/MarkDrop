@@ -63,7 +63,7 @@ public final class AttributedStringRender: DropRendable {
         return rerender(attributes: attributes, mapping: mapping)
     }
     
-    private func render(docOffset: inout Int, renderStacks: inout [DropParagraphRender], block multiParagraphs: [DropContainerNode], isLastLine: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
+    private func render(docOffset: inout Int, renderStacks: inout [DropParagraphRender], parentType: DropContainerRenderType, parentStack: DropParagraphRender?, block multiParagraphs: [DropContainerNode], isLastLine: Bool, base: ParagraphTextAttributes, with attributes: DropAttributes, mapping: DropAttributedMapping) -> Result {
         
         let result = NSMutableAttributedString()
         
@@ -89,6 +89,7 @@ public final class AttributedStringRender: DropRendable {
                 
                 /// - Tag: Render stack
                 let stack = DropParagraphRender(
+                    parentType: .init(type: type),
                     type: child.type,
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
@@ -100,7 +101,9 @@ public final class AttributedStringRender: DropRendable {
                 
                 paragraphText = render(
                     docOffset: &docOffset,
-                    renderStacks: &renderStacks,
+                    renderStacks: &renderStacks, 
+                    parentType: .init(type: type),
+                    parentStack: stack,
                     block: child.containers(),
                     isLastLine: child.isLastLine,
                     base: base,
@@ -112,6 +115,7 @@ public final class AttributedStringRender: DropRendable {
                 
             case .paragraph:
                 let stack = DropParagraphRender(
+                    parentType: parentType,
                     type: child.type,
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
@@ -119,7 +123,11 @@ public final class AttributedStringRender: DropRendable {
                     children: []
                 )
                 
-                renderStacks.append(stack)
+                if let parentStack {
+                    parentStack.children.append(stack)
+                } else {
+                    renderStacks.append(stack)
+                }
                 
                 paragraphText = render(
                     docOffset: &docOffset,
@@ -134,6 +142,7 @@ public final class AttributedStringRender: DropRendable {
                 
             case .break:
                 let stack = DropParagraphRender(
+                    parentType: parentType,
                     type: child.type,
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
@@ -141,7 +150,11 @@ public final class AttributedStringRender: DropRendable {
                     children: []
                 )
                 
-                renderStacks.append(stack)
+                if let parentStack {
+                    parentStack.children.append(stack)
+                } else {
+                    renderStacks.append(stack)
+                }
                 
                 paragraphText = render(
                     docOffset: &docOffset,
@@ -434,6 +447,8 @@ public final class AttributedStringRender: DropRendable {
         return render(
             docOffset: &docOffset,
             renderStacks: &renderStacks,
+            parentType: .documant,
+            parentStack: nil,
             block: ast.containers(),
             isLastLine: false,
             base: attributes.paragraphText,

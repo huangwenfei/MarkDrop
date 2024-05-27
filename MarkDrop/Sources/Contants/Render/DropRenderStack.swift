@@ -7,19 +7,33 @@
 
 import Foundation
 
-public final class DropParagraphRender: CustomStringConvertible {
+public protocol DropRenderStackProtocol: AnyObject {
+    var renderRange: DropContants.IntRange { get set }
+    var renderDocRange: DropContants.IntRange { get }
+    var paragraphRange: DropContants.IntRange { get set }
+    var docRange: DropContants.IntRange { get set }
+    var lineDescription: String { get }
+}
+
+public final class DropParagraphRender: DropRenderStackProtocol, CustomStringConvertible {
     
     // MARK: Properties
+    public var parentType: DropContainerRenderType?
     public var type: DropContainerType
     public var renderRange: DropContants.IntRange
     public var renderDocRange: DropContants.IntRange { renderRange }
     public var paragraphRange: DropContants.IntRange
     public var docRange: DropContants.IntRange
-    public var children: [DropRenderStack]
+    public var children: [DropRenderStackProtocol]
+    
+    public var lineDescription: String {
+        "{ type: \(type), parentType: \(String(describing: parentType)), range: \(renderRange), renderDocRange: \(renderDocRange) }"
+    }
     
     public var description: String {
         """
-        \ntype: \(type),
+        \nparentType:\(String(describing: parentType)),
+        type: \(type),
         renderRange: \(renderRange),
         paragraphRange: \(paragraphRange),
         docRange: \(docRange),
@@ -28,8 +42,9 @@ public final class DropParagraphRender: CustomStringConvertible {
     }
     
     // MARK: Init
-    public init(type: DropContainerType, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange, docRange: DropContants.IntRange, children: [DropRenderStack]) {
+    public init(parentType: DropContainerRenderType? = nil, type: DropContainerType, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange, docRange: DropContants.IntRange, children: [DropRenderStackProtocol]) {
         
+        self.parentType = parentType
         self.type = type
         self.renderRange = renderRange
         self.paragraphRange = paragraphRange
@@ -39,7 +54,7 @@ public final class DropParagraphRender: CustomStringConvertible {
     
 }
 
-public final class DropRenderStack: CustomStringConvertible {
+public final class DropRenderStack: DropRenderStackProtocol, CustomStringConvertible {
     
     // MARK: Properties
     public var renderRange: DropContants.IntRange

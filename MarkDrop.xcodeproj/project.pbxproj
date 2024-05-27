@@ -17,6 +17,7 @@
 		2307CA262BEE2686003CD18F /* DropRule+LargeTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2307CA252BEE2686003CD18F /* DropRule+LargeTag.swift */; };
 		2307CA282BEE6AC7003CD18F /* DropVaildHead.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2307CA272BEE6AC7003CD18F /* DropVaildHead.swift */; };
 		230C50672C046FA200E3DFC2 /* DropRenderStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230C50662C046FA200E3DFC2 /* DropRenderStack.swift */; };
+		230C50692C04A89300E3DFC2 /* DropContainerRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230C50682C04A89300E3DFC2 /* DropContainerRenderType.swift */; };
 		231DFFF52BF9CBEF00456E4B /* DropContentNodeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231DFFF42BF9CBEF00456E4B /* DropContentNodeProtocol.swift */; };
 		231DFFFA2BF9D3DB00456E4B /* DropParagraphIndent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */; };
 		232A0D172BE3E517006A594C /* MarkDrop.docc in Sources */ = {isa = PBXBuildFile; fileRef = 232A0D162BE3E517006A594C /* MarkDrop.docc */; };
@@ -117,6 +118,7 @@
 		2307CA252BEE2686003CD18F /* DropRule+LargeTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+LargeTag.swift"; sourceTree = "<group>"; };
 		2307CA272BEE6AC7003CD18F /* DropVaildHead.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropVaildHead.swift; sourceTree = "<group>"; };
 		230C50662C046FA200E3DFC2 /* DropRenderStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropRenderStack.swift; sourceTree = "<group>"; };
+		230C50682C04A89300E3DFC2 /* DropContainerRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropContainerRenderType.swift; sourceTree = "<group>"; };
 		231DFFF42BF9CBEF00456E4B /* DropContentNodeProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropContentNodeProtocol.swift; sourceTree = "<group>"; };
 		231DFFF92BF9D3DB00456E4B /* DropParagraphIndent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropParagraphIndent.swift; sourceTree = "<group>"; };
 		232A0D122BE3E517006A594C /* MarkDrop.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MarkDrop.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -325,6 +327,7 @@
 				234873CA2BFC946E00FF3E54 /* DropRenderFillMode.swift */,
 				23E5338F2BFD956B004EF80B /* DropAttributedMappingResult.swift */,
 				230C50662C046FA200E3DFC2 /* DropRenderStack.swift */,
+				230C50682C04A89300E3DFC2 /* DropContainerRenderType.swift */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -727,6 +730,7 @@
 				23452EDD2BF4DB98009404D8 /* DropRule+CommonMark.swift in Sources */,
 				23EB49192BF79C0C002F25F0 /* CharacterAttributes.swift in Sources */,
 				23C831822BF64CA30047D385 /* UnderlineAttributes.swift in Sources */,
+				230C50692C04A89300E3DFC2 /* DropContainerRenderType.swift in Sources */,
 				23C831762BF5FB860047D385 /* ThemeProtocol.swift in Sources */,
 				23C831702BF5F9F00047D385 /* EnvironmentTheme.swift in Sources */,
 				236C7EB82BF8A73D0023BDEC /* DropActionState.swift in Sources */,

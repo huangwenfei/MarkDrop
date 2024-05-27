@@ -27,6 +27,8 @@ public struct ParagraphAttributes: Hashable {
     public var lineBreakMode: NSLineBreakMode
     public var lineBreakStrategy: NSParagraphStyle.LineBreakStrategy
     
+    public var startHeadIndent: CGFloat
+    
     /// use for indentation -> firstHead & head & tail & tabStop
     public var indentWidth: CGFloat
     
@@ -40,6 +42,7 @@ public struct ParagraphAttributes: Hashable {
         paragraphSpacingAfter: CGFloat = NSParagraphStyle.default.paragraphSpacing,
         lineBreakMode: NSLineBreakMode = NSParagraphStyle.default.lineBreakMode,
         lineBreakStrategy: NSParagraphStyle.LineBreakStrategy = NSParagraphStyle.default.lineBreakStrategy,
+        startHeadIndent: CGFloat = 0,
         indentWidth: CGFloat = 20
     ) {
         self.alignment = alignment
@@ -50,6 +53,7 @@ public struct ParagraphAttributes: Hashable {
         self.paragraphSpacingAfter = paragraphSpacingAfter
         self.lineBreakMode = lineBreakMode
         self.lineBreakStrategy = lineBreakStrategy
+        self.startHeadIndent = startHeadIndent
         self.indentWidth = indentWidth
     }
 
@@ -65,6 +69,7 @@ public struct ParagraphAttributes: Hashable {
         result.paragraphSpacing = paragraphSpacingAfter
         result.lineBreakMode = lineBreakMode
         result.lineBreakStrategy = lineBreakStrategy
+        result.headIndent = startHeadIndent
         return result.copy() as! NSParagraphStyle
     }
     
@@ -106,6 +111,10 @@ extension AttributesKey {
     
     public static var paragraphLineBreakStrategy: Self {
         .init(rawValue: "drop.attributes.paragraph.lineBreakStrategy.key")
+    }
+    
+    public static var paragraphStartHeadindent: Self {
+        .init(rawValue: "drop.attributes.paragraph.startHeadIndent.key")
     }
     
 }

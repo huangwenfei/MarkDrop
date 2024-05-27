@@ -42,7 +42,7 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
     }
     
     // MARK: Init
-    public init(parentType: DropContainerRenderType? = nil, type: DropContainerType, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange, docRange: DropContants.IntRange, children: [DropRenderStackProtocol]) {
+    public init(parentType: DropContainerRenderType? = nil, type: DropContainerType = .document, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange = .init(), docRange: DropContants.IntRange = .init(), children: [DropRenderStackProtocol] = []) {
         
         self.parentType = parentType
         self.type = type

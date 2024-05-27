@@ -336,6 +336,9 @@ public final class DropRuleLargeToken {
         case .replace(let new):
             renderToken = new
             
+        case let .append(leading, trailing):
+            renderToken = leading + document.content(in: openRange) + trailing
+            
         case .none:
             renderToken = document.content(in: openRange)
         }
@@ -364,6 +367,9 @@ public final class DropRuleLargeToken {
                 
             case .replace(let new):
                 capture += new
+                
+            case let .append(leading, trailing):
+                capture = leading + close + trailing
                 
             case .none:
                 capture += close

@@ -53,8 +53,8 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         let style = DropMutableParagraph()
         style.setParagraphStyle(paragraph.paragraphStyle)
         
-        style.firstLineHeadIndent = 0
-        style.headIndent = 0
+        style.firstLineHeadIndent = paragraph.startHeadIndent
+        style.headIndent = paragraph.startHeadIndent
         style.tabStops = []
         
         let indentation = paragraph.indentWidth

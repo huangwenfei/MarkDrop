@@ -916,6 +916,9 @@ public final class DropRuleTag {
         case .replace(let new):
             openTag = new
             
+        case let .append(leading, trailing):
+            openTag = leading + tag.openTag + trailing
+            
         case .none:
             openTag = tag.openTag
         }
@@ -931,6 +934,9 @@ public final class DropRuleTag {
             
         case .replace(let new):
             closeTag = new
+            
+        case let .append(leading, trailing):
+            closeTag = leading + tag.closeTag + trailing
             
         case .none:
             closeTag = tag.closeTag
@@ -953,6 +959,9 @@ public final class DropRuleTag {
                 
             case .replace(let new):
                 medianTag = new
+                
+            case let .append(leading, trailing):
+                medianTag = leading + median + trailing
                 
             case .none:
                 medianTag = median

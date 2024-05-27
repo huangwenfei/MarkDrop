@@ -226,6 +226,9 @@ public final class DropRuleLargeTag {
         case .replace(let new):
             openTag = new
             
+        case let .append(leading, trailing):
+            openTag = leading + document.content(in: openRange) + trailing
+            
         case .none:
             openTag = document.content(in: openRange)
         }
@@ -241,6 +244,9 @@ public final class DropRuleLargeTag {
             
         case .replace(let new):
             closeTag = new
+            
+        case let .append(leading, trailing):
+            closeTag = leading + tag.closeTag + trailing
             
         case .none:
             closeTag = tag.closeTag

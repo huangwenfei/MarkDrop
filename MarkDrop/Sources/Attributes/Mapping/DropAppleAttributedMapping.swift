@@ -16,7 +16,7 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         
         style.firstLineHeadIndent = 0
         style.headIndent = 0
-        style.tabStops = []
+        style.tabStops = [.init(textAlignment: .left, location: paragraph.startHeadIndent)]
         
         let indentation = paragraph.indentWidth
         

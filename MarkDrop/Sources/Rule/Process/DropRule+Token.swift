@@ -267,6 +267,9 @@ public final class DropRuleToken {
         case .replace(let new):
             renderToken = new
             
+        case let .append(leading, trailing):
+            renderToken = leading + token.token + trailing
+            
         case .none:
             renderToken = token.token
         }
@@ -295,6 +298,9 @@ public final class DropRuleToken {
                 
             case .replace(let new):
                 capture += new
+                
+            case let .append(leading, trailing):
+                capture = leading + capture + close + trailing
                 
             case .none:
                 capture += close

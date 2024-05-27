@@ -308,17 +308,31 @@ public final class AttributedStringRender: DropRendable {
     }
     
     public func rerender(document string: String, using attributes: DropAttributes) -> Result {
-        self.document.raw = string
+        
         self.attributes = attributes
         
-        let ast = Dropper(document: self.document).process(using: rules)
-        self.renderAST = ast
-        
-        guard let mapping else {
-            return .init(string: string)
+        if string != document.raw {
+            
+            self.document.raw = string
+            
+            let ast = Dropper(document: self.document).process(using: rules)
+            self.renderAST = ast
+            
+            guard let mapping else {
+                return .init(string: string)
+            }
+            
+            return rerender(attributes: attributes, mapping: mapping)
+            
+        } else {
+            
+            guard let mapping else {
+                return .init(string: string)
+            }
+            
+            return rerender(attributes: attributes, mapping: mapping)
         }
-        
-        return rerender(attributes: attributes, mapping: mapping)
+    
     }
     
     public func rerender(using attributes: DropAttributes) -> Result {

@@ -289,6 +289,7 @@ public final class AttributedStringRender: DropRendable {
                 renderMarkAttributes.append(
                     .init(
                         type: renderType,
+                        parentTypes: content.parentContainerRenderTypes,
                         intRange: content.intRange,
                         mappingResult: mappingResult
                     )
@@ -373,8 +374,8 @@ public final class AttributedStringRender: DropRendable {
         /// - Tag: Clear
         paragraphRenderDict = .init()
         
-        #if DEBUG && false
-        print((#file as NSString).lastPathComponent, #function, #line, renderStack)
+        #if DEBUG && true
+        print((#file as NSString).lastPathComponent, #function, #line, renderStack, paragraphContent)
         #endif
         
         return paragraphContent
@@ -513,7 +514,10 @@ public final class AttributedStringRender: DropRendable {
             
             if
                 let type = markNode.type.render,
-                let previousMappingResult = renderMarkAttributes.last(where: { $0.type == type })?.mappingResult
+                let previousMappingResult = renderMarkAttributes.last(where: {
+                    $0.type == type &&
+                    $0.parentTypes == markNode.parentContainerRenderTypes
+                })?.mappingResult
             {
                 
                 mappingResult = previousMappingResult
@@ -537,18 +541,19 @@ public final class AttributedStringRender: DropRendable {
             }
         }
         
-        if
-            let _ = markNode.type.render,
-            markNode.parentContainerRenderTypes.filter({
+        if let _ = markNode.type.render {
+            
+            let parentFilles = markNode.parentContainerRenderTypes.filter({
                 attributes.markAttributes($0).isFillChildAttributes
             })
-            .isEmpty == false
-        {
             
-            let parentAttributes = renderMarkAttributes.last
-
-            if let previousMappingResult = parentAttributes?.mappingResult {
-                mappingResult = previousMappingResult
+            if 
+                parentFilles.isEmpty == false,
+                let parentAttributes = renderMarkAttributes.first(where: {
+                    $0.type == parentFilles.first!
+                })
+            {
+                mappingResult = parentAttributes.mappingResult
             } else {
                 fillNewDict()
             }
@@ -749,8 +754,30 @@ public final class AttributedStringRender: DropRendable {
             let renderType = content.type.render
         {
             
-            let isExpand = attributes.markAttributes(renderType).shouldExpandContent
-            let isAction = attributes.markAttributes(renderType).action != nil
+            var attribute = attributes.markAttributes(renderType)
+            
+            var isExpand = attribute.shouldExpandContent
+            
+            if 
+                content.parentContainerRenderTypes.filter({
+                    attributes.markAttributes($0).shouldExpandContent
+                }).isEmpty
+            {
+                isExpand = true
+                attribute.shouldExpandContent = true
+            }
+            
+            var isAction = attribute.action != nil
+            
+            let parentActions = content.parentContainerRenderTypes.filter({
+                attributes.markAttributes($0).action != nil
+            })
+            
+            if parentActions.isEmpty == false {
+                isAction = true
+                let parentAttribute = attributes.markAttributes(parentActions.first!)
+                attribute.action = parentAttribute.action
+            }
             
             let mode: RenderContentSpecialMode?
             
@@ -770,6 +797,7 @@ public final class AttributedStringRender: DropRendable {
                     markNode: content,
                     range: renderRange,
                     content: string,
+                    attribute: attribute,
                     mappingResult: mappingResult
                 ))
                 contentRenders.sort(by: { $0.range.location < $1.range.location })
@@ -1127,12 +1155,14 @@ extension AttributedStringRender {
         
         // MARK: Properties
         public var type: DropRenderMarkType
+        public var parentTypes: [DropRenderMarkType]
         public var intRange: DropContants.IntRange
         public var mappingResult: DropContants.AttributedDict
         
         // MARK: Init
-        public init(type: DropRenderMarkType, intRange: DropContants.IntRange, mappingResult: DropContants.AttributedDict) {
+        public init(type: DropRenderMarkType, parentTypes: [DropRenderMarkType], intRange: DropContants.IntRange, mappingResult: DropContants.AttributedDict) {
             self.type = type
+            self.parentTypes = parentTypes
             self.intRange = intRange
             self.mappingResult = mappingResult
         }
@@ -1153,6 +1183,7 @@ extension AttributedStringRender {
         public var markNode: DropContentNodeProtocol
         public var range: DropContants.IntRange
         public var content: String
+        public var attribute: TextAttributes
         public var mappingResult: DropContants.AttributedDict
         
         // MARK: Init
@@ -1164,6 +1195,7 @@ extension AttributedStringRender {
             markNode: DropContentNodeProtocol,
             range: DropContants.IntRange,
             content: String,
+            attribute: TextAttributes,
             mappingResult: DropContants.AttributedDict
         ) {
             self.mode = mode
@@ -1173,6 +1205,7 @@ extension AttributedStringRender {
             self.markNode = markNode
             self.range = range
             self.content = content
+            self.attribute = attribute
             self.mappingResult = mappingResult
         }
         

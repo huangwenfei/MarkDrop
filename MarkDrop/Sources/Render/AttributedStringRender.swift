@@ -373,7 +373,7 @@ public final class AttributedStringRender: DropRendable {
         /// - Tag: Clear
         paragraphRenderDict = .init()
         
-        #if DEBUG && true
+        #if DEBUG && false
         print((#file as NSString).lastPathComponent, #function, #line, renderStack)
         #endif
         

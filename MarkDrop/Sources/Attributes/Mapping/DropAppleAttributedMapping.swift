@@ -69,13 +69,13 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mapping(expand text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    public override func mapping(expand: ExpandAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         
         nil
         
     }
     
-    public override func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    public override func mapping(action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         
         nil
     }

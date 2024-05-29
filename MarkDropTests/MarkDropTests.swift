@@ -689,7 +689,12 @@ final class MarkDropTests: XCTestCase {
         现在，试着把#弹谷 当前脑海中的😤, #谷海鸥
         """
         
-        let dropper = Dropper(string: string)
+        let string1 =
+        """
+        \t- #欢迎/新人??指南??
+        """
+        
+        let dropper = Dropper(string: string1)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

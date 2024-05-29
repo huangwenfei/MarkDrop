@@ -91,6 +91,7 @@
 		23EB492B2BF7ABE5002F25F0 /* ParagraphTextAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EB492A2BF7ABE5002F25F0 /* ParagraphTextAttributes.swift */; };
 		23EB492D2BF7AC16002F25F0 /* ParagraphMarkTextAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EB492C2BF7AC16002F25F0 /* ParagraphMarkTextAttributes.swift */; };
 		23EB492F2BF7AEBF002F25F0 /* ActionAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EB492E2BF7AEBF002F25F0 /* ActionAttributes.swift */; };
+		23ECF0962C06D3C600F95AE6 /* ExpandAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23ECF0952C06D3C600F95AE6 /* ExpandAttributes.swift */; };
 		23F0AAE12BF1B4590009BC42 /* BorderAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F0AAE02BF1B4590009BC42 /* BorderAttributes.swift */; };
 		23F0AAE32BF1BA170009BC42 /* DropAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F0AAE22BF1BA170009BC42 /* DropAttributes.swift */; };
 		23F0AAE62BF1E8350009BC42 /* MarkDropRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F0AAE52BF1E8350009BC42 /* MarkDropRenderTests.swift */; };
@@ -196,6 +197,7 @@
 		23EB492A2BF7ABE5002F25F0 /* ParagraphTextAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParagraphTextAttributes.swift; sourceTree = "<group>"; };
 		23EB492C2BF7AC16002F25F0 /* ParagraphMarkTextAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParagraphMarkTextAttributes.swift; sourceTree = "<group>"; };
 		23EB492E2BF7AEBF002F25F0 /* ActionAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionAttributes.swift; sourceTree = "<group>"; };
+		23ECF0952C06D3C600F95AE6 /* ExpandAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandAttributes.swift; sourceTree = "<group>"; };
 		23F0AAE02BF1B4590009BC42 /* BorderAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BorderAttributes.swift; sourceTree = "<group>"; };
 		23F0AAE22BF1BA170009BC42 /* DropAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropAttributes.swift; sourceTree = "<group>"; };
 		23F0AAE52BF1E8350009BC42 /* MarkDropRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDropRenderTests.swift; sourceTree = "<group>"; };
@@ -539,6 +541,7 @@
 				23EB49162BF77BC6002F25F0 /* ParagraphAttributes.swift */,
 				23EB491A2BF79CCC002F25F0 /* ShadowAttributes.swift */,
 				23EB492E2BF7AEBF002F25F0 /* ActionAttributes.swift */,
+				23ECF0952C06D3C600F95AE6 /* ExpandAttributes.swift */,
 			);
 			path = Descriptions;
 			sourceTree = "<group>";
@@ -674,6 +677,7 @@
 				23452ECE2BF4865B009404D8 /* DropLargeTagRenderType.swift in Sources */,
 				2377B3322BE4E69B00A7B257 /* Dropper.swift in Sources */,
 				238199462BE8D85800B0D763 /* DropContentRule.swift in Sources */,
+				23ECF0962C06D3C600F95AE6 /* ExpandAttributes.swift in Sources */,
 				236C7EB22BF89B8C0023BDEC /* DropAttributeType.swift in Sources */,
 				2307CA222BEE24D0003CD18F /* DropRule+LargeToken.swift in Sources */,
 				2338055A2BFAE126002D3F36 /* DropExtensions.swift in Sources */,

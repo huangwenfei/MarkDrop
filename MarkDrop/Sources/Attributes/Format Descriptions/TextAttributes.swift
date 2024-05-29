@@ -23,6 +23,7 @@ public struct TextAttributes: Hashable {
     public var backgroundBorder: BorderAttributes?
     public var shadow: ShadowAttributes?
     
+    public var expand: ExpandAttributes?
     public var action: ActionAttributes?
 
     public var fillChildMode: DropRenderFillMode = .none
@@ -30,11 +31,15 @@ public struct TextAttributes: Hashable {
         fillChildMode != .none
     }
     
-    public var shouldExpandContent: Bool = false
+    public var shouldExpandContent: Bool {
+        expand != nil
+    }
     
     public var shouldBuildBackgroundBorderInMappingText: Bool {
-        action == nil && shouldExpandContent == false
+        action == nil && expand != nil
     }
+    
+    public var isLinkToParentOn: Bool = false
     
     // MARK: Init
     public init(
@@ -44,9 +49,10 @@ public struct TextAttributes: Hashable {
         border: BorderAttributes? = nil,
         backgroundBorder: BorderAttributes? = nil,
         shadow: ShadowAttributes? = nil,
+        expand: ExpandAttributes? = nil,
         action: ActionAttributes? = nil,
         fillMode: DropRenderFillMode = .none,
-        shouldExpandContent: Bool = false
+        isLinkToParentOn: Bool = false
     ) {
         self.character = character
         self.stroke = stroke
@@ -54,9 +60,10 @@ public struct TextAttributes: Hashable {
         self.border = border
         self.backgroundBorder = backgroundBorder
         self.shadow = shadow
+        self.expand = expand
         self.action = action
         self.fillChildMode = fillMode
-        self.shouldExpandContent = shouldExpandContent
+        self.isLinkToParentOn = isLinkToParentOn
     }
     
 }

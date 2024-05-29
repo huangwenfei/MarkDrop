@@ -27,7 +27,7 @@ public struct BorderAttributes: Hashable {
     public init(
         color: DropColor = .white,
         lineMode: DropLineMode = .single,
-        width: CGFloat = 1,
+        width: CGFloat = 0,
         cornerRadius: CGFloat = 0,
         fillColor: DropColor = .clear,
         paddings: DropPaddings = .zero

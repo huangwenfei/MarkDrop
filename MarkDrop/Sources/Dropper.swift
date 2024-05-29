@@ -313,6 +313,9 @@ public final class Dropper {
                     
                     adjustmentChildParent(currentOpen: node)
                     
+                    /// total content as special text content node
+                    markTexts.append(markNode)
+                    
                     /// total content as special mark to split real text content nodes
                     marks.append(markNode)
                     
@@ -340,6 +343,9 @@ public final class Dropper {
                             markNode.intRange = currentOpen.intRange
                             markNode.documentRange = currentOpen.documentRange
                             currentOpen.append(markNode)
+                            
+                            /// total content as special text content node
+                            markTexts.append(markNode)
                             
                             /// total content as special mark to split real text content nodes
                             marks.append(markNode)
@@ -500,6 +506,7 @@ public final class Dropper {
             
             for mark in marks {
                 guard
+                    text !== mark,
                     text.rawContent.isEmpty == false,
                     mark.intRange.location >= text.intRange.location,
                     mark.intRange.maxLocation <= text.intRange.maxLocation

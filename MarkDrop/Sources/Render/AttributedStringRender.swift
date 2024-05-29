@@ -214,7 +214,7 @@ public final class AttributedStringRender: DropRendable {
         
         var renderMarkAttributes: [RenderMarkAttributes] = []
 
-        var contentRenders: [RenderContentSpecial] = .init()
+        var expandActionRenders: [RenderContentSpecial] = .init()
         
         let sortedLeaves = paragraph.leaves
             .sorted(by: { $0.intRange.location < $1.intRange.location })
@@ -249,7 +249,9 @@ public final class AttributedStringRender: DropRendable {
                 continue
             }
             
+            let attributedString: NSAttributedString
             let renderRange: DropContants.IntRange
+            let isCombineResult: Bool
             
             if let element = paragraphRenderDict[leave.intRange] {
                 
@@ -263,11 +265,13 @@ public final class AttributedStringRender: DropRendable {
                 
                 element.bindMappingResult = mappingResult
                 
+                attributedString = element.content
                 renderRange = element.renderRange
+                isCombineResult = true
                 
             } else {
                 
-                let attributedString = NSAttributedString(string: string, attributes: mappingResult)
+                attributedString = NSAttributedString(string: string, attributes: mappingResult)
                 paragraphContent.append(attributedString)
                 
                 renderRange = DropContants.IntRange(
@@ -275,8 +279,12 @@ public final class AttributedStringRender: DropRendable {
                     length: attributedString.length /// min(0, attributedString.length - 1)
                 )
                 paragraphRenderDict[leave.intRange] = .init(
-                    renderRange: renderRange, bindMappingResult: mappingResult
+                    renderRange: renderRange, 
+                    content: attributedString,
+                    bindMappingResult: mappingResult
                 )
+                
+                isCombineResult = false
                 
                 offset += attributedString.length
                 
@@ -291,19 +299,20 @@ public final class AttributedStringRender: DropRendable {
                         type: renderType,
                         parentTypes: content.parentContainerRenderTypes,
                         intRange: content.intRange,
-                        mappingResult: mappingResult
+                        mappingResult: mappingResult,
+                        isCombineResult: isCombineResult
                     )
                 )
             }
             
             /// - Tag: Capture Expands & Actions
             captureExpandsAndActions(
-                contentRenders: &contentRenders,
+                expandActionRenders: &expandActionRenders,
                 leave: leave,
                 attributes: attributes,
                 isUsingParentAttributes: isUsingParentAttributes,
                 renderRange: renderRange,
-                content: string,
+                content: attributedString,
                 mappingResult: mappingResult
             )
             
@@ -334,7 +343,7 @@ public final class AttributedStringRender: DropRendable {
         
         /// - Tag: Combine Content
         let combineContentRenders = combineExpandActions(
-            contentRenders: contentRenders,
+            contentRenders: expandActionRenders,
             attributes: attributes,
             paragraphContent: paragraphContent
         )
@@ -343,7 +352,8 @@ public final class AttributedStringRender: DropRendable {
         let compactContentRenders = compactExpandActions(
             combineContentRenders: combineContentRenders,
             paragraphContent: paragraphContent,
-            attributes: attributes
+            attributes: attributes,
+            mapping: mapping
         )
         
         /// - Tag: Replace Content
@@ -510,33 +520,50 @@ public final class AttributedStringRender: DropRendable {
         
         /// - Tag: Current
         
+        func generateNewDict() {
+            
+            self.attributeDict(
+                current: current,
+                shouldAppendContent: &shouldAppendContent,
+                type: markNode.type,
+                textNode: node,
+                base: base,
+                attributes: attributes,
+                mapping: mapping,
+                in: &mappingResult,
+                with: &indentList
+            )
+            
+            isUsingParentAttributes = false
+            
+        }
+        
         func fillNewDict() {
             
             if
                 let type = markNode.type.render,
-                let previousMappingResult = renderMarkAttributes.last(where: {
-                    $0.type == type &&
-                    $0.parentTypes == markNode.parentContainerRenderTypes
-                })?.mappingResult
+                attributes.markAttributes(type).isLinkToParentOn
             {
                 
-                mappingResult = previousMappingResult
+                if
+                    let previousMappingResult = renderMarkAttributes.filter({
+                        $0.type == type &&
+                        $0.parentTypes == markNode.parentContainerRenderTypes &&
+                        $0.isCombineResult == false
+                    }).last?.mappingResult
+                {
+                    
+                    mappingResult = previousMappingResult
+                    
+                } else {
+                    
+                    generateNewDict()
+                    
+                }
                 
             } else {
                 
-                self.attributeDict(
-                    current: current,
-                    shouldAppendContent: &shouldAppendContent,
-                    type: markNode.type,
-                    textNode: node,
-                    base: base,
-                    attributes: attributes,
-                    mapping: mapping,
-                    in: &mappingResult,
-                    with: &indentList
-                )
-                
-                isUsingParentAttributes = false
+                generateNewDict()
                 
             }
         }
@@ -747,29 +774,32 @@ public final class AttributedStringRender: DropRendable {
     }
     
     // MARK: Expand & Actions
-    private func captureExpandsAndActions(contentRenders: inout [RenderContentSpecial], leave: DropNode, attributes: DropAttributes, isUsingParentAttributes: Bool, renderRange: DropContants.IntRange, content string: String, mappingResult: DropContants.AttributedDict) {
+    private func captureExpandsAndActions(expandActionRenders: inout [RenderContentSpecial], leave: DropNode, attributes: DropAttributes, isUsingParentAttributes: Bool, renderRange: DropContants.IntRange, content: NSAttributedString, mappingResult: DropContants.AttributedDict) {
         
         if
-            let content = leave as? DropContentNodeProtocol,
-            let renderType = content.type.render
+            let contentNode = leave as? DropContentNodeProtocol,
+            let renderType = contentNode.type.render
         {
             
             var attribute = attributes.markAttributes(renderType)
             
+            /// - Tag: Expand
             var isExpand = attribute.shouldExpandContent
             
-            if 
-                content.parentContainerRenderTypes.filter({
-                    attributes.markAttributes($0).shouldExpandContent
-                }).isEmpty
-            {
+            let parentExpands = contentNode.parentContainerRenderTypes.filter({
+                attributes.markAttributes($0).shouldExpandContent
+            })
+            
+            if parentExpands.isEmpty == false {
                 isExpand = true
-                attribute.shouldExpandContent = true
+                let parentAttribute = attributes.markAttributes(parentExpands.first!)
+                attribute.expand = parentAttribute.expand
             }
             
+            /// - Tag: Action
             var isAction = attribute.action != nil
             
-            let parentActions = content.parentContainerRenderTypes.filter({
+            let parentActions = contentNode.parentContainerRenderTypes.filter({
                 attributes.markAttributes($0).action != nil
             })
             
@@ -789,18 +819,18 @@ public final class AttributedStringRender: DropRendable {
             }
             
             if let mode {
-                contentRenders.append(.init(
+                expandActionRenders.append(.init(
                     mode: mode,
                     isUsingParentAttributes: isUsingParentAttributes,
                     renderType: renderType,
-                    parentTypes: content.parentContainerRenderTypes,
-                    markNode: content,
+                    parentTypes: contentNode.parentContainerRenderTypes,
+                    markNode: contentNode,
                     range: renderRange,
-                    content: string,
+                    content: content,
                     attribute: attribute,
                     mappingResult: mappingResult
                 ))
-                contentRenders.sort(by: { $0.range.location < $1.range.location })
+                expandActionRenders.sort(by: { $0.range.location < $1.range.location })
             }
             
         }
@@ -874,9 +904,9 @@ public final class AttributedStringRender: DropRendable {
         return combineContentRenders
     }
     
-    private func compactExpandActions(combineContentRenders: [[RenderContentSpecial]], paragraphContent: NSAttributedString, attributes: DropAttributes) -> [RenderContentSpecial] {
+    private func compactExpandActions(combineContentRenders: [[RenderContentSpecial]], paragraphContent: NSAttributedString, attributes: DropAttributes, mapping: DropAttributedMapping) -> [RenderCompactContent] {
         
-        var compactContentRenders: [RenderContentSpecial] = []
+        var compactContentRenders: [RenderCompactContent] = []
         
         for combineContentRender in combineContentRenders {
             
@@ -885,9 +915,51 @@ public final class AttributedStringRender: DropRendable {
             }
             
             /// 同位 (range) 重合压缩
-            var subCompactDict: [DropContants.IntRange: RenderContentSpecial] = .init()
+            var subCompactDict: [DropContants.IntRange: RenderCompactContent] = .init()
             combineContentRender.forEach({
-                subCompactDict[$0.range] = $0
+                if var old = subCompactDict[$0.range] {
+                    
+                    let string = old.content.string
+                    
+                    var oldDict = old.mappingResult
+                    let newDict = $0.mappingResult
+                    
+                    mapping.combine(
+                        oldAttributes: newDict,
+                        in: &oldDict
+                    )
+                    
+                    old.mode = .both
+                    old.renderTypes.append($0.renderType)
+                    old.content = .init(string: string, attributes: oldDict)
+                    old.mappingResult = oldDict
+                    
+                    switch $0.mode {
+                    case .expand:
+                        old.expandAttributed = $0.attribute.expand
+                        
+                    case .action:
+                        old.actionAttributed = $0.attribute.action
+                        
+                    case .both:
+                        old.expandAttributed = $0.attribute.expand
+                        old.actionAttributed = $0.attribute.action
+                    }
+                    
+                    subCompactDict[$0.range] = old
+                    
+                } else {
+                    subCompactDict[$0.range] = .init(
+                        mode: $0.mode,
+                        charAttributed: $0.attribute.character,
+                        expandAttributed: $0.attribute.expand,
+                        actionAttributed: $0.attribute.action,
+                        renderTypes: [$0.renderType],
+                        range: $0.range,
+                        content: $0.content,
+                        mappingResult: $0.mappingResult
+                    )
+                }
             })
             
             #if false
@@ -906,9 +978,9 @@ public final class AttributedStringRender: DropRendable {
                 $0.range.location < $1.range.location
             })
 
-            var compacts: [RenderContentSpecial] = []
+            var compacts: [RenderCompactContent] = []
             
-            var previousCompact: RenderContentSpecial? = nil
+            var previousCompact: RenderCompactContent? = nil
 
             for index in 0 ..< subCompacts.count {
 
@@ -924,14 +996,34 @@ public final class AttributedStringRender: DropRendable {
                         
                         newPrevious.range.length += offset
                         
+                        
                         newPrevious.content = paragraphContent.attributedSubstring(
                             from: newPrevious.range
-                        ).string
-                        
-                        /// current or previous ???
-                        newPrevious.mappingResult.merge(
-                            render.mappingResult, uniquingKeysWith: { current,_ in current }
                         )
+                        
+                        var oldDict = previous.mappingResult
+                        let newDict = render.mappingResult
+                        
+                        mapping.combine(
+                            oldAttributes: newDict,
+                            in: &oldDict
+                        )
+                        
+                        newPrevious.mode = .both
+                        newPrevious.renderTypes.append(contentsOf: render.renderTypes)
+                        newPrevious.mappingResult = oldDict
+                        
+                        switch render.mode {
+                        case .expand:
+                            newPrevious.expandAttributed = render.expandAttributed
+                            
+                        case .action:
+                            newPrevious.actionAttributed = render.actionAttributed
+                            
+                        case .both:
+                            newPrevious.expandAttributed = render.expandAttributed
+                            newPrevious.actionAttributed = render.actionAttributed
+                        }
                         
                         compacts.removeLast()
                         compacts.append(newPrevious)
@@ -944,12 +1036,35 @@ public final class AttributedStringRender: DropRendable {
                         var newPrevious = previous
                         
                         newPrevious.range.length += render.range.length
-                        newPrevious.content += render.content
-
-                        newPrevious.mappingResult.merge(
-                            render.mappingResult, uniquingKeysWith: { current,_ in current }
+                        
+                        let newContent = NSMutableAttributedString(attributedString: newPrevious.content)
+                        newContent.append(render.content)
+                        newPrevious.content = newContent
+                        
+                        var oldDict = previous.mappingResult
+                        let newDict = render.mappingResult
+                        
+                        mapping.combine(
+                            oldAttributes: newDict,
+                            in: &oldDict
                         )
                         
+                        newPrevious.mode = .both
+                        newPrevious.renderTypes.append(contentsOf: render.renderTypes)
+                        newPrevious.mappingResult = oldDict
+                        
+                        switch render.mode {
+                        case .expand:
+                            newPrevious.expandAttributed = render.expandAttributed
+                            
+                        case .action:
+                            newPrevious.actionAttributed = render.actionAttributed
+                            
+                        case .both:
+                            newPrevious.expandAttributed = render.expandAttributed
+                            newPrevious.actionAttributed = render.actionAttributed
+                        }
+
                         compacts.removeLast()
                         compacts.append(newPrevious)
                         
@@ -997,11 +1112,6 @@ public final class AttributedStringRender: DropRendable {
                     
                     newPrevious.content = paragraphContent.attributedSubstring(
                         from: newPrevious.range
-                    ).string
-                    
-                    /// current or previous ???
-                    newPrevious.mappingResult.merge(
-                        current.mappingResult, uniquingKeysWith: { current,_ in current }
                     )
                     
                     compactContentRenders.removeLast()
@@ -1020,10 +1130,6 @@ public final class AttributedStringRender: DropRendable {
                     
                     newPrevious.content = paragraphContent.attributedSubstring(
                         from: newPrevious.range
-                    ).string
-                    
-                    newPrevious.mappingResult.merge(
-                        current.mappingResult, uniquingKeysWith: { current,_ in current }
                     )
                     
                     compactContentRenders.removeLast()
@@ -1053,7 +1159,7 @@ public final class AttributedStringRender: DropRendable {
         return compactContentRenders
     }
     
-    private func replaceExpandActionContents(compactContentRenders: [RenderContentSpecial], base: ParagraphTextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, paragraphContent: inout NSMutableAttributedString) {
+    private func replaceExpandActionContents(compactContentRenders: [RenderCompactContent], base: ParagraphTextAttributes, attributes: DropAttributes, mapping: DropAttributedMapping, paragraphContent: inout NSMutableAttributedString) {
         
         paragraphContent.beginEditing()
         
@@ -1067,8 +1173,9 @@ public final class AttributedStringRender: DropRendable {
             switch render.mode {
             case .expand:
                 guard let expand = mapping.mapping(
-                    expand: attributes.markAttributes(render.renderType),
-                    content: .init(string: render.content, attributes: render.mappingResult),
+                    expand: render.expandAttributed!,
+                    text: render.charAttributed,
+                    content: render.content,
                     renderRange: render.range,
                     in: base.paragraph
                 )
@@ -1078,14 +1185,13 @@ public final class AttributedStringRender: DropRendable {
                 
                 paragraphContent.replaceCharacters(in: replaceRange, with: expand.content)
                 
-                compactOffset += expand.content.length - render.content.count
+                compactOffset += expand.content.length - render.content.length
                 
             case .action:
-                let attributed = attributes.markAttributes(render.renderType)
                 guard let action = mapping.mapping(
-                    action: attributed.action!,
-                    text: attributed,
-                    content: .init(string: render.content, attributes: render.mappingResult),
+                    action: render.actionAttributed!,
+                    text:  render.charAttributed,
+                    content: render.content,
                     renderRange: render.range,
                     in: base.paragraph
                 )
@@ -1095,22 +1201,21 @@ public final class AttributedStringRender: DropRendable {
                 
                 paragraphContent.replaceCharacters(in: replaceRange, with: action.content)
                 
-                compactOffset += action.content.length - render.content.count
+                compactOffset += action.content.length - render.content.length
                 
             case .both:
-                let attributed = attributes.markAttributes(render.renderType)
-                
                 guard
                     let expand = mapping.mapping(
-                        expand: attributed,
-                        content: .init(string: render.content, attributes: render.mappingResult),
+                        expand: render.expandAttributed!,
+                        text: render.charAttributed,
+                        content: render.content,
                         renderRange: render.range,
                         in: base.paragraph
                     ),
                     let action = mapping.mapping(
-                        action: attributed.action!,
-                        text: attributed,
-                        content: .init(string: render.content, attributes: render.mappingResult),
+                        action: render.actionAttributed!,
+                        text: render.charAttributed,
+                        content: render.content,
                         renderRange: render.range,
                         in: base.paragraph
                     )
@@ -1121,7 +1226,7 @@ public final class AttributedStringRender: DropRendable {
                 let result = mapping.mappingConflict(expand: expand, action: action)
                 paragraphContent.replaceCharacters(in: replaceRange, with: result.content)
                 
-                compactOffset += result.content.length - render.content.count
+                compactOffset += result.content.length - render.content.length
             }
             
         }
@@ -1141,11 +1246,13 @@ extension AttributedStringRender {
         
         // MARK: Properties
         var renderRange: DropContants.IntRange
+        var content: NSAttributedString
         var bindMappingResult: DropContants.AttributedDict
         
         // MARK: Init
-        init(renderRange: DropContants.IntRange, bindMappingResult: DropContants.AttributedDict) {
+        init(renderRange: DropContants.IntRange, content: NSAttributedString, bindMappingResult: DropContants.AttributedDict) {
             self.renderRange = renderRange
+            self.content = content
             self.bindMappingResult = bindMappingResult
         }
         
@@ -1158,13 +1265,15 @@ extension AttributedStringRender {
         public var parentTypes: [DropRenderMarkType]
         public var intRange: DropContants.IntRange
         public var mappingResult: DropContants.AttributedDict
+        public var isCombineResult: Bool
         
         // MARK: Init
-        public init(type: DropRenderMarkType, parentTypes: [DropRenderMarkType], intRange: DropContants.IntRange, mappingResult: DropContants.AttributedDict) {
+        public init(type: DropRenderMarkType, parentTypes: [DropRenderMarkType], intRange: DropContants.IntRange, mappingResult: DropContants.AttributedDict, isCombineResult: Bool) {
             self.type = type
             self.parentTypes = parentTypes
             self.intRange = intRange
             self.mappingResult = mappingResult
+            self.isCombineResult = isCombineResult
         }
         
     }
@@ -1182,7 +1291,7 @@ extension AttributedStringRender {
         public var parentTypes: [DropRenderMarkType]
         public var markNode: DropContentNodeProtocol
         public var range: DropContants.IntRange
-        public var content: String
+        public var content: NSAttributedString
         public var attribute: TextAttributes
         public var mappingResult: DropContants.AttributedDict
         
@@ -1194,7 +1303,7 @@ extension AttributedStringRender {
             parentTypes: [DropRenderMarkType],
             markNode: DropContentNodeProtocol,
             range: DropContants.IntRange,
-            content: String,
+            content: NSAttributedString,
             attribute: TextAttributes,
             mappingResult: DropContants.AttributedDict
         ) {
@@ -1206,6 +1315,41 @@ extension AttributedStringRender {
             self.range = range
             self.content = content
             self.attribute = attribute
+            self.mappingResult = mappingResult
+        }
+        
+    }
+    
+    struct RenderCompactContent {
+        
+        // MARK: Properties
+        public var mode: RenderContentSpecialMode
+        public var charAttributed: CharacterAttributes
+        public var expandAttributed: ExpandAttributes?
+        public var actionAttributed: ActionAttributes?
+        public var renderTypes: [DropRenderMarkType]
+        public var range: DropContants.IntRange
+        public var content: NSAttributedString
+        public var mappingResult: DropContants.AttributedDict
+        
+        // MARK: Init
+        public init(
+            mode: RenderContentSpecialMode,
+            charAttributed: CharacterAttributes,
+            expandAttributed: ExpandAttributes?,
+            actionAttributed: ActionAttributes?,
+            renderTypes: [DropRenderMarkType],
+            range: DropContants.IntRange,
+            content: NSAttributedString,
+            mappingResult: DropContants.AttributedDict
+        ) {
+            self.mode = mode
+            self.charAttributed = charAttributed
+            self.expandAttributed = expandAttributed
+            self.actionAttributed = actionAttributed
+            self.renderTypes = renderTypes
+            self.range = range
+            self.content = content
             self.mappingResult = mappingResult
         }
         

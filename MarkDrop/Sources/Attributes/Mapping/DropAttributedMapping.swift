@@ -27,11 +27,11 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
-    open func mapping(expand text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    open func mapping(expand: ExpandAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         fatalError("Using subclass !")
     }
     
-    open func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    open func mapping(action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         fatalError("Using subclass !")
     }
     
@@ -108,13 +108,13 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mapping(expand text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    public override func mapping(expand: ExpandAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         
         nil
         
     }
     
-    public override func mapping(action: ActionAttributes, text: TextAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+    public override func mapping(action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         
         nil
         

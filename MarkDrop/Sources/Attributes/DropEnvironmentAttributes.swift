@@ -47,15 +47,23 @@ public struct DropEnvironmentAttributes: Hashable {
         )
         result.light.fillChildMode = .fill
         result.dark.fillChildMode = .fill
+        
+        result.light.isLinkToParentOn = true
+        result.dark.isLinkToParentOn = true
         return result
     }()
     
     public var mention: TextCharacter = {
         var result = defaultText()
+        
         result.light.character.color = .blue
         result.dark.character.color = .blue
+        
         result.light.fillChildMode = .fillIgnoreFont
         result.dark.fillChildMode = .fillIgnoreFont
+        
+        result.light.isLinkToParentOn = true
+        result.dark.isLinkToParentOn = true
         return result
     }()
     

@@ -35,7 +35,11 @@ open class DropAttributedMapping {
         fatalError("Using subclass !")
     }
     
-    open func mappingConflict(expand: DropAttributedMappingResult, action: DropAttributedMappingResult) -> DropAttributedMappingResult {
+    open func mapping(expand: ExpandAttributes, action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        fatalError("Using subclass !")
+    }
+    
+    open func expandActionReplace(_ previous: NSAttributedString, replaceRange: DropContants.IntRange, content: NSAttributedString) -> NSAttributedString? {
         fatalError("Using subclass !")
     }
     
@@ -120,9 +124,14 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mappingConflict(expand: DropAttributedMappingResult, action: DropAttributedMappingResult) -> DropAttributedMappingResult {
+    public override func mapping(expand: ExpandAttributes, action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         
-        action
+        nil
+    }
+    
+    public override func expandActionReplace(_ previous: NSAttributedString, replaceRange: DropContants.IntRange, content: NSAttributedString) -> NSAttributedString? {
+        
+        nil
     }
     
     public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {

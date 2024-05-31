@@ -31,14 +31,6 @@ public struct TextAttributes: Hashable {
         fillChildMode != .none
     }
     
-    public var shouldExpandContent: Bool {
-        expand != nil
-    }
-    
-    public var shouldBuildBackgroundBorderInMappingText: Bool {
-        action == nil && expand != nil
-    }
-    
     public var isLinkToParentOn: Bool = false
     
     // MARK: Init

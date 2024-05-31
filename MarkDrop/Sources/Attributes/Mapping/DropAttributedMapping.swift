@@ -101,7 +101,8 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         let newFont = attributed[fontKey] as? DropFont
         
         /// 如果 key 重复，就使用 attributed 的 value (current)
-        attributed.merge(oldAttributes, uniquingKeysWith: { current,_ in current })
+//        attributed.merge(oldAttributes, uniquingKeysWith: { current,_ in current })
+        attributed.merge(oldAttributes, uniquingKeysWith: { _,old in old })
         
         if var font, let newFont {
             if newFont.isBold      { font = font.bold }

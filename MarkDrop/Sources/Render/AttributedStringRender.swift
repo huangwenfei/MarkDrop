@@ -561,6 +561,8 @@ public final class AttributedStringRender: DropRendable {
                     
                     mappingResult = previousMappingResult
                     
+                    isUsingParentAttributes = false
+                    
                 } else {
                     
                     generateNewDict()
@@ -790,10 +792,10 @@ public final class AttributedStringRender: DropRendable {
             let attribute = attributes.markAttributes(renderType)
             
             /// - Tag: Expand
-            var isExpand = attribute.shouldExpandContent
+            var isExpand = attribute.expand != nil
             
             let parentExpands = contentNode.parentContainerRenderTypes.filter({
-                attributes.markAttributes($0).shouldExpandContent
+                attributes.markAttributes($0).expand != nil
             })
             
             if parentExpands.isEmpty == false {
@@ -993,11 +995,18 @@ public final class AttributedStringRender: DropRendable {
             
             let attribute = attributes.markAttributes(render.renderType)
             
+            var parentAttribute: TextAttributes? = nil
+            if 
+                let parent = render.parentTypes.first
+            {
+                parentAttribute = attributes.markAttributes(parent)
+            }
+            
             if let expand = attribute.expand {
                 
                 return mapping.mapping(
                     expand: expand,
-                    text: attribute.character,
+                    text: parentAttribute?.character ?? attribute.character,
                     content: render.content,
                     renderRange: render.range,
                     in: base.paragraph
@@ -1012,11 +1021,18 @@ public final class AttributedStringRender: DropRendable {
             
             let attribute = attributes.markAttributes(render.renderType)
             
+            var parentAttribute: TextAttributes? = nil
+            if
+                let parent = render.parentTypes.first
+            {
+                parentAttribute = attributes.markAttributes(parent)
+            }
+            
             if let action = attribute.action {
                 
                 return mapping.mapping(
                     action: action,
-                    text: attribute.character,
+                    text: parentAttribute?.character ?? attribute.character,
                     content: render.content,
                     renderRange: render.range,
                     in: base.paragraph
@@ -1031,6 +1047,13 @@ public final class AttributedStringRender: DropRendable {
             
             let attribute = attributes.markAttributes(render.renderType)
             
+            var parentAttribute: TextAttributes? = nil
+            if
+                let parent = render.parentTypes.first
+            {
+                parentAttribute = attributes.markAttributes(parent)
+            }
+            
             if 
                 let expand = attribute.expand,
                 let action = attribute.action
@@ -1039,7 +1062,7 @@ public final class AttributedStringRender: DropRendable {
                 return mapping.mapping(
                     expand: expand,
                     action: action,
-                    text: attribute.character,
+                    text: parentAttribute?.character ?? attribute.character,
                     content: render.content,
                     renderRange: render.range,
                     in: base.paragraph
@@ -1063,8 +1086,8 @@ public final class AttributedStringRender: DropRendable {
                 if 
                     let previous = replaces
                         .filter({
-                            render.range.location >= $0.render.range.location &&
-                            render.range.vaildMaxLocation <= $0.render.range.vaildMaxLocation
+                            render.markNode.intRange.location >= $0.render.markNode.intRange.location &&
+                            render.markNode.intRange.vaildMaxLocation <= $0.render.markNode.intRange.vaildMaxLocation
                         })
                         .sorted(by: {
                             $0.render.range.length < $1.render.range.length

@@ -694,7 +694,12 @@ final class MarkDropTests: XCTestCase {
         \t- #欢迎/新人??指南??
         """
         
-        let dropper = Dropper(string: string1)
+        let string2 =
+        """
+        我生怕自己本#非美玉 ，故而不敢加以刻苦琢磨，却又半信自己是块#美玉  ，故又不肯庸庸碌碌，与瓦砾为伍。@中岛敦《山月记》
+        """
+        
+        let dropper = Dropper(string: string2)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

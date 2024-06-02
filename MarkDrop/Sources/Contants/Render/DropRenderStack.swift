@@ -15,7 +15,7 @@ public protocol DropRenderStackProtocol: AnyObject {
     var lineDescription: String { get }
 }
 
-public final class DropParagraphRender: DropRenderStackProtocol, CustomStringConvertible {
+public final class DropParagraphRender: DropRenderStackProtocol, CustomStringConvertible, Hashable {
     
     // MARK: Properties
     public var parentType: DropContainerRenderType?
@@ -52,9 +52,28 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
         self.children = children
     }
     
+    // MARK: Hashable
+    public static func ==(lhs: DropParagraphRender, rhs: DropParagraphRender) -> Bool {
+        lhs.parentType == rhs.parentType &&
+        lhs.renderRange == rhs.renderRange &&
+        lhs.renderDocRange == rhs.renderDocRange &&
+        lhs.paragraphRange == rhs.paragraphRange &&
+        lhs.docRange == rhs.docRange &&
+        lhs.type == rhs.type
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(parentType)
+        hasher.combine(renderRange)
+        hasher.combine(renderDocRange)
+        hasher.combine(paragraphRange)
+        hasher.combine(docRange)
+        hasher.combine(type)
+    }
+    
 }
 
-public final class DropRenderStack: DropRenderStackProtocol, CustomStringConvertible {
+public final class DropRenderStack: DropRenderStackProtocol, CustomStringConvertible, Hashable {
     
     // MARK: Properties
     public var renderRange: DropContants.IntRange
@@ -94,6 +113,29 @@ public final class DropRenderStack: DropRenderStackProtocol, CustomStringConvert
         self.renderType = renderType
         self.attribute = attribute
         self.content = content
+    }
+    
+    // MARK: Hashable
+    public static func ==(lhs: DropRenderStack, rhs: DropRenderStack) -> Bool {
+        lhs.renderRange == rhs.renderRange &&
+        lhs.renderDocRange == rhs.renderDocRange &&
+        lhs.paragraphRange == rhs.paragraphRange &&
+        lhs.docRange == rhs.docRange &&
+        lhs.type == rhs.type &&
+        lhs.renderType == rhs.renderType &&
+        lhs.attribute == rhs.attribute &&
+        lhs.content == rhs.content
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(renderRange)
+        hasher.combine(renderDocRange)
+        hasher.combine(paragraphRange)
+        hasher.combine(docRange)
+        hasher.combine(type)
+        hasher.combine(renderType)
+        hasher.combine(attribute)
+        hasher.combine(content)
     }
     
 }

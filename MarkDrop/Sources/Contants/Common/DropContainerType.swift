@@ -28,6 +28,16 @@ public enum DropContainerType: Hashable {
         }
     }
     
+    public var child: DropContainerBlockType? {
+        switch self {
+        case .document, .paragraph, .break:
+            return nil
+            
+        case .block(let child):
+            return child
+        }
+    }
+    
     // MARK: Hashable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch lhs {

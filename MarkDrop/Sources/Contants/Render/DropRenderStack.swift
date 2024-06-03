@@ -52,6 +52,11 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
         self.children = children
     }
     
+    // MARK: Content
+    public var contents: [DropRenderStack]? {
+        children as? [DropRenderStack]
+    }
+    
     // MARK: Hashable
     public static func ==(lhs: DropParagraphRender, rhs: DropParagraphRender) -> Bool {
         lhs.parentType == rhs.parentType &&

@@ -156,17 +156,19 @@ public final class DropRuleLargeToken {
                 
                 if theLastMarks?.contains(content) == true {
                     
+                    openRange?.length += 1
+                    
                     if isDocEndChar {
                         state = .done(isCancled: false, close: nil)
-                        closeRange = .init(location: offset, length: 1)
+                        closeRange = .init(location: offset, length: 0)
                     }
                     else if isParagraphEndChar {
                         state = .done(isCancled: false, close: nil)
-                        closeRange = .init(location: offset, length: 1)
+                        closeRange = .init(location: offset, length: 0)
                     } else {
                         state = token.shouldCapture ? .tokenCapture : .done(isCancled: false, close: nil)
                         if token.shouldCapture == false {
-                            closeRange = .init(location: offset, length: 1)
+                            closeRange = .init(location: offset, length: 0)
                         }
                     }
                     
@@ -200,6 +202,8 @@ public final class DropRuleLargeToken {
                         }
                         
                         if contains.filter({ $0 }).count == token.token.count {
+                            
+                            openRange?.length += 1
                             
                             if isDocEndChar {
                                 state = .done(isCancled: false, close: nil)
@@ -245,6 +249,8 @@ public final class DropRuleLargeToken {
                     tag[next] = String(content)
                     
                     if tag.enumerated().filter({ token.token[$0].contains($1) }).count == token.tokenCount {
+                        
+                        openRange?.length += 1
                         
                         if isDocEndChar {
                             state = .done(isCancled: false, close: nil)

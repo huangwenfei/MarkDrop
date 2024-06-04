@@ -365,6 +365,7 @@ public final class AttributedStringRender: DropRendable {
         
         /// - Tag: Paragraph
         append(
+            node: paragraph,
             paragraph: base.paragraph,
             mapping: mapping,
             in: &paragraphContent,
@@ -471,11 +472,12 @@ public final class AttributedStringRender: DropRendable {
     }
     
     // MARK: Attributes
-    private func append(paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    private func append(node: DropContainerNode, paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         /// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/TextAttributes/ChangingAttrStrings.html#//apple_ref/doc/uid/20000162-BBCBGCDG
         /// Paragraph styles must apply to entire paragraphs.
         mapping.append(
+            type: node.paragraphType,
             paragraph: paragraph,
             in: &content,
             with: indentList

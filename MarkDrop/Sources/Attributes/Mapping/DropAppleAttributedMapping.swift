@@ -9,7 +9,7 @@ import Foundation
 
 public final class DropAppleAttributedMapping: DropAttributedMapping {
     
-    public override func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    public override func append(type: DropParagraphType, paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         let style = DropMutableParagraph()
         style.setParagraphStyle(paragraph.paragraphStyle)
@@ -17,6 +17,11 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         style.firstLineHeadIndent = 0
         style.headIndent = 0
         style.tabStops = [.init(textAlignment: .left, location: paragraph.startHeadIndent)]
+        
+        if type.isList {
+//            style.firstLineHeadIndent = paragraph.startHeadIndent
+            style.headIndent = paragraph.startHeadIndent
+        }
         
         let indentation = paragraph.indentWidth
         

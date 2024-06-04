@@ -133,7 +133,7 @@ public final class Dropper {
             case .document:
                 break
                 
-            case .block:
+            case .block(let child):
                 if
                     let previousContainer = tree.lastContainer(),
                     previousContainer.type.isBlock,
@@ -154,8 +154,15 @@ public final class Dropper {
                     tree.addChild(container)
                 }
                 
+                switch child {
+                case .bulletList:      paragraphNode.paragraphType = .bulletList
+                case .numberOrderList: paragraphNode.paragraphType = .numberOrderList
+                case .letterOrderList: paragraphNode.paragraphType = .letterOrderList
+                }
+                
             case .paragraph, .break:
                 paragraphNode.type = containerType
+                paragraphNode.paragraphType = containerType == .paragraph ? .text : .break
                 tree.addChild(paragraphNode)
             }
             

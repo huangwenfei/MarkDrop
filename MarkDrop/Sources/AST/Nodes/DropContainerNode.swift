@@ -11,6 +11,7 @@ public class DropContainerNode: DropNode {
     
     // MARK: Properties
     public var type: DropContainerType = .document
+    public var paragraphType: DropParagraphType = .document
     
     public var lineCount: Int = -1
     public var lineIndex: Int = -1
@@ -54,13 +55,14 @@ public class DropContainerNode: DropNode {
     }
     
     public override var lineDescription: String {
-        "{ type: \(type), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ type: \(type), paragraphType: \(paragraphType), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public override var description: String {
         if type.isBlock {
             return """
             \ntype: \(type),
+            paragraphType: \(paragraphType),
             lineIndex: \(lineIndex),
             content: \(allContent),
             intRange: \(allIntRange),
@@ -72,6 +74,7 @@ public class DropContainerNode: DropNode {
         } else {
             return """
             \ntype: \(type),
+            paragraphType: \(paragraphType),
             lineIndex: \(lineIndex),
             contents: \(contents),
             rawContentIndices: \(rawContentIndices),
@@ -97,12 +100,14 @@ public class DropContainerNode: DropNode {
     public static func == (lhs: DropContainerNode, rhs: DropContainerNode) -> Bool {
         DropNode.equal(lhs: lhs, rhs: rhs) &&
         lhs.type == rhs.type &&
+        lhs.paragraphType == rhs.paragraphType &&
         lhs.lineIndex == rhs.lineIndex
     }
     
     public override func hash(into hasher: inout Hasher) {
         DropNode.hash(self, into: &hasher)
         hasher.combine(type)
+        hasher.combine(paragraphType)
         hasher.combine(lineIndex)
     }
     

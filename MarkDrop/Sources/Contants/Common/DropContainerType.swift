@@ -96,3 +96,26 @@ public enum DropContainerBlockType: Int {
 //         codeBlock, quote,
 //         html
 }
+
+public enum DropParagraphType: Int {
+    case document,
+         bulletList, numberOrderList, letterOrderList,
+         text,
+         `break`
+//         , code, headingDescription, html, splitLine, table
+    
+    public var isList: Bool {
+        switch self {
+        case .document: 
+            return false
+            
+        case .bulletList,
+             .numberOrderList,
+             .letterOrderList:
+            return true
+            
+        case .text, .break:
+            return false
+        }
+    }
+}

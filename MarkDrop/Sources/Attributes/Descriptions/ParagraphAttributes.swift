@@ -28,6 +28,9 @@ public struct ParagraphAttributes: Hashable {
     public var lineBreakStrategy: NSParagraphStyle.LineBreakStrategy
     
     public var startHeadIndent: CGFloat
+    public var usingFixWidth: Bool
+    public var fixHeadMaxWidth: FixBlock? = nil
+    public var fixHeadTabStopWidth: CGFloat
     
     /// use for indentation -> firstHead & head & tail & tabStop
     public var indentWidth: CGFloat
@@ -43,7 +46,10 @@ public struct ParagraphAttributes: Hashable {
         lineBreakMode: NSLineBreakMode = NSParagraphStyle.default.lineBreakMode,
         lineBreakStrategy: NSParagraphStyle.LineBreakStrategy = NSParagraphStyle.default.lineBreakStrategy,
         startHeadIndent: CGFloat = 0,
-        indentWidth: CGFloat = 20
+        indentWidth: CGFloat = 20,
+        usingFixWidth: Bool = false,
+        fixHeadMaxWidth: FixBlock? = nil,
+        fixHeadTabStopWidth: CGFloat = 16
     ) {
         self.alignment = alignment
         self.maximumLineHeight = maximumLineHeight
@@ -55,6 +61,9 @@ public struct ParagraphAttributes: Hashable {
         self.lineBreakStrategy = lineBreakStrategy
         self.startHeadIndent = startHeadIndent
         self.indentWidth = indentWidth
+        self.usingFixWidth = usingFixWidth
+        self.fixHeadMaxWidth = fixHeadMaxWidth
+        self.fixHeadTabStopWidth = fixHeadTabStopWidth
     }
 
     // MARK: Style
@@ -71,6 +80,36 @@ public struct ParagraphAttributes: Hashable {
         result.lineBreakStrategy = lineBreakStrategy
         result.headIndent = startHeadIndent
         return result.copy() as! NSParagraphStyle
+    }
+    
+}
+
+extension ParagraphAttributes {
+    
+    public struct FixBlock: Hashable {
+        
+        // MARK: Types
+        public typealias Closure = (_ attributes: [NSAttributedString.Key: Any]) -> CGFloat
+        
+        // MARK: Properties
+        public let id: UUID
+        public var value: Closure
+        
+        // MARK: Init
+        public init(value: @escaping Closure) {
+            self.id = .init()
+            self.value = value
+        }
+        
+        // MARK: Hashable
+        public static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.id == rhs.id
+        }
+        
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
     }
     
 }

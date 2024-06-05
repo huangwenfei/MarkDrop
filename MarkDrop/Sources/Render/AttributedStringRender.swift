@@ -221,6 +221,8 @@ public final class AttributedStringRender: DropRendable {
         
         var paragraphContent: NSMutableAttributedString = .init(string: "")
         
+        var listMark: NSAttributedString? = nil
+        
         for leave in sortedLeaves {
             
             paragraphContent.beginEditing()
@@ -338,6 +340,13 @@ public final class AttributedStringRender: DropRendable {
                 renderStack.children.append(contentStack)
             }
             
+            if 
+                let content = leave as? DropContentMarkNode,
+                content.type.isListMark
+            {
+                listMark = attributedString
+            }
+            
             paragraphContent.endEditing()
         }
         
@@ -367,6 +376,7 @@ public final class AttributedStringRender: DropRendable {
         append(
             node: paragraph,
             paragraph: base.paragraph,
+            listMark: listMark,
             mapping: mapping,
             in: &paragraphContent,
             with: indentList
@@ -472,13 +482,14 @@ public final class AttributedStringRender: DropRendable {
     }
     
     // MARK: Attributes
-    private func append(node: DropContainerNode, paragraph: ParagraphAttributes, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    private func append(node: DropContainerNode, paragraph: ParagraphAttributes, listMark: NSAttributedString?, mapping: DropAttributedMapping, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         /// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/TextAttributes/ChangingAttrStrings.html#//apple_ref/doc/uid/20000162-BBCBGCDG
         /// Paragraph styles must apply to entire paragraphs.
         mapping.append(
             type: node.paragraphType,
             paragraph: paragraph,
+            listMark: listMark,
             in: &content,
             with: indentList
         )

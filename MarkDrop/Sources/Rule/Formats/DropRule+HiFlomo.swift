@@ -460,6 +460,44 @@ public final class DropNumberOrderRule: DropRule {
         return dict
     }()
     
+    // MARK: Methods
+    public static func startNumber() -> String {
+        "1. "
+    }
+    
+    public static func number(index: Int) -> String {
+        "\(index). "
+    }
+    
+    public static func nextNumber(by current: String) -> String {
+        guard
+            let first = current.split(separator: ".").first
+        else {
+            return current
+        }
+        
+        let value = (String(first) as NSString).integerValue
+        
+        return "\(value + 1). "
+        
+    }
+    
+    public static func minWidth(with attributes: [NSAttributedString.Key: Any]) -> CGFloat {
+        
+        let string = " 9. "
+        let attriString = NSAttributedString(string: string, attributes: attributes)
+        
+        return attriString.size().width
+    }
+    
+    public static func maxWidth(with attributes: [NSAttributedString.Key: Any]) -> CGFloat {
+        
+        let string = " 999. "
+        let attriString = NSAttributedString(string: string, attributes: attributes)
+        
+        return attriString.size().width
+    }
+    
     // MARK: Init
     public init() {
         super.init(

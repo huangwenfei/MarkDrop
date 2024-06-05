@@ -45,4 +45,20 @@ public enum DropContentMarkType: Int {
     
     /// - Tag: Other
     case indent
+    
+    public var isListMark: Bool {
+        switch self {
+        case .none, .text:
+            return false
+            
+        case .bulletOrder, .numberOrder, .letterOrder:
+            return true
+            
+        case .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke,
+             .indent:
+            return false
+        }
+    }
 }

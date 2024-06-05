@@ -57,6 +57,22 @@ public enum DropContentType: Int {
     /// 缩进 ( 4 个空格 Or \t)
     case spaceIndent
     case tabIndent
+    
+    public var isListMark: Bool {
+        switch self {
+        case .text: 
+            return false
+            
+        case .bulletList, .numberOrderList, .letterOrderList:
+            return true
+            
+        case .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke,
+             .spaceIndent, .tabIndent:
+            return false
+        }
+    }
 }
 
 extension DropContentType {

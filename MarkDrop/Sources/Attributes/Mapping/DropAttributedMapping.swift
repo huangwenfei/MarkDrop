@@ -19,7 +19,7 @@ open class DropAttributedMapping {
     public init() {}
     
     // MARK: Mapping
-    open func append(type: DropParagraphType, paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    open func append(type: DropParagraphType, paragraph: ParagraphAttributes, listMark: NSAttributedString?, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         fatalError("Using subclass !")
     }
     
@@ -52,7 +52,7 @@ open class DropAttributedMapping {
 
 public final class DropDefaultAttributedMapping: DropAttributedMapping {
     
-    public override func append(type: DropParagraphType, paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    public override func append(type: DropParagraphType, paragraph: ParagraphAttributes, listMark: NSAttributedString?, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         let style = DropMutableParagraph()
         style.setParagraphStyle(paragraph.paragraphStyle)

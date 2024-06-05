@@ -73,6 +73,20 @@ public enum DropContentType: Int {
             return false
         }
     }
+    
+    public var isIndent: Bool {
+        switch self {
+        case .text,
+             .bulletList, .numberOrderList, .letterOrderList,
+             .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke:
+            return false
+            
+        case .spaceIndent, .tabIndent:
+            return true
+        }
+    }
 }
 
 extension DropContentType {

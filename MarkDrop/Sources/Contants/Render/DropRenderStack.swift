@@ -25,6 +25,7 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
     public var paragraphRange: DropContants.IntRange
     public var docRange: DropContants.IntRange
     public var children: [DropRenderStackProtocol]
+    public var indentCount: Int
     
     public var lineDescription: String {
         "{ type: \(type), parentType: \(String(describing: parentType)), range: \(renderRange), renderDocRange: \(renderDocRange) }"
@@ -37,12 +38,13 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
         renderRange: \(renderRange),
         paragraphRange: \(paragraphRange),
         docRange: \(docRange),
-        children: \(children.map({ $0.lineDescription }))
+        children: \(children.map({ $0.lineDescription })),
+        indentCount: \(indentCount)
         """
     }
     
     // MARK: Init
-    public init(parentType: DropContainerRenderType? = nil, type: DropContainerType = .document, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange = .init(), docRange: DropContants.IntRange = .init(), children: [DropRenderStackProtocol] = []) {
+    public init(parentType: DropContainerRenderType? = nil, type: DropContainerType = .document, renderRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange = .init(), docRange: DropContants.IntRange = .init(), children: [DropRenderStackProtocol] = [], indentCount: Int = 0) {
         
         self.parentType = parentType
         self.type = type
@@ -50,6 +52,7 @@ public final class DropParagraphRender: DropRenderStackProtocol, CustomStringCon
         self.paragraphRange = paragraphRange
         self.docRange = docRange
         self.children = children
+        self.indentCount = indentCount
     }
     
     // MARK: Content

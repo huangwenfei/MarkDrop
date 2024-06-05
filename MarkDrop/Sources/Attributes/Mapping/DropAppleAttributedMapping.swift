@@ -16,24 +16,29 @@ public final class DropAppleAttributedMapping: DropAttributedMapping {
         
         style.firstLineHeadIndent = 0
         style.headIndent = 0
-        style.tabStops = [.init(textAlignment: .left, location: paragraph.startHeadIndent)]
+        style.tabStops = []
         
-        if paragraph.usingFixWidth {
-            let font = content.attribute(.font, at: 0, effectiveRange: nil) ?? DropFont.systemFont(ofSize: 16)
-            let color = content.attribute(.foregroundColor, at: 0, effectiveRange: nil) ?? DropColor.green
-            let kern = content.attribute(.kern, at: 0, effectiveRange: nil) ?? 0
-            let max = paragraph.fixHeadMaxWidth?.value([
-                .font: font,
-                .foregroundColor: color,
-                .kern: kern
-            ]) ?? 0
-            style.firstLineHeadIndent = Swift.max(0, max - (listMark?.size().width ?? 0))
-            style.headIndent = max
-        } else {
-            style.headIndent = paragraph.startHeadIndent
+        let font = content.attribute(.font, at: 0, effectiveRange: nil) ?? DropFont.systemFont(ofSize: 16)
+        let color = content.attribute(.foregroundColor, at: 0, effectiveRange: nil) ?? DropColor.green
+        let kern = content.attribute(.kern, at: 0, effectiveRange: nil) ?? 0
+        
+        let charAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+            .kern: kern
+        ]
+        
+        if type.isList {
+            if paragraph.usingFixWidth {
+                let max = paragraph.fixHeadMaxWidth?.value(charAttributes) ?? 0
+                style.firstLineHeadIndent = Swift.max(0, max - (listMark?.size().width ?? 0))
+                style.headIndent = max
+            } else {
+                style.headIndent = paragraph.startHeadIndent
+            }
         }
         
-        let indentation = paragraph.indentWidth
+        let indentation = paragraph.indentWidthClosure?.value(charAttributes) ?? 20
         
         indentList.forEach({
             

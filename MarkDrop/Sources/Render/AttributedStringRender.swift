@@ -94,7 +94,8 @@ public final class AttributedStringRender: DropRendable {
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
                     docRange: child.documentRange,
-                    children: []
+                    children: [], 
+                    indentCount: 0
                 )
                 
                 renderStacks.append(stack)
@@ -120,7 +121,8 @@ public final class AttributedStringRender: DropRendable {
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
                     docRange: child.documentRange,
-                    children: []
+                    children: [],
+                    indentCount: 0
                 )
                 
                 if let parentStack {
@@ -147,7 +149,8 @@ public final class AttributedStringRender: DropRendable {
                     renderRange: .init(location: docOffset, length: 0),
                     paragraphRange: child.intRange,
                     docRange: child.documentRange,
-                    children: []
+                    children: [],
+                    indentCount: 0
                 )
                 
                 if let parentStack {
@@ -242,6 +245,13 @@ public final class AttributedStringRender: DropRendable {
                 mapping: mapping,
                 with: &indentList
             )
+            
+            if
+                let content = leave as? DropContentMarkNode,
+                content.type.isIndent
+            {
+                renderStack.indentCount += 1
+            }
             
             var mappingResult           = result.mappingResult
             let shouldAppendContent     = result.shouldAppendContent

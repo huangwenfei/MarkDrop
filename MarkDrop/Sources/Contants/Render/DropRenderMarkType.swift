@@ -106,4 +106,31 @@ public enum DropRenderType: Int, Hashable, CaseIterable {
             
         }
     }
+    
+    public var isIndent: Bool {
+        switch self {
+        case .text:
+            return false
+            
+        case .bulletListMark,
+             .numberOrderListMark,
+             .letterOrderListMark:
+            return false
+            
+        case .bulletListText,
+             .numberOrderListText,
+             .letterOrderListText:
+            return false
+            
+        case .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke:
+            return false
+        
+        case .spaceIndent,
+             .tabIndent:
+            return true
+            
+        }
+    }
 }

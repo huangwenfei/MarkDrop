@@ -29,11 +29,11 @@ public struct ParagraphAttributes: Hashable {
     
     public var startHeadIndent: CGFloat
     public var usingFixWidth: Bool
-    public var fixHeadMaxWidth: FixBlock? = nil
+    public var fixHeadMaxWidth: WidthBlock? = nil
     public var fixHeadTabStopWidth: CGFloat
     
     /// use for indentation -> firstHead & head & tail & tabStop
-    public var indentWidth: CGFloat
+    public var indentWidthClosure: WidthBlock?
     
     // MARK: Init
     public init(
@@ -46,10 +46,10 @@ public struct ParagraphAttributes: Hashable {
         lineBreakMode: NSLineBreakMode = NSParagraphStyle.default.lineBreakMode,
         lineBreakStrategy: NSParagraphStyle.LineBreakStrategy = NSParagraphStyle.default.lineBreakStrategy,
         startHeadIndent: CGFloat = 0,
-        indentWidth: CGFloat = 20,
         usingFixWidth: Bool = false,
-        fixHeadMaxWidth: FixBlock? = nil,
-        fixHeadTabStopWidth: CGFloat = 16
+        fixHeadMaxWidth: WidthBlock? = nil,
+        fixHeadTabStopWidth: CGFloat = 16,
+        indentWidthClosure: WidthBlock? = nil
     ) {
         self.alignment = alignment
         self.maximumLineHeight = maximumLineHeight
@@ -60,10 +60,10 @@ public struct ParagraphAttributes: Hashable {
         self.lineBreakMode = lineBreakMode
         self.lineBreakStrategy = lineBreakStrategy
         self.startHeadIndent = startHeadIndent
-        self.indentWidth = indentWidth
         self.usingFixWidth = usingFixWidth
         self.fixHeadMaxWidth = fixHeadMaxWidth
         self.fixHeadTabStopWidth = fixHeadTabStopWidth
+        self.indentWidthClosure = indentWidthClosure
     }
 
     // MARK: Style
@@ -86,7 +86,7 @@ public struct ParagraphAttributes: Hashable {
 
 extension ParagraphAttributes {
     
-    public struct FixBlock: Hashable {
+    public struct WidthBlock: Hashable {
         
         // MARK: Types
         public typealias Closure = (_ attributes: [NSAttributedString.Key: Any]) -> CGFloat

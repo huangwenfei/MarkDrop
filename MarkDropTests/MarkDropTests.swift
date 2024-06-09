@@ -136,7 +136,7 @@ final class MarkDropTests: XCTestCase {
             \t现在，试着把当前#脑海 中的!!想法、**A灵无??压Press记录感Z**、情??绪!!等等记下来，尝试下!!#无压记录的??愉悦??。!!
         """
         
-        let dropper = Dropper(string: string4)
+        let dropper = Dropper(string: string)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)
@@ -699,7 +699,12 @@ final class MarkDropTests: XCTestCase {
         我生怕自己本#非美玉 ，故而不敢加以刻苦琢磨，却又半信自己是块#美玉  ，故又不肯庸庸碌碌，与瓦砾为伍。@中岛敦《山月记》
         """
         
-        let dropper = Dropper(string: string2)
+        let string3 =
+        """
+        # 现在，试着把#弹谷 当前脑海中的😤, #谷海鸥
+        """
+        
+        let dropper = Dropper(string: string3)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

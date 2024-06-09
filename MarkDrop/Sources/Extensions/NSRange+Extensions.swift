@@ -17,7 +17,7 @@ extension DropWrapper where RawValue == NSRange {
     
     public var vaildMaxLocation: Int {
         rawValue.location == 0 
-            ? rawValue.length
+            ? rawValue.length - 1
             : (rawValue.location < 0 ? 0 : maxLocation - 1)
     }
     

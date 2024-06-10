@@ -107,4 +107,18 @@ public final class PlainTextRender: DropRendable {
         return result
     }
     
+    // MARK: Rerender
+    public func rerender(string: String) -> Result {
+        
+        /// - Tag: Update Raw
+        document.raw = string
+        
+        /// - Tag: AST
+        let ast = Dropper(document: document).process(using: rules)
+        
+        /// - Tag: Render
+        return render(block: ast.containers(), isLastLine: false)
+        
+    }
+    
 }

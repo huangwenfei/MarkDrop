@@ -11,6 +11,7 @@ public final class PlainTextRender: DropRendable {
     
     // MARK: Types
     public typealias Result = String
+    public typealias FormatCaptureClosure = (_ type: DropRenderType, _ text: String) -> Void
     
     // MARK: Properties
     public var document: Document
@@ -26,15 +27,19 @@ public final class PlainTextRender: DropRendable {
     
     // MARK: Render
     public func render() -> Result {
+        render(formatCapture: { _,_ in })
+    }
+    
+    public func render(formatCapture: FormatCaptureClosure) -> Result {
         
         /// - Tag: AST
         let ast = Dropper(document: document).process(using: rules)
         
         /// - Tag: Render
-        return render(block: ast.containers(), isLastLine: false)
+        return render(block: ast.containers(), isLastLine: false, formatCapture: formatCapture)
     }
     
-    private func render(block multiParagraphs: [DropContainerNode], isLastLine: Bool) -> Result {
+    private func render(block multiParagraphs: [DropContainerNode], isLastLine: Bool, formatCapture: FormatCaptureClosure) -> Result {
         
         var result: String = ""
         
@@ -50,13 +55,17 @@ public final class PlainTextRender: DropRendable {
                 
             case .block:
                 // TODO: 不用递归
-                paragraphText = render(block: child.containers(), isLastLine: child.isLastLine)
+                paragraphText = render(
+                    block: child.containers(),
+                    isLastLine: child.isLastLine,
+                    formatCapture: formatCapture
+                )
                 
             case .paragraph:
-                paragraphText = render(paragraph: child)
+                paragraphText = render(paragraph: child, formatCapture: formatCapture)
                 
             case .break:
-                paragraphText = render(break: child)
+                paragraphText = render(break: child, formatCapture: formatCapture)
             }
             
             result += paragraphText
@@ -66,15 +75,15 @@ public final class PlainTextRender: DropRendable {
         return result
     }
     
-    private func render(paragraph: DropContainerNode) -> Result {
-        render(paragraph: paragraph, isBreak: false)
+    private func render(paragraph: DropContainerNode, formatCapture: FormatCaptureClosure) -> Result {
+        render(paragraph: paragraph, isBreak: false, formatCapture: formatCapture)
     }
     
-    private func render(break paragraph: DropContainerNode) -> Result {
-        render(paragraph: paragraph, isBreak: true)
+    private func render(break paragraph: DropContainerNode, formatCapture: FormatCaptureClosure) -> Result {
+        render(paragraph: paragraph, isBreak: true, formatCapture: formatCapture)
     }
     
-    private func render(paragraph: DropContainerNode, isBreak: Bool) -> Result {
+    private func render(paragraph: DropContainerNode, isBreak: Bool, formatCapture: FormatCaptureClosure) -> Result {
         
         /// - Tag: Clear
         renderSet = []
@@ -83,6 +92,10 @@ public final class PlainTextRender: DropRendable {
         var result = paragraph.leaves
             .sorted(by: { $0.intRange.location < $1.intRange.location })
             .reduce("", {
+                
+                if let content = $1 as? DropContentMarkNode {
+                    formatCapture(.init(type: content.type, mark: content.mark), $1.rawRenderContent)
+                }
                 
                 guard renderSet.contains($1.intRange) == false else {
                     return $0
@@ -109,6 +122,10 @@ public final class PlainTextRender: DropRendable {
     
     // MARK: Rerender
     public func rerender(string: String) -> Result {
+        rerender(string: string, formatCapture: { _,_ in })
+    }
+    
+    public func rerender(string: String, formatCapture: FormatCaptureClosure) -> Result {
         
         /// - Tag: Update Raw
         document.raw = string
@@ -117,7 +134,7 @@ public final class PlainTextRender: DropRendable {
         let ast = Dropper(document: document).process(using: rules)
         
         /// - Tag: Render
-        return render(block: ast.containers(), isLastLine: false)
+        return render(block: ast.containers(), isLastLine: false, formatCapture: formatCapture)
         
     }
     

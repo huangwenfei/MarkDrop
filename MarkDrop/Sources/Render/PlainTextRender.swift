@@ -94,6 +94,22 @@ public final class PlainTextRender: DropRendable {
             .reduce("", {
                 
                 if let content = $1 as? DropContentMarkNode {
+                    
+//                    let renderType = DropRenderType(type: content.type, mark: content.mark)
+//                    
+//                    let mark = DropPlainRenderMark(
+//                        renderRange: renderRange,
+//                        renderDocRange: .init(
+//                            location: renderRange.location + renderStack.renderRange.location,
+//                            length: renderRange.length
+//                        ),
+//                        paragraphRange: $1.intRange,
+//                        docRange: $1.documentRange,
+//                        type: content.type,
+//                        renderType: renderType,
+//                        content: $1.rawContent
+//                    )
+                    
                     formatCapture(.init(type: content.type, mark: content.mark), $1.rawRenderContent)
                 }
                 
@@ -136,6 +152,47 @@ public final class PlainTextRender: DropRendable {
         /// - Tag: Render
         return render(block: ast.containers(), isLastLine: false, formatCapture: formatCapture)
         
+    }
+    
+}
+
+public struct DropPlainRenderMark: CustomStringConvertible, Hashable {
+    
+    // MARK: Properties
+    public var renderRange: DropContants.IntRange
+    public var renderDocRange: DropContants.IntRange
+    public var paragraphRange: DropContants.IntRange
+    public var docRange: DropContants.IntRange
+    public var type: DropContentType
+    public var renderType: DropRenderType
+    public var content: String
+    
+    public var lineDescription: String {
+        "{ range: \(renderRange), renderDocRange: \(renderDocRange), type: \(type), renderType: \(renderType), content: \(content) }"
+    }
+    
+    public var description: String {
+        """
+        \nrenderRange: \(renderRange),
+        renderDocRange: \(renderDocRange),
+        paragraphRange: \(paragraphRange),
+        docRange: \(docRange),
+        type: \(type),
+        renderType: \(renderType),
+        content: \(content)
+        """
+    }
+    
+    // MARK: Init
+    public init(renderRange: DropContants.IntRange = .init(), renderDocRange: DropContants.IntRange = .init(), paragraphRange: DropContants.IntRange = .init(), docRange: DropContants.IntRange = .init(), type: DropContentType = .text, renderType: DropRenderType = .text, content: String = .init()) {
+        
+        self.renderRange = renderRange
+        self.renderDocRange = renderDocRange
+        self.paragraphRange = paragraphRange
+        self.docRange = docRange
+        self.type = type
+        self.renderType = renderType
+        self.content = content
     }
     
 }

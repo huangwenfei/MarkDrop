@@ -541,7 +541,7 @@ final class MarkDropTests: XCTestCase {
         \(bo)国家地理《好奇地活着》\(bc)
         
         \(io)If you are, you breath..\(ic)
-        如果你\(uo)活着\(uc)，你\(uo)\(bo)呼吸\(bo)\(uc)
+        如果你\(uo)活着\(uc)，你\(uo)\(bo)呼吸\(bc)\(uc)
 
         \(io)If you breath, you talk.\(ic)
         如果你\(uo)呼吸\(uc)，你\(uo)\(bo)说话\(bc)\(uc)

@@ -536,7 +536,60 @@ final class MarkDropTests: XCTestCase {
         \(bo)@屈原 流放汉北\(bc), 现在，试着把@弹谷 当前脑海中的😤, @谷海鸥
         """
         
-        let dropper = Dropper(string: string4)
+        let string5 =
+        """
+        \(bo)国家地理《好奇地活着》\(bc)
+        
+        \(io)If you are, you breath..\(ic)
+        如果你\(uo)活着\(uc)，你\(uo)\(bo)呼吸\(bo)\(uc)
+
+        \(io)If you breath, you talk.\(ic)
+        如果你\(uo)呼吸\(uc)，你\(uo)\(bo)说话\(bc)\(uc)
+
+        \(io)If you talk, you ask. .\(ic)
+        如果你\(uo)说话\(uc)，你\(uo)\(bo)询问\(bc)\(uc)
+
+        \(io)If you ask, you think.\(ic)
+        如果你\(uo)询问\(uc)，你\(uo)\(bo)思考\(bc)\(uc)
+
+        \(io)If you think, you search.\(ic)
+        如果你\(uo)思考\(uc)，你\(uo)\(bo)探索\(bc)\(uc)
+
+        \(io)If you search, you experience.\(ic)
+        如果你\(uo)探索\(uc)，你\(uo)\(bo)体验\(bc)\(uc)
+
+        \(io)If you experience, you learn.\(ic)
+        如果你\(uo)体验\(uc)，你\(uo)\(bo)学习\(bc)\(uc)
+
+        \(io)If you learn, you grow.\(ic)
+        如果你\(uo)学习\(uc)，你\(uo)\(bo)成长\(bc)\(uc)
+
+        \(io)If you grow, you wish.\(ic)
+        如果你\(uo)成长\(uc)，你\(uo)\(bo)期许\(bc)\(uc)
+
+        \(io)If you wish, you find.\(ic)
+        如果你\(uo)期许\(uc)，你\(uo)\(bo)发现\(bc)\(uc)
+
+        \(io)And if you find… you doubt.\(ic)
+        如果你\(uo)发现\(uc)，你\(uo)\(bo)质疑\(bc)\(uc)
+
+        \(io)If you doubt, you question.\(ic)
+        如果你\(uo)质疑\(uc)，你\(uo)\(bo)提问\(bc)\(uc)
+
+        \(io)If you question, you understand..\(ic)
+        如果你\(uo)提问\(uc)，你\(uo)\(bo)理解\(bc)\(uc)
+
+        \(io)If you understand, you know.\(ic)
+        如果你\(uo)理解\(uc)，你\(uo)\(bo)知道\(bc)\(uc)
+
+        \(io)And if you know, you want to know more.\(ic)
+        如果你\(uo)知道\(uc)，你\(uo)\(bo)想知道更多\(bc)\(uc)
+
+        \(io)And if you want to know more, you are… alive.\(ic)
+        如果你\(uo)想知道更多\(uc)，你\(uo)\(bo)活着\(bc)\(uc)
+        """
+        
+        let dropper = Dropper(string: string5)
         let ast = dropper.process(using: [
             DropHashTagRule(), DropMentionRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

@@ -61,4 +61,8 @@ public enum DropContentMarkType: Int {
             return false
         }
     }
+    
+    public var isMark: Bool {
+        self != .none
+    }
 }

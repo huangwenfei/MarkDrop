@@ -87,6 +87,10 @@ public enum DropContentType: Int {
             return true
         }
     }
+    
+    public var isMark: Bool {
+        self != .text
+    }
 }
 
 extension DropContentType {

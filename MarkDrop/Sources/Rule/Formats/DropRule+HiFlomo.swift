@@ -569,3 +569,28 @@ public final class DropChineseLetterOrderRule: DropRule {
     }
     
 }
+
+public final class DropPlainBulletRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropBulletRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropBulletRule.render
+        dict[.open] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainBulletRule.rule, render: DropPlainBulletRule.render),
+            type: .bulletList
+        )
+    }
+    
+}
+
+public typealias DropPlainNumberOrderRule = DropNumberOrderRule
+public typealias DropPlainLetterOrderRule = DropLetterOrderRule
+public typealias DropPlainChineseLetterOrderRule = DropChineseLetterOrderRule

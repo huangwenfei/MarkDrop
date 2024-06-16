@@ -11,7 +11,7 @@ public final class PlainTextRender: DropRendable {
     
     // MARK: Types
     public typealias Result = String
-    public typealias ReplaceRenderContentClosure = (_ type: DropContentType, _ content: String) -> (render: String, markRender: String)
+    public typealias ReplaceRenderContentClosure = (_ type: DropContentType, _ markType: DropContentMarkType, _ content: String, _ renderContent: String) -> (content: String, renderContent: String)
     public typealias FormatCaptureClosure = (_ mark: DropPlainRenderMark) -> Void
     
     // MARK: Properties
@@ -31,7 +31,7 @@ public final class PlainTextRender: DropRendable {
         render(formatCapture: { _ in })
     }
     
-    public func render(replaceRenderContent: ReplaceRenderContentClosure = { _,raw in (raw, raw) }, formatCapture: FormatCaptureClosure) -> Result {
+    public func render(replaceRenderContent: ReplaceRenderContentClosure = { _,_,raw,render in (raw, render) }, formatCapture: FormatCaptureClosure) -> Result {
         
         /// - Tag: AST
         let ast = Dropper(document: document).process(using: rules)
@@ -132,23 +132,24 @@ public final class PlainTextRender: DropRendable {
             .sorted(by: { $0.intRange.location < $1.intRange.location })
             .reduce("", {
                 
-                var (renderContent, markRenderContent) = ($1.rawRenderContent, $1.rawRenderContent)
-                
-                if let content = $1 as? DropContentNodeProtocol {
-                    (renderContent, markRenderContent) = replaceRenderContent(
-                        content.type, content.rawRenderContent
-                    )
-                }
+                var (rawContent, renderContent) = ($1.rawContent, $1.rawRenderContent)
                 
                 if let content = $1 as? DropContentMarkNode {
                     
+                    (rawContent, renderContent) = replaceRenderContent(
+                        content.type, content.mark, content.rawContent, content.rawRenderContent
+                    )
+                    
                     let mark = DropPlainRenderMark(
-                        renderDocLocation: offset + paragraphOffset,
+                        renderDocRange: .init(
+                            location: offset + paragraphOffset,
+                            length: renderContent.count
+                        ),
                         docRange: $1.documentRange,
                         type: content.type,
                         markType: content.mark,
-                        content: $1.rawContent,
-                        renderContent: markRenderContent
+                        content: rawContent,
+                        isReplaceRenderContent: $1.rawRenderContent != renderContent
                     )
                     
                     formatCapture(mark)
@@ -181,12 +182,12 @@ public final class PlainTextRender: DropRendable {
     public func rerender(string: String) -> Result {
         rerender(
             string: string,
-            replaceRenderContent: { _,raw in (raw, raw) },
+            replaceRenderContent: { _,_,raw,render in (raw, render) },
             formatCapture: { _ in }
         )
     }
     
-    public func rerender(string: String, replaceRenderContent: ReplaceRenderContentClosure = { _,raw in (raw, raw) }, formatCapture: FormatCaptureClosure) -> Result {
+    public func rerender(string: String, replaceRenderContent: ReplaceRenderContentClosure = { _,_,raw,render in (raw, render) }, formatCapture: FormatCaptureClosure) -> Result {
         
         /// - Tag: Update Raw
         document.raw = string
@@ -206,7 +207,7 @@ public final class PlainTextRender: DropRendable {
     }
     
     // MARK: Recover
-    public static func renderAndDropMarks(string: String, using rules: [DropRule], replaceRenderContent: ReplaceRenderContentClosure = { _,raw in (raw, raw) }, formatCapture: FormatCaptureClosure = { _ in }) -> (marks: [DropPlainRenderMark], plain: Result) {
+    public static func renderAndDropMarks(string: String, using rules: [DropRule], replaceRenderContent: ReplaceRenderContentClosure = { _,_,raw,render in (raw, render) }, formatCapture: FormatCaptureClosure = { _ in }) -> (marks: [DropPlainRenderMark], plain: Result) {
         
         var marks: [DropPlainRenderMark] = []
         
@@ -215,14 +216,14 @@ public final class PlainTextRender: DropRendable {
             formatCapture: { mark in
                 if mark.shouldRecoverMark { marks.append(mark) }
                 formatCapture(mark)
-                print(#function, #line, mark)
+//                print(#function, #line, mark)
             }
         )
         
         return (marks, plain)
     }
     
-    public static func recover(by marks: [DropPlainRenderMark], in renderResult: inout Result) {
+    public static func recover(by marks: [DropPlainRenderMark], in renderResult: inout Result, replaceContent: (_ mark: DropPlainRenderMark, _ content: String) -> String = { _,content in content }) {
 
         let start = renderResult.startIndex
         var end = renderResult.endIndex
@@ -231,44 +232,50 @@ public final class PlainTextRender: DropRendable {
         
         for mark in marks {
             
-            let insertLocation = mark.renderDocLocation + offset
+            let location = mark.renderDocRange.location + offset
+            let length = mark.renderDocRange.length
             
-            if mark.renderContent.isEmpty {
+            var content = mark.content
+            content = replaceContent(mark, content)
+            
+            if length == 0 {
                 
                 guard
                     let index = renderResult.index(
                         start,
-                        offsetBy: insertLocation,
+                        offsetBy: location,
                         limitedBy: end
                     )
                 else {
                     continue
                 }
                 
-                renderResult.insert(contentsOf: mark.content, at: index)
+                renderResult.insert(contentsOf: content, at: index)
                 
-                offset += mark.docRange.length
+                offset += content.count
                 
             } else {
                 
                 guard
                     let startIndex = renderResult.index(
                         start,
-                        offsetBy: insertLocation,
+                        offsetBy: location,
                         limitedBy: end
                     ),
                     let endIndex = renderResult.index(
                         startIndex,
-                        offsetBy: mark.renderContent.count,
+                        offsetBy: length,
                         limitedBy: end
                     )
                 else {
                     continue
                 }
                 
-                renderResult.replaceSubrange(startIndex ..< endIndex, with: mark.content)
+                let oldCount = renderResult.count
                 
-                offset += (mark.content.count - mark.renderContent.count)
+                renderResult.replaceSubrange(startIndex ..< endIndex, with: content)
+                
+                offset += renderResult.count - oldCount
                 
             }
             
@@ -283,43 +290,46 @@ public final class PlainTextRender: DropRendable {
 public struct DropPlainRenderMark: CustomStringConvertible, Hashable {
     
     // MARK: Properties
-    public var renderDocLocation: Int
+    public var renderDocRange: DropContants.IntRange
     public var docRange: DropContants.IntRange
     public var type: DropContentType
     public var markType: DropContentMarkType
-    public var renderType: DropRenderType { .init(type: type, mark: markType) }
     public var content: String
-    public var renderContent: String
+    public var isReplaceRenderContent: Bool
+    
+    public var renderType: DropRenderType {
+        .init(type: type, mark: markType)
+    }
     
     public var shouldRecoverMark: Bool {
-        content != renderContent
+        isReplaceRenderContent || (markType != .none && markType != .text)
     }
     
     public var lineDescription: String {
-        "{ renderDocLocation: \(renderDocLocation), type: \(type), markType: \(markType), renderType: \(renderType), content: \(content), renderContent: \(renderContent) }"
+        "{ renderDocRange: \(renderDocRange), type: \(type), markType: \(markType), renderType: \(renderType), content: \(content), isReplaceRenderContent: \(isReplaceRenderContent) }"
     }
     
     public var description: String {
         """
-        \nrenderDocLocation: \(renderDocLocation),
+        \nrenderDocRange: \(renderDocRange),
         docRange: \(docRange),
         type: \(type),
         markType: \(markType),
         renderType: \(renderType),
         content: \(content),
-        renderContent: \(renderContent)
+        isReplaceRenderContent: \(isReplaceRenderContent)
         """
     }
     
     // MARK: Init
-    public init(renderDocLocation: Int = 0, docRange: DropContants.IntRange = .init(), type: DropContentType = .text, markType: DropContentMarkType = .text, content: String = .init(), renderContent: String = .init()) {
+    public init(renderDocRange: DropContants.IntRange = .init(), docRange: DropContants.IntRange = .init(), type: DropContentType = .text, markType: DropContentMarkType = .text, content: String = .init(), isReplaceRenderContent: Bool = false) {
         
-        self.renderDocLocation = renderDocLocation
+        self.renderDocRange = renderDocRange
         self.docRange = docRange
         self.type = type
         self.markType = markType
         self.content = content
-        self.renderContent = renderContent
+        self.isReplaceRenderContent = isReplaceRenderContent
     }
     
 }

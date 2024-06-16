@@ -32,8 +32,6 @@ public struct DropLargeTokenSet: Hashable, CustomStringConvertible {
             : token[index]
     }
     
-    public var isCombineContents: Bool = false
-    
     public var description: String {
         """
         token: \(token),

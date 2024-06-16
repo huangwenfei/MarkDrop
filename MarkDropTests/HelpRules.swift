@@ -54,8 +54,8 @@ public struct HelpRules {
         DropTabIndentRule(),
         DropSpaceIndentRule(),
         
-        DropHashTagRule(),
-        DropMentionRule(),
+        DropPlainHashTagRule(),
+        DropPlainMentionRule(),
         
         DropShortBoldRule(),
         DropShortItalicsRule(),

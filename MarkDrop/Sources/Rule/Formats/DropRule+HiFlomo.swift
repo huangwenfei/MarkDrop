@@ -14,7 +14,6 @@ public final class DropHashTagRule: DropRule {
         var rule = DropTokenSet()
         rule.token = "#"
         rule.closeRule = [.space, .newline, .eof]
-        rule.isCombineContents = true
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -23,7 +22,7 @@ public final class DropHashTagRule: DropRule {
     public static let render: MarkRuleDict<DropTokenRenderType> = {
         var dict = MarkRuleDict<DropTokenRenderType>()
         dict[.open] = .keepItAsIs
-        dict[.close] = .remove
+        dict[.close] = .keepItAsIs
         return dict
     }()
     
@@ -44,7 +43,6 @@ public final class DropMentionRule: DropRule {
         var rule = DropTokenSet()
         rule.token = "@"
         rule.closeRule = [.space, .newline, .eof]
-        rule.isCombineContents = true
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -61,6 +59,48 @@ public final class DropMentionRule: DropRule {
     public init() {
         super.init(
             rule: .token(rule: DropMentionRule.rule, render: DropMentionRule.render),
+            type: .mention
+        )
+    }
+    
+}
+
+public final class DropPlainHashTagRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropHashTagRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropHashTagRule.render
+        dict[.close] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainHashTagRule.rule, render: DropPlainHashTagRule.render),
+            type: .hashTag
+        )
+    }
+    
+}
+
+public final class DropPlainMentionRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropMentionRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropMentionRule.render
+        dict[.close] = .remove
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainMentionRule.rule, render: DropPlainMentionRule.render),
             type: .mention
         )
     }

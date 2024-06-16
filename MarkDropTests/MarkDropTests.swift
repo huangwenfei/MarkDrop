@@ -638,7 +638,7 @@ final class MarkDropTests: XCTestCase {
         
     }
     
-    func testEmpty() throws {
+    func testIndentEmpty() throws {
         
         let string =
         """
@@ -758,6 +758,34 @@ final class MarkDropTests: XCTestCase {
         """
         
         let dropper = Dropper(string: string3)
+        let ast = dropper.process(using: shortRules)
+        
+        printNodes(tree: ast)
+        
+    }
+    
+    func testHashtag2() throws {
+        
+        let string =
+        """
+        现在，试着把#弹谷 当前脑海中的😤, #谷海鸥
+        """
+        
+        let dropper = Dropper(string: string)
+        let ast = dropper.process(using: shortRules)
+        
+        printNodes(tree: ast)
+        
+    }
+    
+    func testHashtag3() throws {
+        
+        let string =
+        """
+        现在，试着把#弹谷 当前脑海中的😤, #谷海??鸥??
+        """
+        
+        let dropper = Dropper(string: string)
         let ast = dropper.process(using: shortRules)
         
         printNodes(tree: ast)

@@ -26,6 +26,8 @@ public final class DropRuleLargeToken {
     
     public internal(set) var isOpenDone: Bool = false
     
+    public private(set) var openString: String = ""
+    
     // MARK: Init
     public init(state: DropContentLargeTokenRuleState) {
         self.state = state
@@ -349,6 +351,8 @@ public final class DropRuleLargeToken {
             renderToken = document.content(in: openRange)
         }
         
+        openString = document.content(in: openRange)
+        
         var capture = ""
         if token.shouldCapture {
             capture = document.content(
@@ -357,34 +361,36 @@ public final class DropRuleLargeToken {
                     length: closeRange.location - openRange.maxLocation
                 )
             )
-            
-            let close = (
-                closeRange.location == openRange.vaildMaxLocation
-                    ? ""
-                    : document.content(in: closeRange)
-            )
-            
-            switch render[.close] {
-            case .keepItAsIs:
-                capture += close
-                
-            case .remove:
-                break
-                
-            case .replace(let new):
-                capture += new
-                
-            case let .append(leading, trailing):
-                capture = leading + close + trailing
-                
-            case .none:
-                capture += close
-            }
         }
         
-        let result = [renderToken] + (token.shouldCapture ? [capture] : [])
+        var close: String? = (
+            closeRange.location == openRange.vaildMaxLocation
+                ? ""
+                : document.content(in: closeRange)
+        )
         
-        return self.token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
+        switch render[.close] {
+        case .keepItAsIs:
+            break
+            
+        case .remove:
+            close = ""
+            
+        case .replace(let new):
+            close = new
+            
+        case let .append(leading, trailing):
+            close = leading + close! + trailing
+            
+        case .none:
+            break
+        }
+        
+        close = closeRange.length <= 0 ? nil : (close?.isEmpty == true ? nil : close)
+        
+        let result = [renderToken] + (token.shouldCapture ? [capture] : []) + (close == nil ? [] : [close!])
+        
+        return result
     }
     
     public func rawContents(inDoc document: Document) -> [String] {
@@ -395,26 +401,28 @@ public final class DropRuleLargeToken {
         
         let renderToken = document.content(in: openRange)
         
-        var close = ""
+        var capture = ""
         if token.shouldCapture {
-            let capture = document.content(
+            capture = document.content(
                 in: .init(
                     location: openRange.maxLocation,
                     length: closeRange.location - openRange.maxLocation
                 )
             )
-            
-            close = capture + (
-                closeRange.location == openRange.vaildMaxLocation
-                    ? ""
-                    : document.content(in: closeRange)
-            )
         }
         
-        /// [token.string] + capture
-        let result = [renderToken] + (token.shouldCapture ? [close] : [])
+        var close: String? = (
+            closeRange.location == openRange.vaildMaxLocation
+                ? ""
+                : document.content(in: closeRange)
+        )
         
-        return token.isCombineContents ? [result.reduce("", { $0 + $1 })] : result
+        close = closeRange.length <= 0 ? nil : (close?.isEmpty == true ? nil : close)
+        
+        /// token.string + capture + close
+        let result = [renderToken] + (token.shouldCapture ? [capture] : []) + (close == nil ? [] : [close!])
+        
+        return result
     }
     
     public var contentRange: DropContants.IntRange {
@@ -467,15 +475,12 @@ public final class DropRuleLargeToken {
             
         }
         
+        let close = closeRange.length <= 0 ? nil : closeRange
+        
         /// token.string + capture
-        if let capture {
-            let result = [openRange, capture]
-            return token.isCombineContents
-                ? [.init(location: openRange.location, length: capture.maxLocation - openRange.location)]
-                : result
-        } else {
-            return [openRange]
-        }
+        let result = [openRange] + (capture == nil ? [] : [capture!]) + (close == nil ? [] : [close!])
+        
+        return result
         
     }
     
@@ -483,7 +488,7 @@ public final class DropRuleLargeToken {
         /// [token.string] + capture
         let result = [token.shouldCapture ? 1 : 0]
         
-        return token.isCombineContents ? [0] : result
+        return result
     }
     
     // MARK: Clear
@@ -492,6 +497,8 @@ public final class DropRuleLargeToken {
         openRange = nil
         closeRange = nil
         isOpenDone = false
+        
+        openString = ""
         
         if isContainsHeadInfo {
             previousVaildHeadList = []

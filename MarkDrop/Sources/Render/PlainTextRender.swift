@@ -287,7 +287,7 @@ public final class PlainTextRender: DropRendable {
     
 }
 
-public struct DropPlainRenderMark: CustomStringConvertible, Hashable {
+public struct DropPlainRenderMark: CustomStringConvertible, Hashable, Codable {
     
     // MARK: Properties
     public var renderDocRange: DropContants.IntRange
@@ -303,6 +303,10 @@ public struct DropPlainRenderMark: CustomStringConvertible, Hashable {
     
     public var shouldRecoverMark: Bool {
         isReplaceRenderContent || (markType != .none && markType != .text)
+    }
+    
+    public static func isReplace(_ type: DropContentType, _ markType: DropContentMarkType, _ content: String) -> Bool {
+        type == .hashTag && markType == .text
     }
     
     public var lineDescription: String {

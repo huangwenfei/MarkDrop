@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropAttributeType: Int, Hashable {
+public enum DropAttributeType: Int, Hashable, Codable {
     case text
     
     /// 标签

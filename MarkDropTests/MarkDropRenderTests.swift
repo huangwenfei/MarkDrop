@@ -248,13 +248,9 @@ final class MarkDropRenderTests: XCTestCase {
         
         var tagIds = [(raw: String, replace: String)]()
         
-        func isReplace(_ type: DropContentType, _ markType: DropContentMarkType, _ content: String) -> Bool {
-            type == .hashTag && markType == .text
-        }
-        
         /// #欢迎/新人??指南?? 应该拆解成 两个 而不是 三个
         let (marks, plain) = PlainTextRender.renderAndDropMarks(string: string, using: rules) { type, markType, content, renderContent in
-            if isReplace(type, markType, content) {
+            if DropPlainRenderMark.isReplace(type, markType, content) {
                 let tagId = UUID().uuidString
                 tagIds.append((content, tagId))
                 return (tagId, "")
@@ -272,7 +268,7 @@ final class MarkDropRenderTests: XCTestCase {
         
         var originString = plain
         PlainTextRender.recover(by: marks, in: &originString) { mark, content in
-            if isReplace(mark.type, mark.markType, content) {
+            if DropPlainRenderMark.isReplace(mark.type, mark.markType, content) {
                 let raw = tagIds.first(where: { $0.replace == mark.content })
                 return raw!.raw
             } else {

@@ -7,6 +7,6 @@
 
 import Foundation
 
-public enum DropActionState: Int {
+public enum DropActionState: Int, Codable {
     case normal, highlight, focus, invoke
 }

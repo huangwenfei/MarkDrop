@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContainerType: Hashable {
+public enum DropContainerType: Hashable, Codable {
     /// 所有内容
     case document
     /// 块内容，是 >= 1 paragraph 组合
@@ -90,14 +90,14 @@ public enum DropContainerType: Hashable {
     
 }
 
-public enum DropContainerBlockType: Int {
+public enum DropContainerBlockType: Int, Codable {
     case bulletList, numberOrderList, letterOrderList ///,
 //         heading, previousHeading,
 //         codeBlock, quote,
 //         html
 }
 
-public enum DropParagraphType: Int {
+public enum DropParagraphType: Int, Codable {
     case document,
          bulletList, numberOrderList, letterOrderList,
          text,

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContentType: Int {
+public enum DropContentType: Int, Codable {
     /// - Tag: Normal
     /// 无格式文本，叶子结点
     case text

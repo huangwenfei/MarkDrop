@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContentMarkType: Int {
+public enum DropContentMarkType: Int, Codable {
     case none
     
     case text

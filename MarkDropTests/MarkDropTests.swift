@@ -589,7 +589,7 @@ final class MarkDropTests: XCTestCase {
         如果你\(uo)想知道更多\(uc)，你\(uo)\(bo)活着\(bc)\(uc)
         """
         
-        let dropper = Dropper(string: string5)
+        let dropper = Dropper(string: string4)
         let ast = dropper.process(using: [
             DropHashTagRule(), DropMentionRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

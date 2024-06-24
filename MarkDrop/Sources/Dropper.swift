@@ -341,7 +341,7 @@ public final class Dropper {
                         }()
                         currentOpen.documentRange = rule.source.contentRange
                         
-                        if currentOpen.renderContents.count <= 1 {
+                        if currentOpen.contents.count <= 1 {
                             
                             let markNode = self.contentMark(rule.source.type, mark: .text)
                             markNode.contents = currentOpen.contents
@@ -361,12 +361,12 @@ public final class Dropper {
                             
                             var markIntOffset = currentOpen.intRange.location
                             
-                            let loopContents = zip(
-                                currentOpen.contents,
-                                zip(currentOpen.renderContents, rule.source.rawContentRanges)
-                            )
-                            
-                            for (index, (content, (renderContent, contentRange))) in loopContents.enumerated() {
+                            for index in (0 ..< currentOpen.contents.count) {
+                                
+                                let content = currentOpen.contents[index]
+                                let renderContent = currentOpen.renderContents.indices.contains(index) ? currentOpen.renderContents[index] : ""
+                                let contentRange = rule.source.rawContentRanges[index]
+                                
                                 
                                 let count = content.count
                                 

@@ -108,6 +108,11 @@ public class DropNode: Hashable, CustomStringConvertible {
         child.parentNode = self
     }
     
+    public func append(_ childs: [DropNode]) {
+        children.append(contentsOf: childs)
+        childs.forEach({ $0.parentNode = self })
+    }
+    
     // MARK: Remove
     public func remove(child: DropNode) {
         children.removeAll(where: { $0 === child })

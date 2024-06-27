@@ -435,14 +435,13 @@ public final class Dropper {
             
         }
         
-        /// - Tag: Slpit text nodes
-        let paragraphChildren = paragraph.children.sorted(by: {
+        /// - Tag: Slpit text nodes using format nodes
+        let markChildren = (markTexts + marks).sorted(by: {
             $0.intRange.location < $1.intRange.location
         })
         
-        var newChildren: [DropNode] = []
         var currentLocation: Int = 0
-        for child in paragraphChildren {
+        for child in markChildren {
             
             let contentOffset = child.intRange.location - currentLocation
             
@@ -457,20 +456,17 @@ public final class Dropper {
                 text.rawContentIndices = [0]
                 text.renderContents = text.contents
                 text.parentNode = paragraph
-                newChildren.append(text)
+                paragraph.append(text)
             }
             
             currentLocation = child.intRange.maxLocation
-            newChildren.append(child)
         }
         
         /// the last text node
-        if
-            let last = newChildren.last,
-            last.intRange.maxLocation < paragraph.rawContent.count
-        {
+        if currentLocation < paragraph.rawContent.count {
+            
             let text = self.content(.text)
-            let intStart = last.intRange.maxLocation
+            let intStart = currentLocation
             text.intRange = .init(location: intStart, length: paragraph.rawContent.count - intStart)
             text.documentRange = .init(
                 location: text.intRange.location + paragraph.intRange.location,
@@ -480,10 +476,8 @@ public final class Dropper {
             text.rawContentIndices = [0]
             text.renderContents = text.contents
             text.parentNode = paragraph
-            newChildren.append(text)
+            paragraph.append(text)
         }
-        
-        paragraph.children = newChildren
         
         /// - Tag: text paragraph
         if paragraph.haveChildren == false, paragraph.rawContent.isEmpty == false {
@@ -500,11 +494,17 @@ public final class Dropper {
             paragraph.children = [text]
         }
         
-        /// - Tag: Split Texts
+        /// - Tag: Split Texts in foramt nodes using format marks
         var markNodes = markTexts
         marks.sort(by: { $0.intRange.location < $1.intRange.location })
         
         while let text = markNodes.popLast() {
+            
+            guard text.rawContent.isEmpty == false else {
+                text.parentNode?.append(text.children)
+                text.parentNode?.remove(child: text)
+                continue
+            }
             
 //            print()
 //            print((#file as NSString).lastPathComponent, #function.split(separator: "(").first!, #line, "before", text.rawContent)
@@ -514,7 +514,6 @@ public final class Dropper {
             for mark in marks {
                 guard
                     text !== mark,
-                    text.rawContent.isEmpty == false,
                     mark.intRange.location >= text.intRange.location,
                     mark.intRange.maxLocation <= text.intRange.maxLocation
                 else {
@@ -547,7 +546,11 @@ public final class Dropper {
                     node.contents = [document.content(in: node.documentRange)]
                     node.rawContentIndices = [0]
                     node.renderContents = node.contents
+                    #if true
+                    text.parentNode?.append(node)
+                    #else
                     text.append(node)
+                    #endif
                 }
                 
                 currentRange.location = mark.intRange.maxLocation
@@ -571,15 +574,24 @@ public final class Dropper {
                 node.contents = [document.content(in: node.documentRange)]
                 node.rawContentIndices = [0]
                 node.renderContents = node.contents
+                #if true
+                text.parentNode?.append(node)
+                #else
                 text.append(node)
+                #endif
             }
             
 //            print((#file as NSString).lastPathComponent, #function.split(separator: "(").first!, #line, "after", text.leaves.map({ $0.rawContent }))
 //            print()
             
+            #if true
+            text.parentNode?.append(text.children)
+            text.parentNode?.remove(child: text)
+            #else
             text.contents = []
             text.rawContentIndices = []
             text.renderContents = []
+            #endif
             
         }
         

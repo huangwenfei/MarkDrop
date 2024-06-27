@@ -589,7 +589,12 @@ final class MarkDropTests: XCTestCase {
         如果你\(uo)想知道更多\(uc)，你\(uo)\(bo)活着\(bc)\(uc)
         """
         
-        let dropper = Dropper(string: string4)
+        let string6 = """
+        @村上春树 曾写下:“我告诉你，我爱你，并不是一定要和你在一起，是希望今后的你，灰心的时候记得有人喜欢过你。”陪你走完这段路，我也就变成你路过的路人，从此，\(uo)人山人海，不再归来\(uc)。以前喜欢长得好看的，现在喜欢相处舒服的。越长大越觉得，一辈子能够遇到你说#上半句 他能接下半句，还能把你宠上天的人有多难..
+        #春天 #椿树 #春树 #热泵人 #人上人 #驴肉 #略有/有偿时 #相处/融洽 #好看 #真好看 #春秋 #长夏 #长沙/砂糖橘 #一起 #以后 #蚁后 #后来/王菲 #谢霆锋/张学友 #学友/雅西了你
+        """
+        
+        let dropper = Dropper(string: string6)
         let ast = dropper.process(using: [
             DropHashTagRule(), DropMentionRule(),
             Bold(), Italics(), Underline(), Highlight(), Stroke()

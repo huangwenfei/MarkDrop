@@ -923,7 +923,10 @@ public final class AttributedStringRender: DropRendable {
                         render = newPrevious
                         
                     }
-                    else if previous.range.maxLocation == render.range.location {
+                    else if 
+                        previous.range.maxLocation == render.range.location,
+                        previous.markNode.parentNode === render.markNode.parentNode
+                    {
                         
                         var newPrevious = previous
                         

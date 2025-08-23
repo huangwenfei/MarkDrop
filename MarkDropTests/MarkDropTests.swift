@@ -99,7 +99,7 @@ final class MarkDropTests: XCTestCase {
         let string = 
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力\t#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -107,7 +107,7 @@ final class MarkDropTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、灵感、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         \t- \t#欢迎/新人??指南??
@@ -162,14 +162,14 @@ final class MarkDropTests: XCTestCase {
         /// short format, shortRules
         let string =
         """
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         """
         let rules = shortRules
         #else
         /// rich format, flomoRules
         let string =
         """
-        \(DropBoldRule.rule.openTag)hiflomo\(DropBoldRule.rule.closeTag) 是一款全平台卡片笔记 App，主要功能有：
+        \(DropBoldRule.rule.openTag)drop\(DropBoldRule.rule.closeTag) 是一款全平台卡片笔记 App，主要功能有：
         """
         let rules = flomoRules
         #endif
@@ -188,14 +188,14 @@ final class MarkDropTests: XCTestCase {
         /// short format, shortRules
         let string =
         """
-        hiflomo 是一款**全平台**卡片笔记 App，主要功能有：
+        drop 是一款**全平台**卡片笔记 App，主要功能有：
         """
         let rules = shortRules
         #else
         /// rich format, flomoRules
         let string =
         """
-        hiflomo 是一款\(DropItalicsRule.rule.openTag)全平台\(DropItalicsRule.rule.closeTag)卡片笔记 App，主要功能有：
+        drop 是一款\(DropItalicsRule.rule.openTag)全平台\(DropItalicsRule.rule.closeTag)卡片笔记 App，主要功能有：
         """
         let rules = flomoRules
         #endif
@@ -213,14 +213,14 @@ final class MarkDropTests: XCTestCase {
         /// short format, shortRules
         let string =
         """
-        hiflomo 是一款全平台!!卡片笔记!! App，主要功能有：
+        drop 是一款全平台!!卡片笔记!! App，主要功能有：
         """
         let rules = shortRules
         #else
         /// rich format, flomoRules
         let string =
         """
-        hiflomo 是一款全平台\(DropUnderlineRule.rule.openTag)卡片笔记\(DropUnderlineRule.rule.closeTag) App，主要功能有：
+        drop 是一款全平台\(DropUnderlineRule.rule.openTag)卡片笔记\(DropUnderlineRule.rule.closeTag) App，主要功能有：
         """
         let rules = flomoRules
         #endif
@@ -391,7 +391,7 @@ final class MarkDropTests: XCTestCase {
         
         let string =
         """
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
         """
         
         let dropper = Dropper(string: string)
@@ -1114,7 +1114,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -1149,7 +1149,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -1184,7 +1184,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -1217,7 +1217,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -1225,7 +1225,7 @@ final class MarkDropTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
         
         现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         - #欢迎/新人??指南??
@@ -1237,7 +1237,7 @@ final class MarkDropTests: XCTestCase {
         
         let string1 =
         """
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
             
         
         现在，试着把当前脑海中的!!想法、**灵无??压记录感**、情??绪!!等等记下来，尝试下无压记录的??愉悦??。
@@ -1260,7 +1260,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -1280,7 +1280,7 @@ final class MarkDropTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇

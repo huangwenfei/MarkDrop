@@ -27,7 +27,7 @@ final class MarkDropRenderTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -35,7 +35,7 @@ final class MarkDropRenderTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         - #欢迎/新人??指南??
@@ -79,7 +79,7 @@ final class MarkDropRenderTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -87,7 +87,7 @@ final class MarkDropRenderTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         - #欢迎/新人??指南??
@@ -228,7 +228,7 @@ final class MarkDropRenderTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -236,7 +236,7 @@ final class MarkDropRenderTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         - #欢迎/新人??指南??
@@ -289,7 +289,7 @@ final class MarkDropRenderTests: XCTestCase {
         let string =
         """
         👋，吾友
-        ::hiflomo:: 是一款全平台卡片笔记 App，主要功能有：
+        ::drop:: 是一款全平台卡片笔记 App，主要功能有：
         - ::极简记录::，做笔记毫无压力#欢迎🍎
         - ::多级标签::，让记录井井有条
         - ::每日回顾::，**与**记录不期而遇
@@ -297,7 +297,7 @@ final class MarkDropRenderTests: XCTestCase {
         
         1. 你说::??努力??::有用吗？
         - 不期而遇，期望美好的开始
-        不期, ::hiflomo: 是卡片??笔记
+        不期, ::drop: 是卡片??笔记
 
         现在，试着把当前脑海中的!!想法、**灵感**、情绪!!等等记下来，尝试下无压记录的??愉悦??。
         \t- #欢迎/新人??指南??

@@ -1,5 +1,5 @@
 //
-//  DropRule+HiFlomo.swift
+//  DropRule+Drop.swift
 //  MarkDrop
 //
 //  Created by windy on 2024/5/15.
@@ -112,7 +112,7 @@ public final class DropBoldRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoBold|"
+        let mark = "|dropBold|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -141,7 +141,7 @@ public final class DropItalicsRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoItalics|"
+        let mark = "|dropItalics|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -170,7 +170,7 @@ public final class DropUnderlineRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoUnderline|"
+        let mark = "|dropUnderline|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -199,7 +199,7 @@ public final class DropHighlightRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoHighlight|"
+        let mark = "|dropHighlight|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -228,7 +228,7 @@ public final class DropStrokeRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoStroke|"
+        let mark = "|dropStroke|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"

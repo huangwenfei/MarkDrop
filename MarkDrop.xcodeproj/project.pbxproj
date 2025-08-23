@@ -34,7 +34,7 @@
 		23452ECC2BF48644009404D8 /* DropLargeTokenRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452ECB2BF48644009404D8 /* DropLargeTokenRenderType.swift */; };
 		23452ECE2BF4865B009404D8 /* DropLargeTagRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452ECD2BF4865B009404D8 /* DropLargeTagRenderType.swift */; };
 		23452ED02BF4866C009404D8 /* DropMultiTagRenderType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452ECF2BF4866C009404D8 /* DropMultiTagRenderType.swift */; };
-		23452ED92BF4DB66009404D8 /* DropRule+HiFlomo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452ED82BF4DB66009404D8 /* DropRule+HiFlomo.swift */; };
+		23452ED92BF4DB66009404D8 /* DropRule+Drop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452ED82BF4DB66009404D8 /* DropRule+Drop.swift */; };
 		23452EDD2BF4DB98009404D8 /* DropRule+CommonMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23452EDC2BF4DB98009404D8 /* DropRule+CommonMark.swift */; };
 		234873CB2BFC946E00FF3E54 /* DropRenderFillMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234873CA2BFC946E00FF3E54 /* DropRenderFillMode.swift */; };
 		236C7EB22BF89B8C0023BDEC /* DropAttributeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236C7EB12BF89B8C0023BDEC /* DropAttributeType.swift */; };
@@ -127,7 +127,7 @@
 		232A0D162BE3E517006A594C /* MarkDrop.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = MarkDrop.docc; sourceTree = "<group>"; };
 		232A0D1C2BE3E517006A594C /* MarkDropTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkDropTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		232A0D212BE3E517006A594C /* MarkDropTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDropTests.swift; sourceTree = "<group>"; };
-		232A0D302BE3E58B006A594C /* HiFlomoFileFormat.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HiFlomoFileFormat.md; sourceTree = "<group>"; };
+		232A0D302BE3E58B006A594C /* DropFileFormat.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DropFileFormat.md; sourceTree = "<group>"; };
 		233805592BFAE126002D3F36 /* DropExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropExtensions.swift; sourceTree = "<group>"; };
 		2338055B2BFAEA0E002D3F36 /* DropLineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropLineMode.swift; sourceTree = "<group>"; };
 		233805652BFB3BAA002D3F36 /* DropCaptureRenderNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropCaptureRenderNode.swift; sourceTree = "<group>"; };
@@ -138,7 +138,7 @@
 		23452ECB2BF48644009404D8 /* DropLargeTokenRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropLargeTokenRenderType.swift; sourceTree = "<group>"; };
 		23452ECD2BF4865B009404D8 /* DropLargeTagRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropLargeTagRenderType.swift; sourceTree = "<group>"; };
 		23452ECF2BF4866C009404D8 /* DropMultiTagRenderType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropMultiTagRenderType.swift; sourceTree = "<group>"; };
-		23452ED82BF4DB66009404D8 /* DropRule+HiFlomo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+HiFlomo.swift"; sourceTree = "<group>"; };
+		23452ED82BF4DB66009404D8 /* DropRule+Drop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+Drop.swift"; sourceTree = "<group>"; };
 		23452EDC2BF4DB98009404D8 /* DropRule+CommonMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DropRule+CommonMark.swift"; sourceTree = "<group>"; };
 		234873CA2BFC946E00FF3E54 /* DropRenderFillMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropRenderFillMode.swift; sourceTree = "<group>"; };
 		236C7EB12BF89B8C0023BDEC /* DropAttributeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropAttributeType.swift; sourceTree = "<group>"; };
@@ -275,7 +275,7 @@
 			children = (
 				232A0D162BE3E517006A594C /* MarkDrop.docc */,
 				236C7EE12BF8F2830023BDEC /* README.md */,
-				232A0D302BE3E58B006A594C /* HiFlomoFileFormat.md */,
+				232A0D302BE3E58B006A594C /* DropFileFormat.md */,
 				2377B32F2BE4721A00A7B257 /* MarkDropTree.md */,
 			);
 			path = Documentations;
@@ -372,7 +372,7 @@
 		23452EDB2BF4DB7F009404D8 /* Formats */ = {
 			isa = PBXGroup;
 			children = (
-				23452ED82BF4DB66009404D8 /* DropRule+HiFlomo.swift */,
+				23452ED82BF4DB66009404D8 /* DropRule+Drop.swift */,
 				23452EDC2BF4DB98009404D8 /* DropRule+CommonMark.swift */,
 			);
 			path = Formats;
@@ -666,7 +666,7 @@
 				23EB49092BF703FA002F25F0 /* DropFont.swift in Sources */,
 				236C7EB62BF8A4EB0023BDEC /* AttributesKey.swift in Sources */,
 				2307CA1A2BEE10F8003CD18F /* DropContentLargeTagRuleState.swift in Sources */,
-				23452ED92BF4DB66009404D8 /* DropRule+HiFlomo.swift in Sources */,
+				23452ED92BF4DB66009404D8 /* DropRule+Drop.swift in Sources */,
 				2377B3582BE5389800A7B257 /* DropContants.swift in Sources */,
 				23EB49172BF77BC6002F25F0 /* ParagraphAttributes.swift in Sources */,
 				2377B3382BE4E7BC00A7B257 /* AttributedStringRender.swift in Sources */,

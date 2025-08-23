@@ -53,6 +53,8 @@ public enum DropContentType: Int, Codable {
     /// 描边 [文字]
     case stroke
     
+//    case strikethrough
+    
     /// - Tag: Other
     /// 缩进 ( 4 个空格 Or \t)
     case spaceIndent

@@ -16,6 +16,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		233992CD2E599094005D0813 /* Light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Light.png; sourceTree = "<group>"; };
+		233992CE2E599926005D0813 /* Dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Dark.png; sourceTree = "<group>"; };
 		236C7ECA2BF8EFBD0023BDEC /* MarkDropDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarkDropDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		236C7ECD2BF8EFBD0023BDEC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		236C7ECF2BF8EFBD0023BDEC /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -37,6 +39,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		233992CC2E599083005D0813 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				233992CD2E599094005D0813 /* Light.png */,
+				233992CE2E599926005D0813 /* Dark.png */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		236C7EC12BF8EFBD0023BDEC = {
 			isa = PBXGroup;
 			children = (
@@ -56,6 +67,7 @@
 		236C7ECC2BF8EFBD0023BDEC /* MarkDropDemo */ = {
 			isa = PBXGroup;
 			children = (
+				233992CC2E599083005D0813 /* Resources */,
 				236C7ECD2BF8EFBD0023BDEC /* AppDelegate.swift */,
 				236C7ECF2BF8EFBD0023BDEC /* SceneDelegate.swift */,
 				236C7ED12BF8EFBD0023BDEC /* ViewController.swift */,

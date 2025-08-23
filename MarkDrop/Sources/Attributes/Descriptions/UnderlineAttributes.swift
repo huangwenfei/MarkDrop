@@ -19,42 +19,19 @@ public struct UnderlineAttributes: Hashable {
     public var color: DropColor
     public var width: CGFloat
     public var margins: CGFloat
-    public var mode: Mode
+    public var mode: DropLineMode
     
     // MARK: Init
     public init(
         color: DropColor = .black,
         width: CGFloat = 0,
         margins: CGFloat = 1,
-        mode: Mode = .single
+        mode: DropLineMode = .single
     ) {
         self.color = color
         self.width = width
         self.margins = margins
         self.mode = mode
-    }
-    
-}
-
-extension UnderlineAttributes {
-    
-    public enum Mode: Int {
-        case single, thick, double,
-             patternDot, patternDash, patternDashDot, patternDashDotDot,
-             byWord
-        
-        public var style: NSUnderlineStyle {
-            switch self {
-            case .single:            return .single
-            case .thick:             return .thick
-            case .double:            return .double
-            case .patternDot:        return .patternDot
-            case .patternDash:       return .patternDash
-            case .patternDashDot:    return .patternDashDot
-            case .patternDashDotDot: return .patternDashDotDot
-            case .byWord:            return .byWord
-            }
-        }
     }
     
 }

@@ -8,7 +8,7 @@
 import Foundation
 import CoreGraphics
 
-extension CGSize: Hashable {
+extension CGSize: @retroactive Hashable {
     
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.width == rhs.width &&

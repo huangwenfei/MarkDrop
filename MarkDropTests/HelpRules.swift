@@ -46,4 +46,22 @@ public struct HelpRules {
         DropShortStrokeRule(),
     ]
     
+    public static let plainShortRules: [DropRule] = [
+        DropPlainBulletRule(),
+        DropPlainNumberOrderRule(),
+        DropPlainLetterOrderRule(),
+        
+        DropTabIndentRule(),
+        DropSpaceIndentRule(),
+        
+        DropPlainHashTagRule(),
+        DropPlainMentionRule(),
+        
+        DropShortBoldRule(),
+        DropShortItalicsRule(),
+        DropShortUnderlineRule(),
+        DropShortHighlightRule(),
+        DropShortStrokeRule(),
+    ]
+    
 }

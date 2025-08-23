@@ -15,7 +15,9 @@ import UIKit
 import AppKit
 #endif
 
-extension DropFont {
+extension DropFont: DropExtensions { }
+
+extension DropWrapper where RawValue == DropFont {
 
     public var isBold: Bool {
         return contains(.bold)
@@ -30,36 +32,38 @@ extension DropFont {
     }
 
     public var bold: DropFont {
-        return with(.bold) ?? self
+        return with(.bold) ?? self.rawValue
     }
 
     public var italic: DropFont {
-        return with(.italic) ?? self
+        return with(.italic) ?? self.rawValue
     }
 
     public var monoSpace: DropFont {
-        return with(.monoSpace) ?? self
+        return with(.monoSpace) ?? self.rawValue
     }
 
     private func with(_ trait: DropFontDescriptor.SymbolicTraits) -> DropFont? {
-        guard !contains(trait) else { return self }
+        guard !contains(trait) else { return self.rawValue }
 
-        var traits = fontDescriptor.symbolicTraits
+        var traits = rawValue.fontDescriptor.symbolicTraits
         traits.insert(trait)
 
         #if canImport(UIKit)
-        guard let newDescriptor = fontDescriptor.withSymbolicTraits(traits) else { return self }
-        return DropFont(descriptor: newDescriptor, size: pointSize)
+        guard let newDescriptor = rawValue.fontDescriptor.withSymbolicTraits(traits) else {
+            return self.rawValue
+        }
+        return DropFont(descriptor: newDescriptor, size: rawValue.pointSize)
 
         #elseif canImport(AppKit)
         let newDescriptor = fontDescriptor.withSymbolicTraits(traits)
-        return DropFont(descriptor: newDescriptor, size: pointSize)
+        return DropFont(descriptor: newDescriptor, size: rawValue.pointSize)
 
         #endif
     }
 
     private func contains(_ trait: DropFontDescriptor.SymbolicTraits) -> Bool {
-        return fontDescriptor.symbolicTraits.contains(trait)
+        return rawValue.fontDescriptor.symbolicTraits.contains(trait)
     }
 
 }
@@ -85,3 +89,31 @@ private extension DropFontDescriptor.SymbolicTraits {
 }
 
 #endif
+
+extension DropFont {
+    
+    internal var isBold: Bool {
+        drop.isBold
+    }
+    
+    internal var isItalic: Bool {
+        drop.isItalic
+    }
+    
+    internal var isMonoSpace: Bool {
+        drop.isMonoSpace
+    }
+    
+    internal var bold: DropFont {
+        drop.bold
+    }
+    
+    internal var italic: DropFont {
+        drop.italic
+    }
+    
+    internal var monoSpace: DropFont {
+        drop.monoSpace
+    }
+    
+}

@@ -9,6 +9,9 @@ import Foundation
 
 public enum DropMarkRenderMode: Hashable {
     
-    case keepItAsIs, remove, replace(new: String)
+    case keepItAsIs,
+         remove,
+         replace(new: String),
+         append(leading: String, trailing: String)
     
 }

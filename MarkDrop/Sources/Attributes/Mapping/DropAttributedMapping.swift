@@ -7,38 +7,81 @@
 
 import Foundation
 
-public class DropAttributedMapping {
+open class DropAttributedMapping {
+    
+    // MARK: Properties
+    /// index 越小优先级越高
+    public var markCombinePriority: [DropRenderMarkType] = [
+        .hashTag, .mention, .highlight, .bold, .italics, .underline, .stroke
+    ]
     
     // MARK: Init
     public init() {}
     
     // MARK: Mapping
-    public func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    open func append(type: DropParagraphType, paragraph: ParagraphAttributes, listMark: NSAttributedString?, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         fatalError("Using subclass !")
     }
     
-    public func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
+    open func combine(oldAttributes: DropContants.AttributedDict, in attributed: inout DropContants.AttributedDict) {
         fatalError("Using subclass !")
     }
     
-    public func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    open func mapping(expand: ExpandAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
         fatalError("Using subclass !")
     }
+    
+    open func mapping(action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        fatalError("Using subclass !")
+    }
+    
+    open func mapping(expand: ExpandAttributes, action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        fatalError("Using subclass !")
+    }
+    
+    open func expandActionReplace(_ previous: NSAttributedString, replaceRange: DropContants.IntRange, content: NSAttributedString) -> NSAttributedString? {
+        fatalError("Using subclass !")
+    }
+    
+    open func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
+        fatalError("Using subclass !")
+    }
+
 }
 
 
 public final class DropDefaultAttributedMapping: DropAttributedMapping {
     
-    public override func append(paragraph: ParagraphAttributes, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
+    public override func append(type: DropParagraphType, paragraph: ParagraphAttributes, listMark: NSAttributedString?, in content: inout NSMutableAttributedString, with indentList: [DropParagraphIndent]) {
         
         let style = DropMutableParagraph()
         style.setParagraphStyle(paragraph.paragraphStyle)
         
-        style.firstLineHeadIndent = 0
-        style.headIndent = 0
+        style.firstLineHeadIndent = paragraph.startHeadIndent
+        style.headIndent = paragraph.startHeadIndent
         style.tabStops = []
         
-        let indentation = paragraph.indentWidth
+        let font = content.attribute(.font, at: 0, effectiveRange: nil) ?? DropFont.systemFont(ofSize: 16)
+        let color = content.attribute(.foregroundColor, at: 0, effectiveRange: nil) ?? DropColor.green
+        let kern = content.attribute(.kern, at: 0, effectiveRange: nil) ?? 0
+        
+        let charAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+            .kern: kern
+        ]
+        
+        if type.isList {
+            if paragraph.usingFixWidth {
+                let max = paragraph.fixHeadMaxWidth?.value(charAttributes) ?? 0
+                style.firstLineHeadIndent = Swift.max(0, max - (listMark?.size().width ?? 0))
+                style.headIndent = max
+            } else {
+                style.headIndent = paragraph.startHeadIndent
+            }
+        }
+        
+        let indentation = paragraph.indentWidthClosure?.value(charAttributes) ?? 20
         
         indentList.forEach({
             
@@ -78,7 +121,8 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         let newFont = attributed[fontKey] as? DropFont
         
         /// 如果 key 重复，就使用 attributed 的 value (current)
-        attributed.merge(oldAttributes, uniquingKeysWith: { current,_ in current })
+//        attributed.merge(oldAttributes, uniquingKeysWith: { current,_ in current })
+        attributed.merge(oldAttributes, uniquingKeysWith: { _,old in old })
         
         if var font, let newFont {
             if newFont.isBold      { font = font.bold }
@@ -89,7 +133,29 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
         
     }
     
-    public override func mapping(text: TextAttributes, type: DropAttributeType) -> DropContants.AttributedDict {
+    public override func mapping(expand: ExpandAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
+        
+    }
+    
+    public override func mapping(action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
+        
+    }
+    
+    public override func mapping(expand: ExpandAttributes, action: ActionAttributes, text: CharacterAttributes, content attributedContent: NSAttributedString, renderRange: DropContants.IntRange, in paragraph: ParagraphAttributes) -> DropAttributedMappingResult? {
+        
+        nil
+    }
+    
+    public override func expandActionReplace(_ previous: NSAttributedString, replaceRange: DropContants.IntRange, content: NSAttributedString) -> NSAttributedString? {
+        
+        nil
+    }
+    
+    public override func mapping(text: TextAttributes, type: DropAttributeType, content: String, in paragraph: ParagraphAttributes) -> DropContants.AttributedDict {
         
         var result = DropContants.AttributedDict()
         
@@ -126,6 +192,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
     private func border(_ value: BorderAttributes) -> DropContants.AttributedDict {
         [
             key(.borderColor): value.color,
+            key(.borderLineMode): value.lineMode,
             key(.borderWidth): value.width,
             key(.borderCornerRadius): value.cornerRadius,
             key(.borderFillColor): value.fillColor,
@@ -136,6 +203,7 @@ public final class DropDefaultAttributedMapping: DropAttributedMapping {
     private func backgroundBorder(_ value: BorderAttributes) -> DropContants.AttributedDict {
         [
             key(.backgroundBorderColor): value.color,
+            key(.backgroundBorderLineMode): value.lineMode,
             key(.backgroundBorderWidth): value.width,
             key(.backgroundBorderCornerRadius): value.cornerRadius,
             key(.backgroundBorderFillColor): value.fillColor,

@@ -27,8 +27,6 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
         closeRule.isEmpty && shouldCapture == false
     }
     
-    public var isCombineContents: Bool = false
-    
     public var description: String {
         """
         token: \(token),
@@ -37,6 +35,7 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     public func isVaildHead(_ value: String) -> Bool {

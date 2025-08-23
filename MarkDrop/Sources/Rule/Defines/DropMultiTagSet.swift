@@ -18,6 +18,14 @@ public struct DropMultiTagSet: Hashable, CustomStringConvertible {
     
     public var render: [DropMultiTagRenderType: DropMarkRenderMode] = .init()
     
+    /// control close point
+    public var isLooseModeOn: Bool = false
+    public var looseCanSpanParagraphs: Bool = false
+    
+    public var isMultiParagraphMode: Bool {
+        isLooseModeOn && looseCanSpanParagraphs
+    }
+    
     public var description: String {
         """
         openTag: \(openTag),
@@ -28,6 +36,7 @@ public struct DropMultiTagSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     

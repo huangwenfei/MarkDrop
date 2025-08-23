@@ -63,7 +63,7 @@ extension NSParagraphStyle {
 }
 
 
-extension NSParagraphStyle.LineBreakStrategy: Hashable {
+extension NSParagraphStyle.LineBreakStrategy: @retroactive Hashable {
     
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.rawValue == rhs.rawValue

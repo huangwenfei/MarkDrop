@@ -309,6 +309,10 @@ public struct DropPlainRenderMark: CustomStringConvertible, Hashable, Codable {
         type == .hashTag && markType == .text
     }
     
+    public var isReplaceContent: Bool {
+        type == .hashTag && markType == .text
+    }
+    
     public var lineDescription: String {
         "{ renderDocRange: \(renderDocRange), type: \(type), markType: \(markType), renderType: \(renderType), content: \(content), isReplaceRenderContent: \(isReplaceRenderContent) }"
     }

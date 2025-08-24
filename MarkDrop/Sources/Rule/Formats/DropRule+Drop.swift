@@ -1,5 +1,5 @@
 //
-//  DropRule+HiFlomo.swift
+//  DropRule+Drop.swift
 //  MarkDrop
 //
 //  Created by windy on 2024/5/15.
@@ -14,7 +14,6 @@ public final class DropHashTagRule: DropRule {
         var rule = DropTokenSet()
         rule.token = "#"
         rule.closeRule = [.space, .newline, .eof]
-        rule.isCombineContents = true
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -44,7 +43,6 @@ public final class DropMentionRule: DropRule {
         var rule = DropTokenSet()
         rule.token = "@"
         rule.closeRule = [.space, .newline, .eof]
-        rule.isCombineContents = true
 //        rule.isInvalidCaptureOn = true
 //        rule.invaildCaptureSet = rule.token
         return rule
@@ -53,7 +51,7 @@ public final class DropMentionRule: DropRule {
     public static let render: MarkRuleDict<DropTokenRenderType> = {
         var dict = MarkRuleDict<DropTokenRenderType>()
         dict[.open] = .keepItAsIs
-        dict[.close] = .keepItAsIs
+        dict[.close] = .remove
         return dict
     }()
     
@@ -67,12 +65,54 @@ public final class DropMentionRule: DropRule {
     
 }
 
+public final class DropPlainHashTagRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropHashTagRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropHashTagRule.render
+        dict[.close] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainHashTagRule.rule, render: DropPlainHashTagRule.render),
+            type: .hashTag
+        )
+    }
+    
+}
+
+public final class DropPlainMentionRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropMentionRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropMentionRule.render
+        dict[.close] = .remove
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainMentionRule.rule, render: DropPlainMentionRule.render),
+            type: .mention
+        )
+    }
+    
+}
+
 public final class DropBoldRule: DropRule {
     
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoBold|"
+        let mark = "|dropBold|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -101,7 +141,7 @@ public final class DropItalicsRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoItalics|"
+        let mark = "|dropItalics|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -130,7 +170,7 @@ public final class DropUnderlineRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoUnderline|"
+        let mark = "|dropUnderline|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -159,7 +199,7 @@ public final class DropHighlightRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoHighlight|"
+        let mark = "|dropHighlight|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -188,7 +228,7 @@ public final class DropStrokeRule: DropRule {
     // MARK: Class
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
-        let mark = "|flomoStroke|"
+        let mark = "|dropStroke|"
         rule.openTag = "<" + mark
         rule.meidanTag = nil
         rule.closeTag = .init(mark.reversed()) + ">"
@@ -460,6 +500,44 @@ public final class DropNumberOrderRule: DropRule {
         return dict
     }()
     
+    // MARK: Methods
+    public static func startNumber() -> String {
+        "1. "
+    }
+    
+    public static func number(index: Int) -> String {
+        "\(index). "
+    }
+    
+    public static func nextNumber(by current: String) -> String {
+        guard
+            let first = current.split(separator: ".").first
+        else {
+            return current
+        }
+        
+        let value = (String(first) as NSString).integerValue
+        
+        return "\(value + 1). "
+        
+    }
+    
+    public static func minWidth(with attributes: [NSAttributedString.Key: Any]) -> CGFloat {
+        
+        let string = " 9. "
+        let attriString = NSAttributedString(string: string, attributes: attributes)
+        
+        return attriString.size().width
+    }
+    
+    public static func maxWidth(with attributes: [NSAttributedString.Key: Any]) -> CGFloat {
+        
+        let string = " 999. "
+        let attriString = NSAttributedString(string: string, attributes: attributes)
+        
+        return attriString.size().width
+    }
+    
     // MARK: Init
     public init() {
         super.init(
@@ -500,3 +578,59 @@ public final class DropLetterOrderRule: DropRule {
     }
     
 }
+
+public final class DropChineseLetterOrderRule: DropRule {
+    
+    // MARK: Class
+    public static let rule: DropLargeTokenSet = {
+        var rule = DropLargeTokenSet()
+        rule.token = ["一二三四五六七八九十", ".", " "]
+        rule.closeRule = [.space]
+        rule.shouldCapture = false
+        rule.isOnlyVaildOnHead = true
+        rule.vaildHeadSet = [.leadingHead, .space, .value("\t")]
+        /// 一一一一一一 ~ 十十十十十十.
+        rule.firstMaxRepeatCount = 6
+        return rule
+    }()
+    
+    public static let render: MarkRuleDict<DropLargeTokenRenderType> = {
+        var dict = MarkRuleDict<DropLargeTokenRenderType>()
+        dict[.open] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .largeToken(rule: DropChineseLetterOrderRule.rule, render: DropChineseLetterOrderRule.render),
+            type: .letterOrderList
+        )
+    }
+    
+}
+
+public final class DropPlainBulletRule: DropRule {
+    
+    // MARK: Class
+    public static let rule = DropBulletRule.rule
+    
+    public static let render: MarkRuleDict<DropTokenRenderType> = {
+        var dict = DropBulletRule.render
+        dict[.open] = .keepItAsIs
+        return dict
+    }()
+    
+    // MARK: Init
+    public init() {
+        super.init(
+            rule: .token(rule: DropPlainBulletRule.rule, render: DropPlainBulletRule.render),
+            type: .bulletList
+        )
+    }
+    
+}
+
+public typealias DropPlainNumberOrderRule = DropNumberOrderRule
+public typealias DropPlainLetterOrderRule = DropLetterOrderRule
+public typealias DropPlainChineseLetterOrderRule = DropChineseLetterOrderRule

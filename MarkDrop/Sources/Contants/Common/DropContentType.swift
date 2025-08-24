@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContentType: Int {
+public enum DropContentType: Int, Hashable, Codable {
     /// - Tag: Normal
     /// 无格式文本，叶子结点
     case text
@@ -53,10 +53,46 @@ public enum DropContentType: Int {
     /// 描边 [文字]
     case stroke
     
+//    case strikethrough
+    
     /// - Tag: Other
     /// 缩进 ( 4 个空格 Or \t)
     case spaceIndent
     case tabIndent
+    
+    public var isListMark: Bool {
+        switch self {
+        case .text: 
+            return false
+            
+        case .bulletList, .numberOrderList, .letterOrderList:
+            return true
+            
+        case .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke,
+             .spaceIndent, .tabIndent:
+            return false
+        }
+    }
+    
+    public var isIndent: Bool {
+        switch self {
+        case .text,
+             .bulletList, .numberOrderList, .letterOrderList,
+             .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke:
+            return false
+            
+        case .spaceIndent, .tabIndent:
+            return true
+        }
+    }
+    
+    public var isMark: Bool {
+        self != .text
+    }
 }
 
 extension DropContentType {
@@ -88,6 +124,28 @@ extension DropContentType {
         case .stroke:          return .stroke
         case .spaceIndent:     return .indent
         case .tabIndent:       return .indent
+        }
+    }
+    
+}
+
+extension DropContentType {
+    
+    public var render: DropRenderMarkType? {
+        switch self {
+        case .text:            return nil
+        case .bulletList:      return nil
+        case .numberOrderList: return nil
+        case .letterOrderList: return nil
+        case .hashTag:         return .hashTag
+        case .mention:         return .mention
+        case .bold:            return .bold
+        case .italics:         return .italics
+        case .underline:       return .underline
+        case .highlight:       return .highlight
+        case .stroke:          return .stroke
+        case .spaceIndent:     return nil
+        case .tabIndent:       return nil
         }
     }
     

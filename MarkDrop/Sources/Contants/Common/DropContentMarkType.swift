@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContentMarkType: Int {
+public enum DropContentMarkType: Int, Hashable, Codable {
     case none
     
     case text
@@ -45,4 +45,24 @@ public enum DropContentMarkType: Int {
     
     /// - Tag: Other
     case indent
+    
+    public var isListMark: Bool {
+        switch self {
+        case .none, .text:
+            return false
+            
+        case .bulletOrder, .numberOrder, .letterOrder:
+            return true
+            
+        case .hashTag, .mention,
+             .bold, .italics, .underline,
+             .highlight, .stroke,
+             .indent:
+            return false
+        }
+    }
+    
+    public var isMark: Bool {
+        self != .none
+    }
 }

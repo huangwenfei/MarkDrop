@@ -19,36 +19,890 @@ public final class DropRuleTag {
     
     public internal(set) var render: RenderDict = .init()
     
-    public enum CaptureIndex: Int {
-        case open, median
-    }
-    
-    public let captureMaxCount: Int = 2
-    
-    public internal(set) var captures: [String] = []
-    
-    public internal(set) var previousVaildHeadList: [Bool] = []
+    public internal(set) var openRange: DropContants.IntRange? = nil
+    public internal(set) var medianRange: DropContants.IntRange? = nil
+    public internal(set) var closeRange: DropContants.IntRange? = nil
     
     public internal(set) var isOpenDone: Bool = false
     
-    public var openCapture: String {
-        if captures.indices.contains(CaptureIndex.open.rawValue) {
-            return  captures[CaptureIndex.open.rawValue]
+    public internal(set) var previousVaildHeadList: [Bool] = []
+    
+    private var looseCapturePreviousState: DropContentTagRuleState = .idle
+    
+    // MARK: Init
+    public init(state: DropContentTagRuleState) {
+        self.state = state
+    }
+    
+    public init(other: DropRuleTag) {
+        self.state = other.state
+        self.tag = other.tag
+        self.openRange = other.openRange
+        self.medianRange = other.medianRange
+        self.closeRange = other.closeRange
+        self.previousVaildHeadList = other.previousVaildHeadList
+        self.isOpenDone = other.isOpenDone
+    }
+    
+    // MARK: Process
+    public func append(tag: DropTagSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
+        
+        if tag.isLooseModeOn {
+            appendLoose(
+                tag: tag,
+                render: render,
+                content: content,
+                previousContent: previousContent,
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar,
+                canIdleCancle: false
+            )
         } else {
-            return ""
+            appendNormal(
+                tag: tag,
+                render: render,
+                content: content,
+                previousContent: previousContent,
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar
+            )
+        }
+        
+    }
+    
+    public func appendLoose(tag: DropTagSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool, canIdleCancle: Bool) {
+        
+        self.tag = tag
+        self.render = render
+        
+        switch state {
+        case .idle:
+            if tag.openTag == String(content) {
+                
+                if isDocEndChar {
+                    state = canIdleCancle ? .done(isCancled: true) : .idle
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = canIdleCancle ? .done(isCancled: true) : .idle
+                    openRange = nil
+                } else {
+                    state = .openCapture
+                    openRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else
+            if tag.openTag.first == content {
+                var open: [String] = .init(
+                    repeating: "", count: tag.openTag.count
+                )
+                open[0] = String(content)
+                
+                if isDocEndChar {
+                    state = canIdleCancle ? .done(isCancled: true) : .idle
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = canIdleCancle ? .done(isCancled: true) : .idle
+                    openRange = nil
+                } else {
+                    state = .open(tag: open, index: 0)
+                    openRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                state = canIdleCancle ? .done(isCancled: true) : .idle
+                openRange = nil
+            }
+            
+        case .open(var _tag, let index):
+            
+            func reback() {
+                /// 回退状态
+                state = .idle
+                /// 无法继续开启的时候，使用当前字符看是否可以重开
+                appendLoose(
+                    tag: tag,
+                    render: render,
+                    content: content,
+                    previousContent: previousContent,
+                    offset: offset,
+                    isParagraphFirstChar: isParagraphFirstChar,
+                    isParagraphEndChar: isParagraphEndChar,
+                    isDocFirstChar: isDocFirstChar,
+                    isDocEndChar: isDocEndChar,
+                    canIdleCancle: true
+                )
+            }
+            
+            let next = index + 1
+            let start = tag.openTag.startIndex
+            let strIndex = tag.openTag.index(start, offsetBy: next)
+            let nextChar = tag.openTag[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == tag.openTag {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                            reback()
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                        }
+                    } else {
+                        state = .openCapture
+                        openRange?.length += 1
+                    }
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                            reback()
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                        }
+                    } else {
+                        state = .open(tag: _tag, index: next)
+                        openRange?.length += 1
+                    }
+                }
+            } else {
+                
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                        reback()
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                }
+                else {
+                    reback()
+                }
+                
+            }
+            
+        case .openCapture:
+    
+            /// loose point 1
+            
+            if let medianTag = tag.meidanTag {
+                
+                if medianTag == String(content) {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                        }
+                    } else {
+                        state = .medianCapture
+                        medianRange = .init(location: offset, length: 1)
+                    }
+                    
+                }
+                else
+                if medianTag.first == content {
+                    
+                    var median: [String] = .init(
+                        repeating: "", count: medianTag.count
+                    )
+                    median[0] = String(content)
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                        }
+                    } else {
+                        looseCapturePreviousState = state
+                        state = .median(tag: median, index: 0)
+                        medianRange = .init(location: offset, length: 1)
+                    }
+                    
+                }
+                else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                        }
+                    }
+                }
+                
+            }
+            
+            if tag.closeTag == String(content) {
+                
+                state = .done(isCancled: false)
+                closeRange = .init(location: offset, length: 1)
+                
+            }
+            else
+            if tag.closeTag.first == content {
+                var close: [String] = .init(
+                    repeating: "", count: tag.closeTag.count
+                )
+                close[0] = String(content)
+                
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                } else {
+                    looseCapturePreviousState = state
+                    state = .close(tag: close, index: 0)
+                    closeRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                }
+            }
+            
+        case .median(var _tag, let index):
+            
+            guard let source = tag.meidanTag else { break }
+            
+            func reback() {
+                /// 回退状态
+                state = looseCapturePreviousState
+                looseCapturePreviousState = .idle
+                medianRange = nil
+                
+                /// 无法继续取中间标记的时候，使用当前字符看是否可以重新进入中间态
+                appendLoose(
+                    tag: tag,
+                    render: render,
+                    content: content,
+                    previousContent: previousContent,
+                    offset: offset,
+                    isParagraphFirstChar: isParagraphFirstChar,
+                    isParagraphEndChar: isParagraphEndChar,
+                    isDocFirstChar: isDocFirstChar,
+                    isDocEndChar: isDocEndChar,
+                    canIdleCancle: true
+                )
+            }
+            
+            let next = index + 1
+            let start = source.startIndex
+            let strIndex = source.index(start, offsetBy: next)
+            let nextChar = source[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == source {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                            reback()
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                            medianRange = nil
+                        }
+                    } else {
+                        state = .medianCapture
+                        medianRange?.length += 1
+                    }
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                            reback()
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                            medianRange = nil
+                        }
+                    } else {
+                        state = .median(tag: _tag, index: next)
+                        medianRange?.length += 1
+                    }
+                }
+            } else {
+                
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                    medianRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                        reback()
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                }
+                else {
+                    reback()
+                }
+                
+            }
+            
+            
+        case .medianCapture:
+            
+            /// loose point 2
+            
+            if tag.closeTag == String(content) {
+                
+                state = .done(isCancled: false)
+                closeRange = .init(location: offset, length: 1)
+                
+            }
+            else
+            if tag.closeTag.first == content {
+                var close: [String] = .init(
+                    repeating: "", count: tag.closeTag.count
+                )
+                close[0] = String(content)
+                
+                if isDocEndChar {
+                    state = .done(isCancled: false)
+                    openRange = nil
+                    medianRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                    } else {
+                        state = .done(isCancled: false)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                } else {
+                    state = .close(tag: close, index: 0)
+                    closeRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                    medianRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                }
+            }
+            
+        case .close(var _tag, let index):
+            
+            func reback() {
+                /// 回退状态
+                state = looseCapturePreviousState
+                looseCapturePreviousState = .idle
+                
+                switch state {
+                case .idle: break
+                    
+                case .open:
+                    medianRange = nil
+                    
+                case .openCapture:
+                    medianRange = nil
+                    
+                case .median, .medianCapture,
+                        .close,
+                        .done:
+                    
+                    break
+                }
+                
+                closeRange = nil
+                
+                /// 无法继续关闭的时候，使用当前字符看是否可以重关
+                appendLoose(
+                    tag: tag,
+                    render: render,
+                    content: content,
+                    previousContent: previousContent,
+                    offset: offset,
+                    isParagraphFirstChar: isParagraphFirstChar,
+                    isParagraphEndChar: isParagraphEndChar,
+                    isDocFirstChar: isDocFirstChar,
+                    isDocEndChar: isDocEndChar,
+                    canIdleCancle: true
+                )
+            }
+            
+            let next = index + 1
+            let source = tag.closeTag
+            let start = source.startIndex
+            let strIndex = source.index(start, offsetBy: next)
+            let nextChar = source[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == source {
+                    
+                    state = .done(isCancled: false)
+                    closeRange?.length += 1
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                        closeRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        if tag.looseCanSpanParagraphs {
+                            /// continue
+                            reback()
+                        } else {
+                            state = .done(isCancled: true)
+                            openRange = nil
+                            medianRange = nil
+                            closeRange = nil
+                        }
+                    } else {
+                        state = .close(tag: _tag, index: next)
+                        closeRange?.length += 1
+                    }
+                }
+            } else {
+                
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                    medianRange = nil
+                    closeRange = nil
+                }
+                else if isParagraphEndChar {
+                    if tag.looseCanSpanParagraphs {
+                        /// continue
+                        reback()
+                    } else {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                        closeRange = nil
+                    }
+                }
+                else {
+                    reback()
+                }
+            }
+            
+        case .done:
+            break
         }
     }
     
-    public var medianCapture: String {
-        if captures.indices.contains(CaptureIndex.median.rawValue) {
-            return  captures[CaptureIndex.median.rawValue]
-        } else {
-            return ""
+    public func appendNormal(tag: DropTagSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
+        
+        self.tag = tag
+        self.render = render
+        
+        switch state {
+        case .idle:
+            if tag.openTag == String(content) {
+                
+                if isDocEndChar {
+                    state = .idle
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .idle
+                    openRange = nil
+                } else {
+                    state = .openCapture
+                    openRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else
+            if tag.openTag.first == content {
+                var open: [String] = .init(
+                    repeating: "", count: tag.openTag.count
+                )
+                open[0] = String(content)
+                
+                if isDocEndChar {
+                    state = .idle
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .idle
+                    openRange = nil
+                } else {
+                    state = .open(tag: open, index: 0)
+                    openRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                state = .idle
+                openRange = nil
+            }
+            
+        case .open(var _tag, let index):
+            
+            let next = index + 1
+            let start = tag.openTag.startIndex
+            let strIndex = tag.openTag.index(start, offsetBy: next)
+            let nextChar = tag.openTag[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == tag.openTag {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    } else {
+                        state = .openCapture
+                        openRange?.length += 1
+                    }
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    } else {
+                        state = .open(tag: _tag, index: next)
+                        openRange?.length += 1
+                    }
+                }
+            } else {
+                state = .done(isCancled: true)
+                openRange = nil
+            }
+            
+        case .openCapture:
+    
+            if let medianTag = tag.meidanTag {
+                
+                if medianTag == String(content) {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    } else {
+                        state = .medianCapture
+                        medianRange = .init(location: offset, length: 1)
+                    }
+                    
+                }
+                else
+                if medianTag.first == content {
+                    
+                    var median: [String] = .init(
+                        repeating: "", count: medianTag.count
+                    )
+                    median[0] = String(content)
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    } else {
+                        state = .median(tag: median, index: 0)
+                        medianRange = .init(location: offset, length: 1)
+                    }
+                    
+                }
+                else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                    }
+                }
+                
+            }
+            
+            if tag.closeTag == String(content) {
+                
+                state = .done(isCancled: false)
+                closeRange = .init(location: offset, length: 1)
+                
+            }
+            else
+            if tag.closeTag.first == content {
+                var close: [String] = .init(
+                    repeating: "", count: tag.closeTag.count
+                )
+                close[0] = String(content)
+                
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                } else {
+                    state = .close(tag: close, index: 0)
+                    closeRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+            }
+            
+        case .median(var _tag, let index):
+            
+            guard let source = tag.meidanTag else { break }
+            
+            let next = index + 1
+            let start = source.startIndex
+            let strIndex = source.index(start, offsetBy: next)
+            let nextChar = source[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == source {
+                    
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    } else {
+                        state = .medianCapture
+                        medianRange?.length += 1
+                    }
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                    } else {
+                        state = .median(tag: _tag, index: next)
+                        medianRange?.length += 1
+                    }
+                }
+            } else {
+                state = .done(isCancled: true)
+                openRange = nil
+                medianRange = nil
+            }
+            
+            
+        case .medianCapture:
+            if tag.closeTag == String(content) {
+                
+                state = .done(isCancled: false)
+                closeRange = .init(location: offset, length: 1)
+                
+            }
+            else
+            if tag.closeTag.first == content {
+                var close: [String] = .init(
+                    repeating: "", count: tag.closeTag.count
+                )
+                close[0] = String(content)
+                
+                if isDocEndChar {
+                    state = .done(isCancled: false)
+                    openRange = nil
+                    medianRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: false)
+                    openRange = nil
+                    medianRange = nil
+                } else {
+                    state = .close(tag: close, index: 0)
+                    closeRange = .init(location: offset, length: 1)
+                }
+                
+            }
+            else {
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                    medianRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                    medianRange = nil
+                }
+            }
+            
+        case .close(var _tag, let index):
+            
+            let next = index + 1
+            let source = tag.closeTag
+            let start = source.startIndex
+            let strIndex = source.index(start, offsetBy: next)
+            let nextChar = source[strIndex]
+            if nextChar == content {
+                _tag[next] = String(content)
+                
+                /// _tag.count == source.count
+                if _tag.reduce("", { $0 + $1 }) == source {
+                    
+                    state = .done(isCancled: false)
+                    closeRange?.length += 1
+                    
+                } else {
+                    if isDocEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                        closeRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
+                        medianRange = nil
+                        closeRange = nil
+                    } else {
+                        state = .close(tag: _tag, index: next)
+                        closeRange?.length += 1
+                    }
+                }
+            } else {
+                state = .done(isCancled: true)
+                openRange = nil
+                medianRange = nil
+                closeRange = nil
+            }
+            
+        case .done:
+            break
         }
     }
     
-    public var contents: [String] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
+    // MARK: Content
+    public func contents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// openTag + capture + medianTag + capture + closeTag
         
         let openTag: String
         
@@ -61,6 +915,9 @@ public final class DropRuleTag {
             
         case .replace(let new):
             openTag = new
+            
+        case let .append(leading, trailing):
+            openTag = leading + tag.openTag + trailing
             
         case .none:
             openTag = tag.openTag
@@ -78,11 +935,18 @@ public final class DropRuleTag {
         case .replace(let new):
             closeTag = new
             
+        case let .append(leading, trailing):
+            closeTag = leading + tag.closeTag + trailing
+            
         case .none:
             closeTag = tag.closeTag
         }
         
         if let median = tag.meidanTag {
+            
+            guard let medianRange else {
+                return []
+            }
             
             let medianTag: String
             
@@ -96,323 +960,162 @@ public final class DropRuleTag {
             case .replace(let new):
                 medianTag = new
                 
+            case let .append(leading, trailing):
+                medianTag = leading + median + trailing
+                
             case .none:
                 medianTag = median
             }
             
+            let openCapture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: medianRange.location - openRange.maxLocation
+                )
+            )
+            
+            let medianCapture = document.content(
+                in: .init(
+                    location: medianRange.maxLocation,
+                    length: closeRange.location - medianRange.maxLocation
+                )
+            )
+            
             return [openTag, openCapture, medianTag, medianCapture, closeTag]
+            
         } else {
+            
+            /// openTag + capture + closeTag
+            let openCapture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
             return [openTag, openCapture, closeTag]
         }
+        
+        
     }
     
-    public var contentOffsets: [Int] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
+    public func rawContents(inDoc document: Document) -> [String] {
         
-        let openOffset: Int
-        
-        switch render[.open] {
-        case .keepItAsIs:
-            openOffset = 0
-            
-        case .remove:
-            openOffset = -tag.openTag.count
-            
-        case .replace(let new):
-            openOffset = new.count - tag.openTag.count
-            
-        case .none:
-            openOffset = 0
+        guard let openRange, let closeRange else {
+            return []
         }
         
-        let closeOffset: Int
-        
-        switch render[.close] {
-        case .keepItAsIs:
-            closeOffset = 0
-            
-        case .remove:
-            closeOffset = -tag.closeTag.count
-            
-        case .replace(let new):
-            closeOffset = new.count - tag.closeTag.count
-            
-        case .none:
-            closeOffset = 0
-        }
-        
+        /// openTag + capture + medianTag + capture + closeTag
         if let median = tag.meidanTag {
             
-            let medianOffset: Int
-            
-            switch render[.median] {
-            case .keepItAsIs:
-                medianOffset = 0
-                
-            case .remove:
-                medianOffset = -median.count
-                
-            case .replace(let new):
-                medianOffset = new.count - median.count
-                
-            case .none:
-                medianOffset = 0
+            guard let medianRange else {
+                return []
             }
             
-            return [openOffset, 0, medianOffset, 0, closeOffset]
-        } else {
-            return [openOffset, 0, closeOffset]
-        }
-    }
-    
-    public var rawContents: [String] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
-        if let median = tag.meidanTag {
+            let openCapture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: medianRange.location - openRange.maxLocation
+                )
+            )
+            
+            let medianCapture = document.content(
+                in: .init(
+                    location: medianRange.maxLocation,
+                    length: closeRange.location - medianRange.maxLocation
+                )
+            )
+            
             return [tag.openTag, openCapture, median, medianCapture, tag.closeTag]
+            
         } else {
+            
+            /// openTag + capture + closeTag
+            let openCapture = document.content(
+                in: .init(
+                    location: openRange.maxLocation,
+                    length: closeRange.location - openRange.maxLocation
+                )
+            )
+            
             return [tag.openTag, openCapture, tag.closeTag]
         }
     }
     
-    public var contentIndices: [Int] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
-        if tag.meidanTag != nil {
-            return [1, 3]
+    public var contentRange: DropContants.IntRange {
+        
+        let ranges = rawContentRanges
+        
+        guard ranges.isEmpty == false else {
+            return .init()
+        }
+        
+        if ranges.count == 1 {
+            return ranges.first!
         } else {
-            return [1]
+            guard let first = ranges.first, let last = ranges.last else {
+                return .init()
+            }
+            
+            return .init(
+                location: first.location,
+                length: last.maxLocation - first.location
+            )
         }
     }
     
-    // MARK: Init
-    public init(state: DropContentTagRuleState) {
-        self.state = state
+    public var rawContentRanges: [DropContants.IntRange] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// openTag + capture + medianTag + capture + closeTag
+        if let medianRange = medianRange {
+            
+            let openCapture = DropContants.IntRange(
+                location: openRange.maxLocation,
+                length: medianRange.location - openRange.maxLocation
+            )
+            
+            let medianCapture = DropContants.IntRange(
+                location: medianRange.maxLocation,
+                length: closeRange.location - medianRange.maxLocation
+            )
+            
+            return [openRange, openCapture, medianRange, medianCapture, closeRange]
+            
+        } else {
+            
+            /// openTag + capture + closeTag
+            let openCapture = DropContants.IntRange(
+                location: openRange.maxLocation,
+                length: closeRange.location - openRange.maxLocation
+            )
+            
+            return [openRange, openCapture, closeRange]
+        }
+        
     }
     
-    public init(other: DropRuleTag) {
-        self.state = other.state
-        self.tag = other.tag
-        self.captures = other.captures
-        self.previousVaildHeadList = other.previousVaildHeadList
-        self.isOpenDone = other.isOpenDone
-    }
-    
-    // MARK: Process
-    public func append(tag: DropTagSet, render: RenderDict, content: Character, previousContent: String, isFirstChar: Bool, isEndChar: Bool) {
-        
-        self.tag = tag
-        self.render = render
-        
-        switch state {
-        case .idle:
-            if tag.openTag == String(content) {
-                
-                if isEndChar {
-                    state = .idle
-                } else {
-                    state = .openCapture
-                    captures = .init(repeating: "", count: captureMaxCount)
-                }
-                
-            }
-            else
-            if tag.openTag.first == content {
-                var open: [String] = .init(
-                    repeating: "", count: tag.openTag.count
-                )
-                open[0] = String(content)
-                
-                if isEndChar {
-                    state = .idle
-                } else {
-                    state = .open(tag: open, index: 0)
-                }
-                
-            }
-            else {
-                state = .idle
-            }
-            
-        case .open(var _tag, let index):
-            
-            let next = index + 1
-            let start = tag.openTag.startIndex
-            let strIndex = tag.openTag.index(start, offsetBy: next)
-            let nextChar = tag.openTag[strIndex]
-            if nextChar == content {
-                _tag[next] = String(content)
-                
-                /// _tag.count == source.count
-                if _tag.reduce("", { $0 + $1 }) == tag.openTag {
-                    
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .openCapture
-                        captures = .init(repeating: "", count: captureMaxCount)
-                    }
-                    
-                } else {
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .open(tag: _tag, index: next)
-                    }
-                }
-            } else {
-                state = .done(isCancled: true)
-            }
-            
-        case .openCapture:
-    
-            if let medianTag = tag.meidanTag {
-                
-                if medianTag == String(content) {
-                    
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .medianCapture
-                    }
-                    
-                }
-                else
-                if medianTag.first == content {
-                    
-                    var median: [String] = .init(
-                        repeating: "", count: medianTag.count
-                    )
-                    median[0] = String(content)
-                    
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .median(tag: median, index: 0)
-                    }
-                    
-                }
-                else {
-                    state = .done(isCancled: true)
-                }
-                
-            }
-            
-            if tag.closeTag == String(content) {
-                
-                state = .done(isCancled: false)
-                
-            }
-            else
-            if tag.closeTag.first == content {
-                var close: [String] = .init(
-                    repeating: "", count: tag.closeTag.count
-                )
-                close[0] = String(content)
-                
-                if isEndChar {
-                    state = .done(isCancled: false)
-                } else {
-                    state = .close(tag: close, index: 0)
-                }
-                
-            }
-            else {
-                captures[CaptureIndex.open.rawValue] += String(content)
-                if isEndChar { state = .done(isCancled: true) }
-            }
-            
-        case .median(var _tag, let index):
-            
-            guard let source = tag.meidanTag else { break }
-            
-            let next = index + 1
-            let start = source.startIndex
-            let strIndex = source.index(start, offsetBy: next)
-            let nextChar = source[strIndex]
-            if nextChar == content {
-                _tag[next] = String(content)
-                
-                /// _tag.count == source.count
-                if _tag.reduce("", { $0 + $1 }) == source {
-                    
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .medianCapture
-                    }
-                    
-                } else {
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .median(tag: _tag, index: next)
-                    }
-                }
-            } else {
-                state = .done(isCancled: true)
-            }
-            
-            
-        case .medianCapture:
-            if tag.closeTag == String(content) {
-                
-                state = .done(isCancled: false)
-                
-            }
-            else
-            if tag.closeTag.first == content {
-                var close: [String] = .init(
-                    repeating: "", count: tag.closeTag.count
-                )
-                close[0] = String(content)
-                
-                if isEndChar {
-                    state = .done(isCancled: false)
-                } else {
-                    state = .close(tag: close, index: 0)
-                }
-                
-            }
-            else {
-                captures[CaptureIndex.median.rawValue] += String(content)
-                if isEndChar { state = .done(isCancled: true) }
-            }
-            
-        case .close(var _tag, let index):
-            
-            let next = index + 1
-            let source = tag.closeTag
-            let start = source.startIndex
-            let strIndex = source.index(start, offsetBy: next)
-            let nextChar = source[strIndex]
-            if nextChar == content {
-                _tag[next] = String(content)
-                
-                /// _tag.count == source.count
-                if _tag.reduce("", { $0 + $1 }) == source {
-                    
-                    state = .done(isCancled: false)
-                    
-                } else {
-                    if isEndChar {
-                        state = .done(isCancled: true)
-                    } else {
-                        state = .close(tag: _tag, index: next)
-                    }
-                }
-            } else {
-                state = .done(isCancled: true)
-            }
-            
-        case .done:
-            break
+    public var contentIndices: [Int] {
+        /// openTag + capture + medianTag + capture + closeTag
+        if tag.meidanTag != nil {
+            return [1, 3]
+        } else {
+            /// openTag + capture + closeTag
+            return [1]
         }
     }
     
     // MARK: Clear
     public func clear(isContainsHeadInfo: Bool) {
         state = .idle
-        captures = []
+        openRange = nil
+        medianRange = nil
+        closeRange = nil
         isOpenDone = false
+        
         if isContainsHeadInfo {
             previousVaildHeadList = []
         }

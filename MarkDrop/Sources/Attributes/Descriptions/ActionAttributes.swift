@@ -12,11 +12,13 @@ public struct ActionAttributes: Hashable {
     // MARK: Properties
     public var currentState: DropActionState
     public var actions: [DropActionState: DropAction]
+    public var background: BorderAttributes
     
     // MARK: Init
-    public init(currentState: DropActionState, actions: [DropActionState: DropAction]) {
+    public init(currentState: DropActionState = .normal, actions: [DropActionState: DropAction] = .init(), background: BorderAttributes) {
         self.currentState = currentState
         self.actions = actions
+        self.background = background
     }
     
 }
@@ -33,6 +35,10 @@ extension AttributesKey {
     
     public static var actionActions: Self {
         .init(rawValue: "drop.attributes.action.actions.key")
+    }
+    
+    public static var actionBackgroundActions: Self {
+        .init(rawValue: "drop.attributes.action.background.key")
     }
     
 }

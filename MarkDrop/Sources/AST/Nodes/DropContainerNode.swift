@@ -11,9 +11,14 @@ public class DropContainerNode: DropNode {
     
     // MARK: Properties
     public var type: DropContainerType = .document
+    public var paragraphType: DropParagraphType = .document
     
     public var lineCount: Int = -1
     public var lineIndex: Int = -1
+    
+    public var isFirstLine: Bool {
+        lineIndex == 0
+    }
     
     public var isLastLine: Bool {
         lineIndex == lineCount - 1
@@ -21,15 +26,6 @@ public class DropContainerNode: DropNode {
     
     public override var allContent: String {
         String(children.reduce("", { $0 + "\n" + $1.rawContent }).dropFirst(1))
-    }
-    
-    public var allRange: DropContants.Range {
-        guard let first = children.first, let last = children.last else {
-            /// 随便一个值
-            return "".startIndex ... "".endIndex
-        }
-        
-        return first.range.lowerBound ... last.range.upperBound
     }
     
     public var allIntRange: DropContants.IntRange {
@@ -59,16 +55,16 @@ public class DropContainerNode: DropNode {
     }
     
     public override var lineDescription: String {
-        "{ type: \(type), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ type: \(type), paragraphType: \(paragraphType), lineIndex: \(lineIndex), contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public override var description: String {
         if type.isBlock {
             return """
             \ntype: \(type),
+            paragraphType: \(paragraphType),
             lineIndex: \(lineIndex),
             content: \(allContent),
-            range: \(allRange),
             intRange: \(allIntRange),
             docRange: \(documentRange),
             parent: \(parentNode?.lineDescription ?? "nil"),
@@ -78,10 +74,10 @@ public class DropContainerNode: DropNode {
         } else {
             return """
             \ntype: \(type),
+            paragraphType: \(paragraphType),
             lineIndex: \(lineIndex),
             contents: \(contents),
             rawContentIndices: \(rawContentIndices),
-            range: \(range),
             intRange: \(intRange),
             docRange: \(documentRange),
             parent: \(parentNode?.lineDescription ?? "nil")\n
@@ -104,12 +100,14 @@ public class DropContainerNode: DropNode {
     public static func == (lhs: DropContainerNode, rhs: DropContainerNode) -> Bool {
         DropNode.equal(lhs: lhs, rhs: rhs) &&
         lhs.type == rhs.type &&
+        lhs.paragraphType == rhs.paragraphType &&
         lhs.lineIndex == rhs.lineIndex
     }
     
     public override func hash(into hasher: inout Hasher) {
         DropNode.hash(self, into: &hasher)
         hasher.combine(type)
+        hasher.combine(paragraphType)
         hasher.combine(lineIndex)
     }
     

@@ -12,13 +12,15 @@ public class DropContentNode: DropNode, DropContentNodeProtocol {
     // MARK: Properties
     public var type: DropContentType = .text
     
+    public var parentContainerRenderTypes: [DropRenderMarkType] = []
+    
     /// for capture
 //    public internal(set) var rule: DropContentRule? = nil
 //    public internal(set) var tokenState: DropContentTokenRuleState = .idle
 //    public internal(set) var tagState: DropContentTagRuleState = .idle
     
     public override var lineDescription: String {
-        "{ type: \(type), contents: \(contents), rawContentIndices: \(rawContentIndices), range: \(range), intRange: \(intRange), docRange: \(documentRange) }"
+        "{ type: \(type), contents: \(contents), rawContentIndices: \(rawContentIndices), intRange: \(intRange), docRange: \(documentRange) }"
     }
     
     public override var description: String {
@@ -26,7 +28,6 @@ public class DropContentNode: DropNode, DropContentNodeProtocol {
         \ntype: \(type),
         contents: \(contents),
         rawContentIndices: \(rawContentIndices),
-        range: \(range),
         intRange: \(intRange),
         docRange: \(documentRange),
         parent: \(parentNode?.lineDescription ?? "nil"),

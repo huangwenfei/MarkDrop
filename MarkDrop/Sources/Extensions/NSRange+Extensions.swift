@@ -7,10 +7,28 @@
 
 import Foundation
 
-extension NSRange {
+extension NSRange: DropExtensions { }
+
+extension DropWrapper where RawValue == NSRange {
     
     public var maxLocation: Int {
-        location + length
+        rawValue.location + rawValue.length
     }
     
+    public var vaildMaxLocation: Int {
+        rawValue.location == 0 
+            ? rawValue.length - 1
+            : (rawValue.location < 0 ? 0 : maxLocation - 1)
+    }
+    
+}
+
+extension NSRange {
+    internal var maxLocation: Int {
+        drop.maxLocation
+    }
+    
+    internal var vaildMaxLocation: Int {
+        drop.vaildMaxLocation
+    }
 }

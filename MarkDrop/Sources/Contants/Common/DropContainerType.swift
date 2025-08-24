@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropContainerType: Hashable {
+public enum DropContainerType: Hashable, Codable {
     /// 所有内容
     case document
     /// 块内容，是 >= 1 paragraph 组合
@@ -25,6 +25,16 @@ public enum DropContainerType: Hashable {
             
         case .block:
             return true
+        }
+    }
+    
+    public var child: DropContainerBlockType? {
+        switch self {
+        case .document, .paragraph, .break:
+            return nil
+            
+        case .block(let child):
+            return child
         }
     }
     
@@ -80,9 +90,32 @@ public enum DropContainerType: Hashable {
     
 }
 
-public enum DropContainerBlockType: Int {
+public enum DropContainerBlockType: Int, Codable {
     case bulletList, numberOrderList, letterOrderList ///,
 //         heading, previousHeading,
 //         codeBlock, quote,
 //         html
+}
+
+public enum DropParagraphType: Int, Codable {
+    case document,
+         bulletList, numberOrderList, letterOrderList,
+         text,
+         `break`
+//         , code, headingDescription, html, splitLine, table
+    
+    public var isList: Bool {
+        switch self {
+        case .document: 
+            return false
+            
+        case .bulletList,
+             .numberOrderList,
+             .letterOrderList:
+            return true
+            
+        case .text, .break:
+            return false
+        }
+    }
 }

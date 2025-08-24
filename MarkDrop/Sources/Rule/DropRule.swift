@@ -7,40 +7,23 @@
 
 import Foundation
 
-public class DropRule: Hashable, CustomStringConvertible {
+open class DropRule: Hashable, CustomStringConvertible {
     
     // MARK: Types
     public typealias MarkRuleDict<Set: Hashable> = [Set : DropMarkRenderMode]
     
     // MARK: Properties
+    internal weak var document: Document? = nil
+    
     public let rule: DropContentRule
     public let type: DropContentType
     
-    public private(set) var tokenProcess: DropRuleToken = .init(state: .idle)
-    public private(set) var largeTokenProcess: DropRuleLargeToken = .init(state: .idle)
-    public private(set) var tagProcess: DropRuleTag = .init(state: .idle)
-    public private(set) var largeTagProcess: DropRuleLargeTag = .init(state: .idle)
+    open private(set) lazy var tokenProcess: DropRuleToken = .init(state: .idle)
+    open private(set) lazy var largeTokenProcess: DropRuleLargeToken = .init(state: .idle)
+    open private(set) lazy var tagProcess: DropRuleTag = .init(state: .idle)
+    open private(set) lazy var largeTagProcess: DropRuleLargeTag = .init(state: .idle)
     
-    public private(set) var captures: [String] {
-        get {
-            switch rule {
-            case .token:      return tokenProcess.captures
-            case .largeToken: return largeTokenProcess.captures
-            case .tag:        return tagProcess.captures
-            case .largeTag:   return largeTagProcess.captures
-            }
-        }
-        set {
-            switch rule {
-            case .token:      tokenProcess.captures = newValue
-            case .largeToken: largeTokenProcess.captures = newValue
-            case .tag:        tagProcess.captures = newValue
-            case .largeTag:   largeTagProcess.captures = newValue
-            }
-        }
-    }
-    
-    public private(set) var previousVaildHeadList: [Bool] {
+    open private(set) var previousVaildHeadList: [Bool] {
         get {
             switch rule {
             case .token:      return tokenProcess.previousVaildHeadList
@@ -59,7 +42,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public private(set) var isOpenDone: Bool {
+    open private(set) var isOpenDone: Bool {
         get {
             switch rule {
             case .token:      return tokenProcess.isOpenDone
@@ -78,18 +61,18 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public private(set) var totalContent: String = ""
+    open private(set) var totalContent: String = ""
     
-    public var description: String {
+    open var description: String {
         switch rule {
         case .token(let rule, let render):
-            return "{ rule: \(rule), render: \(render), type: \(type), state: \(tokenProcess.state), captures: \(captures) }"
+            return "{ rule: \(rule), render: \(render), type: \(type), state: \(tokenProcess.state) }"
         case .largeToken(let rule, let render):
-            return "{ rule: \(rule), render: \(render), type: \(type), state: \(largeTokenProcess.state), captures: \(captures) }"
+            return "{ rule: \(rule), render: \(render), type: \(type), state: \(largeTokenProcess.state) }"
         case .tag(let rule, let render):
-            return "{ rule: \(rule), render: \(render), type: \(type), state: \(tagProcess.state), captures: \(captures) }"
+            return "{ rule: \(rule), render: \(render), type: \(type), state: \(tagProcess.state) }"
         case .largeTag(let rule, let render):
-            return "{ rule: \(rule), render: \(render), type: \(type), state: \(largeTagProcess.state), captures: \(captures) }"
+            return "{ rule: \(rule), render: \(render), type: \(type), state: \(largeTagProcess.state) }"
         }
     }
     
@@ -110,7 +93,7 @@ public class DropRule: Hashable, CustomStringConvertible {
     }
     
     // MARK: State
-    public var isIdle: Bool {
+    open var isIdle: Bool {
         switch rule {
         case .token:      return tokenProcess.state.isIdle
         case .largeToken: return largeTokenProcess.state.isIdle
@@ -119,7 +102,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public var isOpen: Bool {
+    open var isOpen: Bool {
         switch rule {
         case .token:      return tokenProcess.state.isOpen
         case .largeToken: return largeTokenProcess.state.isOpen
@@ -128,7 +111,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public var isCapture: Bool {
+    open var isCapture: Bool {
         switch rule {
         case .token:      return tokenProcess.state.isCapture
         case .largeToken: return largeTokenProcess.state.isCapture
@@ -137,7 +120,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public var isDone: Bool {
+    open var isDone: Bool {
         switch rule {
         case .token:      return tokenProcess.state.isDone
         case .largeToken: return largeTokenProcess.state.isDone
@@ -146,7 +129,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         }
     }
     
-    public var isCancled: Bool {
+    open var isCancled: Bool {
         switch rule {
         case .token:      return tokenProcess.state.isCancled
         case .largeToken: return largeTokenProcess.state.isCancled
@@ -156,52 +139,57 @@ public class DropRule: Hashable, CustomStringConvertible {
     }
     
     // MARK: State Capture
-    public func contents(isRenderMode: Bool) -> [String] {
-        if isRenderMode {
-            switch rule {
-            case .token:      return tokenProcess.contents
-            case .largeToken: return largeTokenProcess.contents
-            case .tag:        return tagProcess.contents
-            case .largeTag:   return largeTagProcess.contents
-            }
-        } else {
-            switch rule {
-            case .token:      return tokenProcess.rawContents
-            case .largeToken: return largeTokenProcess.rawContents
-            case .tag:        return tagProcess.rawContents
-            case .largeTag:   return largeTagProcess.rawContents
-            }
-        }
+    open func contents(isRenderMode: Bool) -> [String] {
+        isRenderMode ? contents : rawContents
     }
     
-    public var contents: [String] {
+    open var contents: [String] {
+        guard let document else { return [] }
+        
         switch rule {
-        case .token:      return tokenProcess.contents
-        case .largeToken: return largeTokenProcess.contents
-        case .tag:        return tagProcess.contents
-        case .largeTag:   return largeTagProcess.contents
+        case .token:      return tokenProcess.contents(inDoc: document)
+        case .largeToken: return largeTokenProcess.contents(inDoc: document)
+        case .tag:        return tagProcess.contents(inDoc: document)
+        case .largeTag:   return largeTagProcess.contents(inDoc: document)
         }
     }
     
-    public var contentOffsets: [Int] {
+    open var rawContents: [String] {
+        guard let document else { return [] }
+        
         switch rule {
-        case .token:      return tokenProcess.contentOffsets
-        case .largeToken: return largeTokenProcess.contentOffsets
-        case .tag:        return tagProcess.contentOffsets
-        case .largeTag:   return largeTagProcess.contentOffsets
+        case .token:      return tokenProcess.rawContents(inDoc: document)
+        case .largeToken: return largeTokenProcess.rawContents(inDoc: document)
+        case .tag:        return tagProcess.rawContents(inDoc: document)
+        case .largeTag:   return largeTagProcess.rawContents(inDoc: document)
         }
     }
     
-    public var rawContents: [String] {
+    open var contentRange: DropContants.IntRange {
+        guard document != nil else { return .init() }
+        
         switch rule {
-        case .token:      return tokenProcess.rawContents
-        case .largeToken: return largeTokenProcess.rawContents
-        case .tag:        return tagProcess.rawContents
-        case .largeTag:   return largeTagProcess.rawContents
+        case .token:      return tokenProcess.contentRange
+        case .largeToken: return largeTokenProcess.contentRange
+        case .tag:        return tagProcess.contentRange
+        case .largeTag:   return largeTagProcess.contentRange
         }
     }
     
-    public var contentIndices: [Int] {
+    open var rawContentRanges: [DropContants.IntRange] {
+        guard document != nil else { return [] }
+        
+        switch rule {
+        case .token:      return tokenProcess.rawContentRanges
+        case .largeToken: return largeTokenProcess.rawContentRanges
+        case .tag:        return tagProcess.rawContentRanges
+        case .largeTag:   return largeTagProcess.rawContentRanges
+        }
+    }
+    
+    open var contentIndices: [Int] {
+        guard document != nil else { return [] }
+        
         switch rule {
         case .token:      return tokenProcess.contentIndices
         case .largeToken: return largeTokenProcess.contentIndices
@@ -211,7 +199,8 @@ public class DropRule: Hashable, CustomStringConvertible {
     }
     
     // MARK: Append
-    public func append(content: Character, previousContent: String, isFirstChar: Bool, isEndChar: Bool) {
+    open func append(content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
+        
         switch rule {
         case .token(let rule, let render):
             tokenProcess.append(
@@ -219,8 +208,11 @@ public class DropRule: Hashable, CustomStringConvertible {
                 render: render,
                 content: content,
                 previousContent: previousContent,
-                isFirstChar: isFirstChar,
-                isEndChar: isEndChar
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar
             )
             
         case .largeToken(let rule, let render):
@@ -229,8 +221,11 @@ public class DropRule: Hashable, CustomStringConvertible {
                 render: render,
                 content: content,
                 previousContent: previousContent,
-                isFirstChar: isFirstChar,
-                isEndChar: isEndChar
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar
             )
             
         case .tag(let rule, let render):
@@ -239,8 +234,11 @@ public class DropRule: Hashable, CustomStringConvertible {
                 render: render,
                 content: content,
                 previousContent: previousContent,
-                isFirstChar: isFirstChar,
-                isEndChar: isEndChar
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar
             )
             
         case .largeTag(let rule, let render):
@@ -249,8 +247,11 @@ public class DropRule: Hashable, CustomStringConvertible {
                 render: render,
                 content: content,
                 previousContent: previousContent,
-                isFirstChar: isFirstChar,
-                isEndChar: isEndChar
+                offset: offset,
+                isParagraphFirstChar: isParagraphFirstChar,
+                isParagraphEndChar: isParagraphEndChar,
+                isDocFirstChar: isDocFirstChar,
+                isDocEndChar: isDocEndChar
             )
         }
         
@@ -261,7 +262,7 @@ public class DropRule: Hashable, CustomStringConvertible {
     
     // MARK: Clear
     
-    public func clear(isContainsHeadInfo: Bool) {
+    open func clear(isContainsHeadInfo: Bool) {
         tokenProcess.clear(isContainsHeadInfo: isContainsHeadInfo)
         largeTokenProcess.clear(isContainsHeadInfo: isContainsHeadInfo)
         tagProcess.clear(isContainsHeadInfo: isContainsHeadInfo)
@@ -279,7 +280,7 @@ public class DropRule: Hashable, CustomStringConvertible {
         lhs.largeTagProcess.state == rhs.largeTagProcess.state
     }
     
-    public func hash(into hasher: inout Hasher) {
+    open func hash(into hasher: inout Hasher) {
         hasher.combine(rule)
         hasher.combine(type)
         hasher.combine(tokenProcess.state)

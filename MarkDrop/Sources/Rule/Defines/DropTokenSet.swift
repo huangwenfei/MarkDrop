@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// mark + content(optional) + mark(optional), 1 ~ 3 node
-/// mark == content  + mark(optional), 1 ~ 2 node
+/// token + content(optional) + close(optional), 1 ~ 3 node
 public struct DropTokenSet: Hashable, CustomStringConvertible {
     
     // MARK: Properties
@@ -27,8 +26,6 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
         closeRule.isEmpty && shouldCapture == false
     }
     
-    public var isCombineContents: Bool = false
-    
     public var description: String {
         """
         token: \(token),
@@ -37,6 +34,7 @@ public struct DropTokenSet: Hashable, CustomStringConvertible {
     }
     
     // MARK: Init
+    public init() { }
     
     // MARK: Methods
     public func isVaildHead(_ value: String) -> Bool {

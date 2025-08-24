@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DropAttributeType: Int, Hashable {
+public enum DropAttributeType: Int, Hashable, Codable {
     case text
     
     /// 标签
@@ -25,4 +25,21 @@ public enum DropAttributeType: Int, Hashable {
     case highlight
     /// 描边 [文字]
     case stroke
+}
+
+extension DropAttributeType {
+    
+    public var render: DropRenderMarkType? {
+        switch self {
+        case .text:            return nil
+        case .hashTag:         return .hashTag
+        case .mention:         return .mention
+        case .bold:            return .bold
+        case .italics:         return .italics
+        case .underline:       return .underline
+        case .highlight:       return .highlight
+        case .stroke:          return .stroke
+        }
+    }
+    
 }

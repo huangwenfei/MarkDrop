@@ -19,103 +19,12 @@ public final class DropRuleLargeTag {
     
     public internal(set) var render: RenderDict = .init()
     
-    public enum CaptureIndex: Int {
-        case open
-    }
-    
-    public let captureMaxCount: Int = 1
-    
-    public internal(set) var tagOpenCapture: String = ""
-    
-    public internal(set) var captures: [String] = []
+    public internal(set) var openRange: DropContants.IntRange? = nil
+    public internal(set) var closeRange: DropContants.IntRange? = nil
     
     public internal(set) var previousVaildHeadList: [Bool] = []
     
     public internal(set) var isOpenDone: Bool = false
-    
-    public var contents: [String] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
-        
-        let openTag: String
-        
-        switch render[.open] {
-        case .keepItAsIs:
-            openTag = tagOpenCapture
-            
-        case .remove:
-            openTag = ""
-            
-        case .replace(let new):
-            openTag = new
-            
-        case .none:
-            openTag = tagOpenCapture
-        }
-        
-        let closeTag: String
-        
-        switch render[.close] {
-        case .keepItAsIs:
-            closeTag = tag.closeTag
-            
-        case .remove:
-            closeTag = ""
-            
-        case .replace(let new):
-            closeTag = new
-            
-        case .none:
-            closeTag = tag.closeTag
-        }
-        
-        return [openTag] + captures + [closeTag]
-    }
-    
-    public var contentOffsets: [Int] {
-        /// tag.string + capture + tag.string + capture + tag.string ...
-        
-        let openOffset: Int
-        
-        switch render[.open] {
-        case .keepItAsIs:
-            openOffset = 0
-            
-        case .remove:
-            openOffset = -tagOpenCapture.count
-            
-        case .replace(let new):
-            openOffset = new.count - tagOpenCapture.count
-            
-        case .none:
-            openOffset = 0
-        }
-        
-        let closeOffset: Int
-        
-        switch render[.close] {
-        case .keepItAsIs:
-            closeOffset = 0
-            
-        case .remove:
-            closeOffset = -tag.closeTag.count
-            
-        case .replace(let new):
-            closeOffset = new.count - tag.closeTag.count
-            
-        case .none:
-            closeOffset = 0
-        }
-        
-        return [openOffset] + [0] + [closeOffset]
-    }
-    
-    public var rawContents: [String] {
-        [tagOpenCapture] + captures + [tag.closeTag]
-    }
-    
-    public var contentIndices: [Int] {
-        [1]
-    }
     
     // MARK: Init
     public init(state: DropContentLargeTagRuleState) {
@@ -125,14 +34,14 @@ public final class DropRuleLargeTag {
     public init(other: DropRuleLargeTag) {
         self.state = other.state
         self.tag = other.tag
-        self.tagOpenCapture = other.tagOpenCapture
-        self.captures = other.captures
+        self.openRange = other.openRange
+        self.closeRange = other.closeRange
         self.previousVaildHeadList = other.previousVaildHeadList
         self.isOpenDone = other.isOpenDone
     }
     
     // MARK: Process
-    public func append(tag: DropLargeTagSet, render: RenderDict, content: Character, previousContent: String, isFirstChar: Bool, isEndChar: Bool) {
+    public func append(tag: DropLargeTagSet, render: RenderDict, content: Character, previousContent: String?, offset: Int, isParagraphFirstChar: Bool, isParagraphEndChar: Bool, isDocFirstChar: Bool, isDocEndChar: Bool) {
         
         self.tag = tag
         self.render = render
@@ -144,13 +53,16 @@ public final class DropRuleLargeTag {
                 tag.openTag.first?.contains(String(content)) == true
             {
                 
-                if isEndChar {
+                if isDocEndChar {
                     state = .idle
-                    tagOpenCapture = ""
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .idle
+                    openRange = nil
                 } else {
                     state = .openCapture
-                    captures = .init(repeating: "", count: captureMaxCount)
-                    tagOpenCapture = String(content)
+                    openRange = .init(location: offset, length: 1)
                 }
                 
             }
@@ -161,18 +73,22 @@ public final class DropRuleLargeTag {
                 )
                 open[0] = String(content)
                 
-                if isEndChar {
+                if isDocEndChar {
                     state = .idle
-                    tagOpenCapture = ""
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .idle
+                    openRange = nil
                 } else {
                     state = .open(tag: open, index: 0)
-                    tagOpenCapture = open[0]
+                    openRange = .init(location: offset, length: 1)
                 }
                 
             }
             else {
                 state = .idle
-                tagOpenCapture = ""
+                openRange = nil
             }
             
         case .open(var _tag, let index):
@@ -186,27 +102,34 @@ public final class DropRuleLargeTag {
                 
                 if _tag.enumerated().filter({ tag.openTag[$0].contains($1) }).count == tag.openTag.count {
                     
-                    if isEndChar {
+                    if isDocEndChar {
                         state = .done(isCancled: true)
-                        tagOpenCapture = ""
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
                     } else {
                         state = .openCapture
-                        captures = .init(repeating: "", count: captureMaxCount)
-                        tagOpenCapture = _tag.reduce("", { $0 + $1 })
+                        openRange?.length += 1
                     }
                     
                 } else {
-                    if isEndChar {
+                    if isDocEndChar {
                         state = .done(isCancled: true)
-                        tagOpenCapture = ""
+                        openRange = nil
+                    }
+                    else if isParagraphEndChar {
+                        state = .done(isCancled: true)
+                        openRange = nil
                     } else {
                         state = .open(tag: _tag, index: next)
-                        tagOpenCapture = _tag.reduce("", { $0 + $1 })
+                        openRange?.length += 1
                     }
                 }
             } else {
                 state = .done(isCancled: true)
-                tagOpenCapture = ""
+                openRange = nil
             }
             
         case .openCapture:
@@ -214,6 +137,7 @@ public final class DropRuleLargeTag {
             if tag.closeTag == String(content) {
                 
                 state = .done(isCancled: false)
+                closeRange = .init(location: offset, length: 1)
                 
             }
             else
@@ -223,16 +147,28 @@ public final class DropRuleLargeTag {
                 )
                 close[0] = String(content)
                 
-                if isEndChar {
+                if isDocEndChar {
                     state = .done(isCancled: false)
+                    closeRange = .init(location: offset, length: 1)
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: false)
+                    closeRange = .init(location: offset, length: 1)
                 } else {
                     state = .close(tag: close, index: 0)
+                    closeRange = .init(location: offset, length: 1)
                 }
                 
             }
             else {
-                captures[CaptureIndex.open.rawValue] += String(content)
-                if isEndChar { state = .done(isCancled: true) }
+                if isDocEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
+                else if isParagraphEndChar {
+                    state = .done(isCancled: true)
+                    openRange = nil
+                }
             }
             
         case .close(var _tag, let index):
@@ -248,29 +184,155 @@ public final class DropRuleLargeTag {
                 if _tag.reduce("", { $0 + $1 }) == source {
                     
                     state = .done(isCancled: false)
+                    closeRange?.length += 1
                     
                 } else {
-                    if isEndChar {
+                    if isParagraphEndChar {
                         state = .done(isCancled: true)
+                        openRange = nil
                     } else {
                         state = .close(tag: _tag, index: next)
+                        closeRange?.length += 1
                     }
                 }
             } else {
                 state = .done(isCancled: true)
+                openRange = nil
             }
             
         case .done:
             break
         }
     }
+    
+    // MARK: Content
+    public func contents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// [tag.string] + capture
+        
+        let openTag: String
+        
+        switch render[.open] {
+        case .keepItAsIs:
+            openTag = document.content(in: openRange)
+            
+        case .remove:
+            openTag = ""
+            
+        case .replace(let new):
+            openTag = new
+            
+        case let .append(leading, trailing):
+            openTag = leading + document.content(in: openRange) + trailing
+            
+        case .none:
+            openTag = document.content(in: openRange)
+        }
+        
+        let closeTag: String
+        
+        switch render[.close] {
+        case .keepItAsIs:
+            closeTag = tag.closeTag
+            
+        case .remove:
+            closeTag = ""
+            
+        case .replace(let new):
+            closeTag = new
+            
+        case let .append(leading, trailing):
+            closeTag = leading + tag.closeTag + trailing
+            
+        case .none:
+            closeTag = tag.closeTag
+        }
+        
+        let openCapture = document.content(
+            in: .init(
+                location: openRange.maxLocation,
+                length: closeRange.location - openRange.maxLocation
+            )
+        )
+        
+        return [openTag, openCapture, closeTag]
+        
+    }
+    
+    public func rawContents(inDoc document: Document) -> [String] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// [tag.string] + capture
+        let openTag = document.content(in: openRange)
+        
+        let openCapture = document.content(
+            in: .init(
+                location: openRange.maxLocation,
+                length: closeRange.location - openRange.maxLocation
+            )
+        )
+        
+        return [openTag, openCapture, tag.closeTag]
+    }
+    
+    public var contentRange: DropContants.IntRange {
+        
+        let ranges = rawContentRanges
+        
+        guard ranges.isEmpty == false else {
+            return .init()
+        }
+        
+        if ranges.count == 1 {
+            return ranges.first!
+        } else {
+            guard let first = ranges.first, let last = ranges.last else {
+                return .init()
+            }
+            
+            return .init(
+                location: first.location,
+                length: last.maxLocation - first.location
+            )
+        }
+        
+    }
+    
+    public var rawContentRanges: [DropContants.IntRange] {
+        
+        guard let openRange, let closeRange else {
+            return []
+        }
+        
+        /// openTag + capture + closeTag
+        let openCapture = DropContants.IntRange(
+            location: openRange.maxLocation,
+            length: closeRange.location - openRange.maxLocation
+        )
+        
+        return [openRange, openCapture, closeRange]
+        
+    }
+    
+    public var contentIndices: [Int] {
+        /// [tag.string] + capture
+        return [1]
+    }
 
     // MARK: Clear
     public func clear(isContainsHeadInfo: Bool) {
         state = .idle
-        tagOpenCapture = ""
-        captures = []
+        openRange = nil
+        closeRange = nil
         isOpenDone = false
+        
         if isContainsHeadInfo {
             previousVaildHeadList = []
         }

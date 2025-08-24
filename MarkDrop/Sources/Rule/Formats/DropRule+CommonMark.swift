@@ -13,7 +13,7 @@ public final class DropCommonMarkBoldRule: DropRule {
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
         rule.openTag = "**"
-        rule.meidanTag = nil
+        rule.meidanTag = nil	
         rule.closeTag = rule.openTag
         return rule
     }()
@@ -85,7 +85,7 @@ public final class DropCommonMarkItalicsRule: DropRule {
     public init() {
         super.init(
             rule: .tag(rule: DropCommonMarkItalicsRule.rule, render: DropCommonMarkItalicsRule.render),
-            type: .bold
+            type: .italics
         )
     }
     
@@ -113,7 +113,7 @@ public final class DropCommonMarkItalicsRule2: DropRule {
     public init() {
         super.init(
             rule: .tag(rule: DropCommonMarkItalicsRule2.rule, render: DropCommonMarkItalicsRule2.render),
-            type: .bold
+            type: .italics
         )
     }
     
@@ -203,6 +203,7 @@ public final class DropCommonMarkStrokeRule: DropRule {
     
 }
 
+#if false
 public final class DropCommonMarkStrikethroughRule: DropRule {
     
     // MARK: Class
@@ -286,6 +287,7 @@ public final class DropCommonMarkSuperscriptRule: DropRule {
     }
     
 }
+#endif
 
 
 #if false

@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// mark + content(optional) + mark(optional), 1 ~ 3 node
-/// mark == content  + mark(optional), 1 ~ 2 node
+/// token + content(optional) + close(optional), 1 ~ 3 node
 public struct DropTokenSet: Hashable, CustomStringConvertible {
     
     // MARK: Properties

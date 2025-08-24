@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// mark + content + mark, 3 node
-/// mark + content + mark + content + mark, 5 node
+/// open + content(optional) + meidan(optional) + content(optional) + close, 2 ~ 5 node
 public struct DropTagSet: Hashable, CustomStringConvertible {
     
     // MARK: Properties

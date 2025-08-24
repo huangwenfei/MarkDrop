@@ -7,13 +7,12 @@
 
 import Foundation
 
-/// mark + content + mark, 3 node
-/// mark + content + (mark + content)(optional) + mark, >= 5 node
+/// open + content(optional) + meidans(optional) + content(optional) + close, 2 ~ 5 node
 public struct DropMultiTagSet: Hashable, CustomStringConvertible {
     
     // MARK: Properties
     public var openTag: String = .init()
-    public var meidanTags: [String] = []
+    public var meidanTags: [String]? = nil
     public var closeTag: String = .init()
     
     public var render: [DropMultiTagRenderType: DropMarkRenderMode] = .init()
@@ -29,7 +28,7 @@ public struct DropMultiTagSet: Hashable, CustomStringConvertible {
     public var description: String {
         """
         openTag: \(openTag),
-        meidanTags: \(meidanTags),
+        meidanTags: \(String(describing: meidanTags)),
         endTag: \(closeTag),
         render: \(render)
         """

@@ -13,7 +13,7 @@ public final class DropCommonMarkBoldRule: DropRule {
     public static let rule: DropTagSet = {
         var rule = DropTagSet()
         rule.openTag = "**"
-        rule.meidanTag = nil
+        rule.meidanTag = nil	
         rule.closeTag = rule.openTag
         return rule
     }()
